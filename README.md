@@ -79,6 +79,10 @@ Base URL: `/api`. Full reference with every endpoint and edge case: [docs/api.md
 | `PUT` / `DELETE /api/admin/items/:id` | admin | `{ "dropRate", ... }` | `200` |
 | `GET /api/admin/history?cursor=&limit=&userId=` | admin | – | `200 { "items": [{ "userEmail", "eventName", "itemName", ... }], "nextCursor" }` |
 | `GET /api/admin/history/stream` | admin (via `?token=`) | – | Server-Sent Events, `event: pull` pushed live on every commit |
+| `GET /api/admin/users?cursor=&limit=&email=` | admin | – | `200 { "items": [{ "email", "role", "coins", "isBanned", "pullCount", ... }], "nextCursor" }` |
+| `GET /api/admin/users/:id` | admin | – | `200 { ...user, "recentHistory": [...] }` or `404` |
+| `PUT /api/admin/users/:id` | admin | `{ "coins"?, "role"?, "isBanned"? }` | `200`, updates only the provided fields |
+| `GET /api/admin/stats` | admin | – | `200 { "totalUsers", "activeEvents", "totalEvents", "pullsToday", "totalPulls", "totalCoinsSpent" }` |
 
 ## Database design
 
@@ -122,10 +126,11 @@ Log out and back in afterward so the JWT picks up the new role.
 
 1. **Register** at `frontend-user` `/register` — new accounts start with 500 coins.
 2. Promote that account to admin (see below), then log in at `frontend-admin` `/login` — the admin app has no register page and its login rejects non-admin accounts.
-3. As an **admin**, on `frontend-admin`'s `/` (Events): create a draft event, add items with drop rates (they can be added incrementally — only the *active* total must equal exactly 100%), then click **Activate**.
+3. As an **admin**, on `frontend-admin`'s `/events`: create a draft event, add items with drop rates (they can be added incrementally — only the *active* total must equal exactly 100%), then click **Activate**.
 4. As a **user**, on `frontend-user`'s `/gacha`, pick the event, and pull (10 coins per pull).
 5. Check `frontend-user`'s `/profile` for your coin balance and pull history.
 6. As an admin, `frontend-admin`'s `/history` shows paginated history plus a live feed that updates in real time as pulls happen (Server-Sent Events, fed by a BullMQ worker).
+7. `frontend-admin`'s `/` (Dashboard) shows aggregate stats (total users, active/total events, pulls today, total pulls, total coins spent); `/users` lists all users with search-by-email, and drilling into one shows their recent pull history plus controls to adjust coins, ban, or promote to admin.
 
 ## Running tests
 

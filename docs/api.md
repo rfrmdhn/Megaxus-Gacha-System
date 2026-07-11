@@ -91,6 +91,42 @@ While the event is a draft: rejected only if the running total would *exceed* 10
 ### `PUT /api/admin/items/:id` / `DELETE /api/admin/items/:id`
 Same draft/active validation rules as item creation apply to updates. Deletion is always allowed, even if it leaves an active event's items summing to less than 100% — the gacha pull endpoint will refuse to roll on a misconfigured active event until it's fixed.
 
+### `GET /api/admin/users?cursor=&limit=&email=`
+Cursor-paginated, optionally filtered by email (case-insensitive substring match).
+```json
+{
+  "items": [
+    { "id": "...", "email": "player@example.com", "role": "user", "coins": 470, "isBanned": false, "pullCount": 12, "createdAt": "..." }
+  ],
+  "nextCursor": "..." // null when no more pages
+}
+```
+
+### `GET /api/admin/users/:id`
+Same shape as a list item, plus the user's 10 most recent pulls:
+```json
+{
+  "id": "...", "email": "player@example.com", "role": "user", "coins": 470, "isBanned": false, "pullCount": 12, "createdAt": "...",
+  "recentHistory": [
+    { "id": "...", "eventName": "Summer Banner", "itemName": "Legendary Sword", "rarity": "legendary", "coinsSpent": 10, "createdAt": "..." }
+  ]
+}
+```
+`404` if the user doesn't exist.
+
+### `PUT /api/admin/users/:id`
+```json
+// request — every field optional, only provided fields are updated
+{ "coins": 1000, "role": "admin", "isBanned": true }
+```
+Used to grant/adjust coins, promote a user to admin (there is no public admin-registration endpoint by design — see [README](../README.md#creating-an-admin-user)), or ban a user. `404` if the user doesn't exist.
+
+### `GET /api/admin/stats`
+Dashboard summary counters:
+```json
+{ "totalUsers": 128, "activeEvents": 2, "totalEvents": 5, "pullsToday": 340, "totalPulls": 9821, "totalCoinsSpent": 98210 }
+```
+
 ### `GET /api/admin/history?cursor=&limit=&userId=`
 Paginated, all users. Same shape as the user history endpoint plus a `userId`/`userEmail` field.
 
