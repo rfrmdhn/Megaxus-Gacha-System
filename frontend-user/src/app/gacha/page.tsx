@@ -103,7 +103,9 @@ export default function GachaPage() {
         <span>
           Signed in as <strong>{profile.email}</strong>
         </span>
-        <span className="text-lg font-semibold">{profile.coins} coins</span>
+        <span className="rounded-full bg-brand-yellow/20 px-3 py-1 text-lg font-semibold text-amber-700 dark:text-brand-yellow">
+          {profile.coins} coins
+        </span>
       </div>
 
       {events.length === 0 ? (
@@ -115,7 +117,7 @@ export default function GachaPage() {
             <select
               value={selectedEventId ?? ""}
               onChange={(e) => setSelectedEventId(e.target.value)}
-              className="w-full rounded border border-black/20 px-3 py-2 dark:border-white/20"
+              className="w-full rounded border border-black/20 px-3 py-2 outline-none focus:border-brand-purple focus:ring-2 focus:ring-brand-purple/30 dark:border-white/20"
             >
               {events.map((e) => (
                 <option key={e.id} value={e.id}>
@@ -146,7 +148,7 @@ export default function GachaPage() {
           <button
             onClick={pull}
             disabled={pulling}
-            className="rounded bg-black px-6 py-3 text-lg font-semibold text-white disabled:opacity-50 dark:bg-white dark:text-black"
+            className="rounded bg-gradient-to-r from-brand-cyan via-brand-purple to-brand-pink px-6 py-3 text-lg font-semibold text-white shadow-md shadow-brand-purple/30 transition-opacity hover:opacity-90 disabled:opacity-50"
           >
             {pulling ? "Pulling..." : "Pull (10 coins)"}
           </button>
@@ -154,15 +156,17 @@ export default function GachaPage() {
           {error && <p className="text-sm text-red-600">{error}</p>}
 
           {result && (
-            <div className="flex items-center gap-4 rounded border border-black/10 p-4 dark:border-white/10">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={getItemIcon(result.item.rarity)} alt={result.item.rarity} className="h-16 w-16" />
-              <div>
-                <p className="text-sm text-black/60 dark:text-white/60">You got:</p>
-                <p className="text-xl font-semibold">{result.item.name}</p>
-                <p className="text-sm capitalize text-black/60 dark:text-white/60">
-                  {result.item.rarity}
-                </p>
+            <div className="rounded-2xl bg-gradient-to-br from-brand-cyan via-brand-purple to-brand-pink p-[2px] shadow-lg shadow-brand-purple/20">
+              <div className="flex items-center gap-4 rounded-[calc(1rem-2px)] bg-white p-4 dark:bg-neutral-900">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={getItemIcon(result.item.rarity)} alt={result.item.rarity} className="h-16 w-16" />
+                <div>
+                  <p className="text-sm text-black/60 dark:text-white/60">You got:</p>
+                  <p className="text-xl font-semibold">{result.item.name}</p>
+                  <p className="text-sm capitalize text-black/60 dark:text-white/60">
+                    {result.item.rarity}
+                  </p>
+                </div>
               </div>
             </div>
           )}

@@ -61,13 +61,13 @@ export default function UsersPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-semibold">Users</h1>
+      <h1 className="border-l-4 border-brand-purple pl-3 text-2xl font-semibold">Users</h1>
 
       <input
         placeholder="Search by email"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
-        className="max-w-sm rounded border border-black/20 px-3 py-2 text-sm dark:border-white/20"
+        className="max-w-sm rounded border border-black/20 px-3 py-2 text-sm outline-none focus:border-brand-purple focus:ring-2 focus:ring-brand-purple/30 dark:border-white/20"
       />
 
       {error && <p className="text-sm text-red-600">{error}</p>}
@@ -94,7 +94,7 @@ export default function UsersPage() {
               <Fragment key={u.id}>
                 <tr
                   onClick={() => setExpandedId(expandedId === u.id ? null : u.id)}
-                  className="cursor-pointer border-b border-black/5 hover:bg-black/[0.03] dark:border-white/5 dark:hover:bg-white/[0.03]"
+                  className="cursor-pointer border-b border-black/5 hover:bg-brand-purple/5 dark:border-white/5 dark:hover:bg-brand-purple/10"
                 >
                   <td className="py-2">{u.email}</td>
                   <td className="py-2 capitalize">{u.role}</td>
@@ -119,7 +119,7 @@ export default function UsersPage() {
         <button
           onClick={() => loadPage(cursor, false)}
           disabled={loadingMore}
-          className="rounded border border-black/20 px-4 py-2 text-sm disabled:opacity-50 dark:border-white/20"
+          className="rounded border border-black/20 px-4 py-2 text-sm transition-colors hover:border-brand-purple/50 disabled:opacity-50 dark:border-white/20"
         >
           {loadingMore ? "Loading…" : "Load more"}
         </button>

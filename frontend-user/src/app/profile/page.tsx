@@ -62,12 +62,14 @@ export default function ProfilePage() {
       {profile && (
         <div className="flex items-center justify-between rounded border border-black/10 p-4 dark:border-white/10">
           <span>{profile.email}</span>
-          <span className="text-lg font-semibold">{profile.coins} coins</span>
+          <span className="rounded-full bg-brand-yellow/20 px-3 py-1 text-lg font-semibold text-amber-700 dark:text-brand-yellow">
+            {profile.coins} coins
+          </span>
         </div>
       )}
 
       <div>
-        <h1 className="mb-3 text-xl font-semibold">Gacha history</h1>
+        <h1 className="mb-3 border-l-4 border-brand-purple pl-3 text-xl font-semibold">Gacha history</h1>
         {history.length === 0 && !loading ? (
           <p className="text-black/60 dark:text-white/60">No pulls yet.</p>
         ) : (
@@ -100,7 +102,7 @@ export default function ProfilePage() {
           <button
             onClick={() => loadPage(cursor, false)}
             disabled={loading}
-            className="mt-4 rounded border border-black/20 px-4 py-2 text-sm dark:border-white/20"
+            className="mt-4 rounded border border-black/20 px-4 py-2 text-sm transition-colors hover:border-brand-purple/50 dark:border-white/20"
           >
             {loading ? "Loading..." : "Load more"}
           </button>

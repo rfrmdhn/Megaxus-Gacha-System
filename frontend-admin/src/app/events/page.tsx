@@ -123,7 +123,7 @@ export default function EventsPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <h1 className="text-2xl font-semibold">Events</h1>
+      <h1 className="border-l-4 border-brand-purple pl-3 text-2xl font-semibold">Events</h1>
 
       {error && <p className="text-sm text-red-600">{error}</p>}
 
@@ -134,7 +134,7 @@ export default function EventsPage() {
             required
             value={newEventName}
             onChange={(e) => setNewEventName(e.target.value)}
-            className="rounded border border-black/20 px-2 py-1 dark:border-white/20"
+            className="rounded border border-black/20 px-2 py-1 outline-none focus:border-brand-purple focus:ring-2 focus:ring-brand-purple/30 dark:border-white/20"
           />
         </div>
         <div className="flex flex-col gap-1">
@@ -144,7 +144,7 @@ export default function EventsPage() {
             required
             value={newEventStart}
             onChange={(e) => setNewEventStart(e.target.value)}
-            className="rounded border border-black/20 px-2 py-1 dark:border-white/20"
+            className="rounded border border-black/20 px-2 py-1 outline-none focus:border-brand-purple focus:ring-2 focus:ring-brand-purple/30 dark:border-white/20"
           />
         </div>
         <div className="flex flex-col gap-1">
@@ -154,13 +154,13 @@ export default function EventsPage() {
             required
             value={newEventEnd}
             onChange={(e) => setNewEventEnd(e.target.value)}
-            className="rounded border border-black/20 px-2 py-1 dark:border-white/20"
+            className="rounded border border-black/20 px-2 py-1 outline-none focus:border-brand-purple focus:ring-2 focus:ring-brand-purple/30 dark:border-white/20"
           />
         </div>
         <button
           type="submit"
           disabled={creating}
-          className="rounded bg-black px-4 py-2 text-sm text-white disabled:opacity-50 dark:bg-white dark:text-black"
+          className="rounded bg-gradient-to-r from-brand-cyan via-brand-purple to-brand-pink px-4 py-2 text-sm font-medium text-white shadow-md shadow-brand-purple/30 transition-opacity hover:opacity-90 disabled:opacity-50"
         >
           {creating ? "Creating…" : "New draft event"}
         </button>
@@ -221,7 +221,7 @@ function EventCard({
   }
 
   return (
-    <div className="rounded border border-black/10 p-4 dark:border-white/10">
+    <div className="rounded border border-black/10 p-4 transition-colors hover:border-brand-purple/30 dark:border-white/10">
       <div className="mb-3 flex items-center justify-between">
         <div>
           <h2 className="text-lg font-medium">{event.name}</h2>
@@ -235,7 +235,7 @@ function EventCard({
         <div className="flex gap-2">
           <button
             onClick={() => onToggleActive(event)}
-            className="rounded border border-black/20 px-3 py-1 text-xs dark:border-white/20"
+            className="rounded border border-black/20 px-3 py-1 text-xs transition-colors hover:border-brand-purple/50 dark:border-white/20"
           >
             {event.isActive ? "Deactivate" : "Activate"}
           </button>
@@ -287,14 +287,14 @@ function EventCard({
           placeholder="Item name"
           value={itemName}
           onChange={(e) => setItemName(e.target.value)}
-          className="rounded border border-black/20 px-2 py-1 text-sm dark:border-white/20"
+          className="rounded border border-black/20 px-2 py-1 text-sm outline-none focus:border-brand-purple focus:ring-2 focus:ring-brand-purple/30 dark:border-white/20"
         />
         <input
           required
           placeholder="Rarity"
           value={rarity}
           onChange={(e) => setRarity(e.target.value)}
-          className="rounded border border-black/20 px-2 py-1 text-sm dark:border-white/20"
+          className="rounded border border-black/20 px-2 py-1 text-sm outline-none focus:border-brand-purple focus:ring-2 focus:ring-brand-purple/30 dark:border-white/20"
         />
         <input
           required
@@ -305,12 +305,12 @@ function EventCard({
           placeholder="Drop rate %"
           value={dropRate}
           onChange={(e) => setDropRate(e.target.value)}
-          className="w-28 rounded border border-black/20 px-2 py-1 text-sm dark:border-white/20"
+          className="w-28 rounded border border-black/20 px-2 py-1 text-sm outline-none focus:border-brand-purple focus:ring-2 focus:ring-brand-purple/30 dark:border-white/20"
         />
         <button
           type="submit"
           disabled={addingItem}
-          className="rounded border border-black/20 px-3 py-1 text-sm disabled:opacity-50 dark:border-white/20"
+          className="rounded border border-black/20 px-3 py-1 text-sm transition-colors hover:border-brand-purple/50 disabled:opacity-50 dark:border-white/20"
         >
           {addingItem ? "Adding…" : "Add item"}
         </button>

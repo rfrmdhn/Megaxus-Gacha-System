@@ -104,12 +104,12 @@ export function UserDetailRow({
                   min="0"
                   value={coinsInput}
                   onChange={(e) => setCoinsInput(e.target.value)}
-                  className="w-28 rounded border border-black/20 px-2 py-1 text-sm dark:border-white/20"
+                  className="w-28 rounded border border-black/20 px-2 py-1 text-sm outline-none focus:border-brand-purple focus:ring-2 focus:ring-brand-purple/30 dark:border-white/20"
                 />
                 <button
                   onClick={saveCoins}
                   disabled={savingCoins || parseInt(coinsInput, 10) === user.coins}
-                  className="rounded border border-black/20 px-3 py-1 text-sm disabled:opacity-50 dark:border-white/20"
+                  className="rounded border border-black/20 px-3 py-1 text-sm transition-colors hover:border-brand-purple/50 disabled:opacity-50 dark:border-white/20"
                 >
                   {savingCoins ? "Saving…" : "Save"}
                 </button>
@@ -122,7 +122,7 @@ export function UserDetailRow({
                 value={user.role}
                 disabled={savingRole}
                 onChange={(e) => changeRole(e.target.value as "user" | "admin")}
-                className="rounded border border-black/20 px-2 py-1 text-sm disabled:opacity-50 dark:border-white/20"
+                className="rounded border border-black/20 px-2 py-1 text-sm outline-none focus:border-brand-purple focus:ring-2 focus:ring-brand-purple/30 disabled:opacity-50 dark:border-white/20"
               >
                 <option value="user">user</option>
                 <option value="admin">admin</option>
