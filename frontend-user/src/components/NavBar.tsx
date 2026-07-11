@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { clearToken, getCurrentUser, JwtPayload } from "@/lib/auth";
@@ -25,9 +26,10 @@ export default function NavBar() {
   }
 
   return (
-    <header className="border-b border-black/10 dark:border-white/10">
+    <header className="border-b border-black/10 bg-gradient-to-r from-brand-cyan/10 via-brand-purple/10 to-brand-pink/10 dark:border-white/10">
       <nav className="mx-auto flex max-w-4xl items-center justify-between px-4 py-3">
-        <Link href="/gacha" className="font-semibold">
+        <Link href="/gacha" className="flex items-center gap-2 font-semibold">
+          <Image src="/ayodance-logo.jpg" alt="AyoDance Audition" width={112} height={60} className="h-7 w-auto" />
           Gacha Event System
         </Link>
         <div className="flex items-center gap-4 text-sm">

@@ -19,6 +19,8 @@ export function useRequireAdmin(): JwtPayload | null {
       router.push("/login");
       return;
     }
+    // Mirrors the existing auth-check pattern in NavBar.tsx (localStorage read, not React state).
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setUser(current);
   }, [router]);
 
