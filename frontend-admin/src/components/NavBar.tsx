@@ -39,34 +39,40 @@ export default function NavBar() {
   if (pathname === "/login") return null;
 
   return (
-    <header className="border-b border-black/10 bg-gradient-to-r from-brand-cyan/10 via-brand-purple/10 to-brand-pink/10">
-      <nav className="mx-auto flex max-w-4xl items-center justify-between px-4 py-3">
-        <Link href="/" className="flex items-center gap-2 font-semibold">
-          <Image src="/ayodance-logo.jpg" alt="AyoDance Audition" width={112} height={60} className="h-7 w-auto" />
-          Gacha Admin
-        </Link>
-        <div className="flex items-center gap-4 text-sm">
-          {user ? (
-            <>
-              {LINKS.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={isActive(link.href) ? "font-medium text-brand-purple underline" : undefined}
-                >
-                  {link.label}
-                </Link>
-              ))}
-              <span className="text-black/50">{user.email}</span>
-              <button onClick={logout} className="underline">
-                Logout
-              </button>
-            </>
-          ) : (
-            <Link href="/login">Login</Link>
-          )}
+    <aside className="sticky top-0 flex h-screen w-60 shrink-0 flex-col border-r border-black/10 bg-gradient-to-b from-brand-cyan/10 via-brand-purple/10 to-brand-pink/10">
+      <Link href="/" className="flex items-center gap-2 border-b border-black/10 px-4 py-4 font-semibold">
+        <Image src="/ayodance-logo.jpg" alt="AyoDance Audition" width={112} height={60} className="h-7 w-auto" />
+        Gacha Admin
+      </Link>
+      {user ? (
+        <>
+          <nav className="flex flex-1 flex-col gap-1 overflow-y-auto p-3 text-sm">
+            {LINKS.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`rounded-lg px-3 py-2 transition-colors ${
+                  isActive(link.href)
+                    ? "bg-brand-purple/10 font-medium text-brand-purple"
+                    : "hover:bg-black/5"
+                }`}
+              >
+                {link.label}
+              </Link>
+            ))}
+          </nav>
+          <div className="border-t border-black/10 p-3 text-sm">
+            <p className="truncate text-black/50">{user.email}</p>
+            <button onClick={logout} className="mt-1 underline">
+              Logout
+            </button>
+          </div>
+        </>
+      ) : (
+        <div className="p-3 text-sm">
+          <Link href="/login">Login</Link>
         </div>
-      </nav>
-    </header>
+      )}
+    </aside>
   );
 }

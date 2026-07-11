@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { GachaCacheService } from './gacha-cache.service';
 import { AdminFeedProducer } from '../queue/admin-feed.producer';
@@ -17,7 +22,9 @@ export class GachaService {
   ) {}
 
   async pull(userId: string, eventId: string) {
-    const event = await this.prisma.gachaEvent.findUnique({ where: { id: eventId } });
+    const event = await this.prisma.gachaEvent.findUnique({
+      where: { id: eventId },
+    });
     if (!event || !event.isActive) {
       throw new NotFoundException('Gacha event not found or inactive');
     }
@@ -70,7 +77,10 @@ export class GachaService {
         createdAt: result.log.createdAt.toISOString(),
       });
     } catch (err) {
-      this.logger.error('Failed to emit admin feed event for a completed pull', err as Error);
+      this.logger.error(
+        'Failed to emit admin feed event for a completed pull',
+        err as Error,
+      );
     }
 
     return {

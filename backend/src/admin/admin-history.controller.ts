@@ -40,7 +40,9 @@ export class AdminHistoryController {
   // from the DB (not trusted from the token payload) so a demotion or ban
   // takes effect immediately, matching JwtStrategy.validate's behavior.
   @Sse('stream')
-  async stream(@Query('token') token: string): Promise<Observable<MessageEvent>> {
+  async stream(
+    @Query('token') token: string,
+  ): Promise<Observable<MessageEvent>> {
     let payload: { sub: string };
     try {
       payload = this.jwtService.verify(token);
