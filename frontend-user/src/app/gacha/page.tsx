@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiFetch, ApiError } from "@/lib/api";
 import { getCurrentUser } from "@/lib/auth";
+import { getItemIcon } from "@/lib/itemIcon";
 
 interface GachaEvent {
   id: string;
@@ -129,8 +130,10 @@ export default function GachaPage() {
               <h2 className="mb-2 font-medium">Drop rates</h2>
               <ul className="flex flex-col gap-1 text-sm">
                 {items.map((item) => (
-                  <li key={item.id} className="flex justify-between">
-                    <span>
+                  <li key={item.id} className="flex items-center justify-between">
+                    <span className="flex items-center gap-2">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={getItemIcon(item.rarity)} alt={item.rarity} className="h-6 w-6" />
                       {item.name} <span className="text-black/50 dark:text-white/50">({item.rarity})</span>
                     </span>
                     <span>{item.dropRate}%</span>
@@ -151,12 +154,16 @@ export default function GachaPage() {
           {error && <p className="text-sm text-red-600">{error}</p>}
 
           {result && (
-            <div className="rounded border border-black/10 p-4 dark:border-white/10">
-              <p className="text-sm text-black/60 dark:text-white/60">You got:</p>
-              <p className="text-xl font-semibold">{result.item.name}</p>
-              <p className="text-sm capitalize text-black/60 dark:text-white/60">
-                {result.item.rarity}
-              </p>
+            <div className="flex items-center gap-4 rounded border border-black/10 p-4 dark:border-white/10">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={getItemIcon(result.item.rarity)} alt={result.item.rarity} className="h-16 w-16" />
+              <div>
+                <p className="text-sm text-black/60 dark:text-white/60">You got:</p>
+                <p className="text-xl font-semibold">{result.item.name}</p>
+                <p className="text-sm capitalize text-black/60 dark:text-white/60">
+                  {result.item.rarity}
+                </p>
+              </div>
             </div>
           )}
         </>

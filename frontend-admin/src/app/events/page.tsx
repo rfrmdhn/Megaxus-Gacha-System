@@ -1,10 +1,8 @@
 "use client";
 
 import { useEffect, useState, FormEvent } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { apiFetch, ApiError } from "@/lib/api";
-import { clearToken, getCurrentUser } from "@/lib/auth";
+import { useRequireAdmin } from "@/lib/useRequireAdmin";
 
 interface AdminItem {
   id: string;
@@ -26,27 +24,19 @@ function itemsTotal(items: AdminItem[]): number {
   return items.reduce((sum, i) => sum + parseFloat(i.dropRate), 0);
 }
 
-export default function AdminPage() {
-  const router = useRouter();
+export default function EventsPage() {
+  const user = useRequireAdmin();
   const [events, setEvents] = useState<AdminEvent[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [newEventName, setNewEventName] = useState("");
   const [newEventStart, setNewEventStart] = useState("");
   const [newEventEnd, setNewEventEnd] = useState("");
+  const [creating, setCreating] = useState(false);
 
   useEffect(() => {
-    const user = getCurrentUser();
-    if (!user) {
-      router.push("/login");
-      return;
-    }
-    if (user.role !== "admin") {
-      clearToken();
-      router.push("/login");
-      return;
-    }
-    void loadEvents();
-  }, [router]);
+    if (user) void loadEvents();
+  }, [user]);
 
   async function loadEvents() {
     try {
@@ -54,12 +44,15 @@ export default function AdminPage() {
       setEvents(list);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Failed to load events");
+    } finally {
+      setLoading(false);
     }
   }
 
   async function createEvent(e: FormEvent) {
     e.preventDefault();
     setError(null);
+    setCreating(true);
     try {
       await apiFetch("/admin/events", {
         method: "POST",
@@ -75,6 +68,8 @@ export default function AdminPage() {
       void loadEvents();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Failed to create event");
+    } finally {
+      setCreating(false);
     }
   }
 
@@ -92,6 +87,7 @@ export default function AdminPage() {
   }
 
   async function deleteItem(itemId: string) {
+    if (!window.confirm("Remove this item?")) return;
     setError(null);
     try {
       await apiFetch(`/admin/items/${itemId}`, { method: "DELETE" });
@@ -115,6 +111,7 @@ export default function AdminPage() {
   }
 
   async function deleteEvent(eventId: string) {
+    if (!window.confirm("Delete this event? This cannot be undone.")) return;
     setError(null);
     try {
       await apiFetch(`/admin/events/${eventId}`, { method: "DELETE" });
@@ -126,12 +123,7 @@ export default function AdminPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Admin: Events</h1>
-        <Link href="/history" className="underline">
-          Live history →
-        </Link>
-      </div>
+      <h1 className="text-2xl font-semibold">Events</h1>
 
       {error && <p className="text-sm text-red-600">{error}</p>}
 
@@ -165,23 +157,33 @@ export default function AdminPage() {
             className="rounded border border-black/20 px-2 py-1 dark:border-white/20"
           />
         </div>
-        <button type="submit" className="rounded bg-black px-4 py-2 text-sm text-white dark:bg-white dark:text-black">
-          New draft event
+        <button
+          type="submit"
+          disabled={creating}
+          className="rounded bg-black px-4 py-2 text-sm text-white disabled:opacity-50 dark:bg-white dark:text-black"
+        >
+          {creating ? "Creating…" : "New draft event"}
         </button>
       </form>
 
-      <div className="flex flex-col gap-6">
-        {events.map((event) => (
-          <EventCard
-            key={event.id}
-            event={event}
-            onAddItem={addItem}
-            onDeleteItem={deleteItem}
-            onToggleActive={toggleActive}
-            onDeleteEvent={deleteEvent}
-          />
-        ))}
-      </div>
+      {loading ? (
+        <p className="text-sm text-black/50 dark:text-white/50">Loading events…</p>
+      ) : events.length === 0 ? (
+        <p className="text-sm text-black/50 dark:text-white/50">No events yet — create one above.</p>
+      ) : (
+        <div className="flex flex-col gap-6">
+          {events.map((event) => (
+            <EventCard
+              key={event.id}
+              event={event}
+              onAddItem={addItem}
+              onDeleteItem={deleteItem}
+              onToggleActive={toggleActive}
+              onDeleteEvent={deleteEvent}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -194,7 +196,7 @@ function EventCard({
   onDeleteEvent,
 }: {
   event: AdminEvent;
-  onAddItem: (eventId: string, name: string, rarity: string, dropRate: number) => void;
+  onAddItem: (eventId: string, name: string, rarity: string, dropRate: number) => Promise<void>;
   onDeleteItem: (itemId: string) => void;
   onToggleActive: (event: AdminEvent) => void;
   onDeleteEvent: (eventId: string) => void;
@@ -202,14 +204,20 @@ function EventCard({
   const [itemName, setItemName] = useState("");
   const [rarity, setRarity] = useState("");
   const [dropRate, setDropRate] = useState("");
+  const [addingItem, setAddingItem] = useState(false);
   const total = itemsTotal(event.items);
 
-  function submitItem(e: FormEvent) {
+  async function submitItem(e: FormEvent) {
     e.preventDefault();
-    onAddItem(event.id, itemName, rarity, parseFloat(dropRate));
-    setItemName("");
-    setRarity("");
-    setDropRate("");
+    setAddingItem(true);
+    try {
+      await onAddItem(event.id, itemName, rarity, parseFloat(dropRate));
+      setItemName("");
+      setRarity("");
+      setDropRate("");
+    } finally {
+      setAddingItem(false);
+    }
   }
 
   return (
@@ -220,7 +228,8 @@ function EventCard({
           <span
             className={`text-xs ${event.isActive ? "text-green-600" : "text-black/50 dark:text-white/50"}`}
           >
-            {event.isActive ? "Active" : "Draft"} · total drop rate: {total}%
+            {event.isActive ? "Active" : "Draft"} · total drop rate:{" "}
+            <span className={total !== 100 ? "text-amber-600" : undefined}>{total}%</span>
           </span>
         </div>
         <div className="flex gap-2">
@@ -249,18 +258,26 @@ function EventCard({
           </tr>
         </thead>
         <tbody>
-          {event.items.map((item) => (
-            <tr key={item.id} className="border-t border-black/5 dark:border-white/5">
-              <td className="py-1">{item.name}</td>
-              <td className="py-1 capitalize">{item.rarity}</td>
-              <td className="py-1">{item.dropRate}%</td>
-              <td className="py-1 text-right">
-                <button onClick={() => onDeleteItem(item.id)} className="text-xs text-red-600 underline">
-                  Remove
-                </button>
+          {event.items.length === 0 ? (
+            <tr>
+              <td colSpan={4} className="py-2 text-black/50 dark:text-white/50">
+                No items yet
               </td>
             </tr>
-          ))}
+          ) : (
+            event.items.map((item) => (
+              <tr key={item.id} className="border-t border-black/5 dark:border-white/5">
+                <td className="py-1">{item.name}</td>
+                <td className="py-1 capitalize">{item.rarity}</td>
+                <td className="py-1">{item.dropRate}%</td>
+                <td className="py-1 text-right">
+                  <button onClick={() => onDeleteItem(item.id)} className="text-xs text-red-600 underline">
+                    Remove
+                  </button>
+                </td>
+              </tr>
+            ))
+          )}
         </tbody>
       </table>
 
@@ -290,8 +307,12 @@ function EventCard({
           onChange={(e) => setDropRate(e.target.value)}
           className="w-28 rounded border border-black/20 px-2 py-1 text-sm dark:border-white/20"
         />
-        <button type="submit" className="rounded border border-black/20 px-3 py-1 text-sm dark:border-white/20">
-          Add item
+        <button
+          type="submit"
+          disabled={addingItem}
+          className="rounded border border-black/20 px-3 py-1 text-sm disabled:opacity-50 dark:border-white/20"
+        >
+          {addingItem ? "Adding…" : "Add item"}
         </button>
       </form>
     </div>

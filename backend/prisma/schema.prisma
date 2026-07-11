@@ -23,6 +23,7 @@ model User {
   passwordHash String   @map("password_hash")
   role         Role     @default(user)
   coins        Int      @default(500)
+  isBanned     Boolean  @default(false) @map("is_banned")
   createdAt    DateTime @default(now()) @map("created_at")
 
   gachaLogs GachaLog[]

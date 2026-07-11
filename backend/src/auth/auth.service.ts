@@ -37,6 +37,9 @@ export class AuthService {
     if (!user || !(await bcrypt.compare(dto.password, user.passwordHash))) {
       throw new UnauthorizedException('Invalid email or password');
     }
+    if (user.isBanned) {
+      throw new UnauthorizedException('This account has been banned');
+    }
     return { token: this.signToken(user.id, user.email, user.role) };
   }
 
