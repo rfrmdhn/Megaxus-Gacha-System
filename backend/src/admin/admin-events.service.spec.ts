@@ -29,6 +29,7 @@ describe('AdminEventsService', () => {
         delete: jest.fn(),
       },
       gachaItem: { findMany: jest.fn() },
+      gachaLog: { count: jest.fn().mockResolvedValue(0) },
     };
     gachaCache = { invalidate: jest.fn().mockResolvedValue(undefined) };
     service = new AdminEventsService(prisma, gachaCache);
@@ -68,6 +69,17 @@ describe('AdminEventsService', () => {
         },
       });
       expect(result).toEqual(created);
+    });
+
+    it('throws BadRequestException when endsAt is not after startsAt', async () => {
+      await expect(
+        service.create({
+          name: 'Spring Event',
+          startsAt: '2026-02-01T00:00:00.000Z',
+          endsAt: '2026-01-01T00:00:00.000Z',
+        }),
+      ).rejects.toThrow(BadRequestException);
+      expect(prisma.gachaEvent.create).not.toHaveBeenCalled();
     });
   });
 
@@ -168,6 +180,24 @@ describe('AdminEventsService', () => {
         },
       });
     });
+
+    it('throws BadRequestException when the updated range is invalid against the existing endsAt', async () => {
+      prisma.gachaEvent.findUnique.mockResolvedValue(makeEvent());
+
+      await expect(
+        service.update('evt-1', { startsAt: '2026-03-01T00:00:00.000Z' }),
+      ).rejects.toThrow(BadRequestException);
+      expect(prisma.gachaEvent.update).not.toHaveBeenCalled();
+    });
+
+    it('throws BadRequestException when the updated range is invalid against the existing startsAt', async () => {
+      prisma.gachaEvent.findUnique.mockResolvedValue(makeEvent());
+
+      await expect(
+        service.update('evt-1', { endsAt: '2025-12-01T00:00:00.000Z' }),
+      ).rejects.toThrow(BadRequestException);
+      expect(prisma.gachaEvent.update).not.toHaveBeenCalled();
+    });
   });
 
   describe('remove', () => {
@@ -177,13 +207,23 @@ describe('AdminEventsService', () => {
       await expect(service.remove('missing')).rejects.toThrow(NotFoundException);
     });
 
-    it('deletes the event when it exists', async () => {
+    it('deletes the event when it exists and has no pull history', async () => {
       prisma.gachaEvent.findUnique.mockResolvedValue(makeEvent());
+      prisma.gachaLog.count.mockResolvedValue(0);
       prisma.gachaEvent.delete.mockResolvedValue(undefined);
 
       await service.remove('evt-1');
 
+      expect(prisma.gachaLog.count).toHaveBeenCalledWith({ where: { eventId: 'evt-1' } });
       expect(prisma.gachaEvent.delete).toHaveBeenCalledWith({ where: { id: 'evt-1' } });
+    });
+
+    it('throws BadRequestException when the event has existing pull history', async () => {
+      prisma.gachaEvent.findUnique.mockResolvedValue(makeEvent());
+      prisma.gachaLog.count.mockResolvedValue(3);
+
+      await expect(service.remove('evt-1')).rejects.toThrow(BadRequestException);
+      expect(prisma.gachaEvent.delete).not.toHaveBeenCalled();
     });
   });
 });

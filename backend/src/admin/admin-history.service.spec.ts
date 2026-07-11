@@ -93,4 +93,20 @@ describe('AdminHistoryService', () => {
       }),
     );
   });
+
+  it('selects only the fields it needs from item/event/user relations', async () => {
+    prisma.gachaLog.findMany.mockResolvedValue([]);
+
+    await service.list({ limit: 20 } as any);
+
+    expect(prisma.gachaLog.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        include: {
+          item: { select: { name: true, rarity: true } },
+          event: { select: { name: true } },
+          user: { select: { email: true } },
+        },
+      }),
+    );
+  });
 });

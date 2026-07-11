@@ -92,5 +92,20 @@ describe('UsersService', () => {
         }),
       );
     });
+
+    it('selects only the fields it needs from item/event relations', async () => {
+      prisma.gachaLog.findMany.mockResolvedValue([]);
+
+      await service.getHistory('user-1', { limit: 20 } as any);
+
+      expect(prisma.gachaLog.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          include: {
+            item: { select: { name: true, rarity: true } },
+            event: { select: { name: true } },
+          },
+        }),
+      );
+    });
   });
 });

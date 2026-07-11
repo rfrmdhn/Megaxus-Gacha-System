@@ -39,6 +39,7 @@ describe('AdminItemsService', () => {
         update: jest.fn(),
         delete: jest.fn(),
       },
+      gachaLog: { count: jest.fn().mockResolvedValue(0) },
     };
     gachaCache = { invalidate: jest.fn().mockResolvedValue(undefined) };
     service = new AdminItemsService(prisma, gachaCache);
@@ -194,14 +195,24 @@ describe('AdminItemsService', () => {
       await expect(service.remove('missing')).rejects.toThrow(NotFoundException);
     });
 
-    it('deletes item and invalidates cache', async () => {
+    it('deletes item and invalidates cache when it has no pull history', async () => {
       prisma.gachaItem.findUnique.mockResolvedValue(makeItem());
+      prisma.gachaLog.count.mockResolvedValue(0);
       prisma.gachaItem.delete.mockResolvedValue(undefined);
 
       await service.remove('item-1');
 
+      expect(prisma.gachaLog.count).toHaveBeenCalledWith({ where: { itemId: 'item-1' } });
       expect(prisma.gachaItem.delete).toHaveBeenCalledWith({ where: { id: 'item-1' } });
       expect(gachaCache.invalidate).toHaveBeenCalledWith('evt-1');
+    });
+
+    it('throws BadRequestException when the item has existing pull history', async () => {
+      prisma.gachaItem.findUnique.mockResolvedValue(makeItem());
+      prisma.gachaLog.count.mockResolvedValue(2);
+
+      await expect(service.remove('item-1')).rejects.toThrow(BadRequestException);
+      expect(prisma.gachaItem.delete).not.toHaveBeenCalled();
     });
   });
 });

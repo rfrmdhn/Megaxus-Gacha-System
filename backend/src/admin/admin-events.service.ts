@@ -1,8 +1,14 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { GachaCacheService } from '../gacha/gacha-cache.service';
 import { assertDropRatesEqual100 } from './drop-rate.util';
 import { CreateEventDto, UpdateEventDto } from './dto/event.dto';
+
+function assertDateRangeValid(startsAt: Date, endsAt: Date): void {
+  if (endsAt <= startsAt) {
+    throw new BadRequestException('endsAt must be after startsAt');
+  }
+}
 
 @Injectable()
 export class AdminEventsService {

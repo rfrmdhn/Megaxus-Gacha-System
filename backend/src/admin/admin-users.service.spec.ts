@@ -101,6 +101,22 @@ describe('AdminUsersService', () => {
         },
       ]);
     });
+
+    it('selects only the fields it needs from item/event relations', async () => {
+      prisma.user.findUnique.mockResolvedValue(makeUserRow());
+      prisma.gachaLog.findMany.mockResolvedValue([]);
+
+      await service.getDetail('u1');
+
+      expect(prisma.gachaLog.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          include: {
+            item: { select: { name: true, rarity: true } },
+            event: { select: { name: true } },
+          },
+        }),
+      );
+    });
   });
 
   describe('update', () => {

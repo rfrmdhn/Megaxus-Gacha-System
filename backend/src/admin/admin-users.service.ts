@@ -44,7 +44,10 @@ export class AdminUsersService {
       where: { userId: id },
       orderBy: { createdAt: 'desc' },
       take: RECENT_HISTORY_LIMIT,
-      include: { item: true, event: true },
+      include: {
+        item: { select: { name: true, rarity: true } },
+        event: { select: { name: true } },
+      },
     });
 
     return {

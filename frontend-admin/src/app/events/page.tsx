@@ -1,38 +1,37 @@
 "use client";
 
-import { useEffect, useState, FormEvent } from "react";
+import { useEffect, useState } from "react";
+import {
+  PlusOutlined,
+  EditOutlined,
+  DeleteOutlined,
+  CheckCircleOutlined,
+  StopOutlined,
+  UnorderedListOutlined,
+  GiftOutlined,
+} from "@ant-design/icons";
 import { apiFetch, ApiError } from "@/lib/api";
 import { useRequireAdmin } from "@/lib/useRequireAdmin";
+import { Card } from "@/components/Card";
+import { IconButton } from "@/components/IconButton";
+import { AdminEvent, EventFormDialog } from "./EventFormDialog";
+import { EventItemsDialog } from "./EventItemsDialog";
 
-interface AdminItem {
-  id: string;
-  name: string;
-  rarity: string;
-  dropRate: string;
-}
-
-interface AdminEvent {
-  id: string;
-  name: string;
-  isActive: boolean;
-  startsAt: string;
-  endsAt: string;
-  items: AdminItem[];
-}
-
-function itemsTotal(items: AdminItem[]): number {
+function itemsTotal(items: AdminEvent["items"]): number {
   return items.reduce((sum, i) => sum + parseFloat(i.dropRate), 0);
 }
+
+type FormDialogState = { mode: "create" } | { mode: "edit"; event: AdminEvent } | null;
 
 export default function EventsPage() {
   const user = useRequireAdmin();
   const [events, setEvents] = useState<AdminEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [newEventName, setNewEventName] = useState("");
-  const [newEventStart, setNewEventStart] = useState("");
-  const [newEventEnd, setNewEventEnd] = useState("");
-  const [creating, setCreating] = useState(false);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "draft">("all");
+  const [formDialog, setFormDialog] = useState<FormDialogState>(null);
+  const [itemsEventId, setItemsEventId] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) void loadEvents();
@@ -46,54 +45,6 @@ export default function EventsPage() {
       setError(err instanceof ApiError ? err.message : "Failed to load events");
     } finally {
       setLoading(false);
-    }
-  }
-
-  async function createEvent(e: FormEvent) {
-    e.preventDefault();
-    setError(null);
-    setCreating(true);
-    try {
-      await apiFetch("/admin/events", {
-        method: "POST",
-        body: JSON.stringify({
-          name: newEventName,
-          startsAt: new Date(newEventStart).toISOString(),
-          endsAt: new Date(newEventEnd).toISOString(),
-        }),
-      });
-      setNewEventName("");
-      setNewEventStart("");
-      setNewEventEnd("");
-      void loadEvents();
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Failed to create event");
-    } finally {
-      setCreating(false);
-    }
-  }
-
-  async function addItem(eventId: string, name: string, rarity: string, dropRate: number) {
-    setError(null);
-    try {
-      await apiFetch(`/admin/events/${eventId}/items`, {
-        method: "POST",
-        body: JSON.stringify({ name, rarity, dropRate }),
-      });
-      void loadEvents();
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Failed to add item");
-    }
-  }
-
-  async function deleteItem(itemId: string) {
-    if (!window.confirm("Remove this item?")) return;
-    setError(null);
-    try {
-      await apiFetch(`/admin/items/${itemId}`, { method: "DELETE" });
-      void loadEvents();
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Failed to delete item");
     }
   }
 
@@ -121,200 +72,134 @@ export default function EventsPage() {
     }
   }
 
+  const itemsEvent = events.find((e) => e.id === itemsEventId) ?? null;
+
+  const filteredEvents = events.filter((event) => {
+    if (statusFilter === "active" && !event.isActive) return false;
+    if (statusFilter === "draft" && event.isActive) return false;
+    if (search && !event.name.toLowerCase().includes(search.toLowerCase())) return false;
+    return true;
+  });
+
   return (
-    <div className="flex flex-col gap-8">
-      <h1 className="border-l-4 border-brand-purple pl-3 text-2xl font-semibold">Events</h1>
+    <div className="flex flex-col gap-6">
+      <div className="flex items-center justify-between">
+        <h1 className="flex items-center gap-2 border-l-4 border-brand-purple pl-3 text-2xl font-semibold">
+          <GiftOutlined className="text-brand-purple" />
+          Events
+        </h1>
+        <button
+          type="button"
+          onClick={() => setFormDialog({ mode: "create" })}
+          className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-brand-cyan via-brand-purple to-brand-pink px-4 py-2 text-sm font-medium text-white shadow-md shadow-brand-purple/30 transition-opacity hover:opacity-90"
+        >
+          <PlusOutlined /> New event
+        </button>
+      </div>
 
       {error && <p className="text-sm text-red-600">{error}</p>}
 
-      <form onSubmit={createEvent} className="flex flex-wrap items-end gap-3 rounded border border-black/10 p-4">
-        <div className="flex flex-col gap-1">
-          <label className="text-xs">Name</label>
+      <Card className="flex flex-col gap-4">
+        <div className="flex flex-wrap items-center gap-3">
           <input
-            required
-            value={newEventName}
-            onChange={(e) => setNewEventName(e.target.value)}
-            className="rounded border border-black/20 px-2 py-1 outline-none focus:border-brand-purple focus:ring-2 focus:ring-brand-purple/30"
+            placeholder="Search by name"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="max-w-xs flex-1 rounded-lg border border-black/15 px-3 py-2 text-sm outline-none focus:border-brand-purple focus:ring-2 focus:ring-brand-purple/30"
           />
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as "all" | "active" | "draft")}
+            className="rounded-lg border border-black/15 px-3 py-2 text-sm outline-none focus:border-brand-purple focus:ring-2 focus:ring-brand-purple/30"
+          >
+            <option value="all">All statuses</option>
+            <option value="active">Active</option>
+            <option value="draft">Draft</option>
+          </select>
         </div>
-        <div className="flex flex-col gap-1">
-          <label className="text-xs">Starts</label>
-          <input
-            type="datetime-local"
-            required
-            value={newEventStart}
-            onChange={(e) => setNewEventStart(e.target.value)}
-            className="rounded border border-black/20 px-2 py-1 outline-none focus:border-brand-purple focus:ring-2 focus:ring-brand-purple/30"
-          />
-        </div>
-        <div className="flex flex-col gap-1">
-          <label className="text-xs">Ends</label>
-          <input
-            type="datetime-local"
-            required
-            value={newEventEnd}
-            onChange={(e) => setNewEventEnd(e.target.value)}
-            className="rounded border border-black/20 px-2 py-1 outline-none focus:border-brand-purple focus:ring-2 focus:ring-brand-purple/30"
-          />
-        </div>
-        <button
-          type="submit"
-          disabled={creating}
-          className="rounded bg-gradient-to-r from-brand-cyan via-brand-purple to-brand-pink px-4 py-2 text-sm font-medium text-white shadow-md shadow-brand-purple/30 transition-opacity hover:opacity-90 disabled:opacity-50"
-        >
-          {creating ? "Creating…" : "New draft event"}
-        </button>
-      </form>
 
-      {loading ? (
-        <p className="text-sm text-black/50">Loading events…</p>
-      ) : events.length === 0 ? (
-        <p className="text-sm text-black/50">No events yet — create one above.</p>
-      ) : (
-        <div className="flex flex-col gap-6">
-          {events.map((event) => (
-            <EventCard
-              key={event.id}
-              event={event}
-              onAddItem={addItem}
-              onDeleteItem={deleteItem}
-              onToggleActive={toggleActive}
-              onDeleteEvent={deleteEvent}
-            />
-          ))}
-        </div>
+        {loading ? (
+          <p className="text-sm text-black/50">Loading events…</p>
+        ) : filteredEvents.length === 0 ? (
+          <p className="text-sm text-black/50">No events found.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-black/10 text-left">
+                  <th className="py-2">Name</th>
+                  <th className="py-2">Status</th>
+                  <th className="py-2">Starts</th>
+                  <th className="py-2">Ends</th>
+                  <th className="py-2">Drop rate</th>
+                  <th className="py-2 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredEvents.map((event) => {
+                  const total = itemsTotal(event.items);
+                  return (
+                    <tr key={event.id} className="border-b border-black/5">
+                      <td className="py-2">{event.name}</td>
+                      <td className="py-2">
+                        <span
+                          className={`rounded-full px-2 py-0.5 text-xs ${
+                            event.isActive ? "bg-green-100 text-green-700" : "bg-black/5 text-black/50"
+                          }`}
+                        >
+                          {event.isActive ? "Active" : "Draft"}
+                        </span>
+                      </td>
+                      <td className="py-2 text-black/60">{new Date(event.startsAt).toLocaleString()}</td>
+                      <td className="py-2 text-black/60">{new Date(event.endsAt).toLocaleString()}</td>
+                      <td className="py-2">
+                        <span className={total !== 100 ? "text-amber-600" : undefined}>{total}%</span>
+                      </td>
+                      <td className="py-2">
+                        <div className="flex justify-end gap-1.5">
+                          <IconButton
+                            icon={<UnorderedListOutlined />}
+                            label="Manage items"
+                            onClick={() => setItemsEventId(event.id)}
+                          />
+                          <IconButton
+                            icon={<EditOutlined />}
+                            label="Edit event"
+                            onClick={() => setFormDialog({ mode: "edit", event })}
+                          />
+                          <IconButton
+                            icon={event.isActive ? <StopOutlined /> : <CheckCircleOutlined />}
+                            label={event.isActive ? "Deactivate" : "Activate"}
+                            onClick={() => toggleActive(event)}
+                          />
+                          <IconButton
+                            icon={<DeleteOutlined />}
+                            label="Delete event"
+                            danger
+                            onClick={() => deleteEvent(event.id)}
+                          />
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Card>
+
+      {formDialog && (
+        <EventFormDialog
+          event={formDialog.mode === "edit" ? formDialog.event : null}
+          onClose={() => setFormDialog(null)}
+          onSaved={() => void loadEvents()}
+        />
       )}
-    </div>
-  );
-}
 
-function EventCard({
-  event,
-  onAddItem,
-  onDeleteItem,
-  onToggleActive,
-  onDeleteEvent,
-}: {
-  event: AdminEvent;
-  onAddItem: (eventId: string, name: string, rarity: string, dropRate: number) => Promise<void>;
-  onDeleteItem: (itemId: string) => void;
-  onToggleActive: (event: AdminEvent) => void;
-  onDeleteEvent: (eventId: string) => void;
-}) {
-  const [itemName, setItemName] = useState("");
-  const [rarity, setRarity] = useState("");
-  const [dropRate, setDropRate] = useState("");
-  const [addingItem, setAddingItem] = useState(false);
-  const total = itemsTotal(event.items);
-
-  async function submitItem(e: FormEvent) {
-    e.preventDefault();
-    setAddingItem(true);
-    try {
-      await onAddItem(event.id, itemName, rarity, parseFloat(dropRate));
-      setItemName("");
-      setRarity("");
-      setDropRate("");
-    } finally {
-      setAddingItem(false);
-    }
-  }
-
-  return (
-    <div className="rounded border border-black/10 p-4 transition-colors hover:border-brand-purple/30">
-      <div className="mb-3 flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-medium">{event.name}</h2>
-          <span
-            className={`text-xs ${event.isActive ? "text-green-600" : "text-black/50"}`}
-          >
-            {event.isActive ? "Active" : "Draft"} · total drop rate:{" "}
-            <span className={total !== 100 ? "text-amber-600" : undefined}>{total}%</span>
-          </span>
-        </div>
-        <div className="flex gap-2">
-          <button
-            onClick={() => onToggleActive(event)}
-            className="rounded border border-black/20 px-3 py-1 text-xs transition-colors hover:border-brand-purple/50"
-          >
-            {event.isActive ? "Deactivate" : "Activate"}
-          </button>
-          <button
-            onClick={() => onDeleteEvent(event.id)}
-            className="rounded border border-red-300 px-3 py-1 text-xs text-red-600"
-          >
-            Delete event
-          </button>
-        </div>
-      </div>
-
-      <table className="mb-3 w-full text-sm">
-        <thead>
-          <tr className="text-left text-black/50">
-            <th className="py-1">Item</th>
-            <th className="py-1">Rarity</th>
-            <th className="py-1">Drop rate</th>
-            <th className="py-1"></th>
-          </tr>
-        </thead>
-        <tbody>
-          {event.items.length === 0 ? (
-            <tr>
-              <td colSpan={4} className="py-2 text-black/50">
-                No items yet
-              </td>
-            </tr>
-          ) : (
-            event.items.map((item) => (
-              <tr key={item.id} className="border-t border-black/5">
-                <td className="py-1">{item.name}</td>
-                <td className="py-1 capitalize">{item.rarity}</td>
-                <td className="py-1">{item.dropRate}%</td>
-                <td className="py-1 text-right">
-                  <button onClick={() => onDeleteItem(item.id)} className="text-xs text-red-600 underline">
-                    Remove
-                  </button>
-                </td>
-              </tr>
-            ))
-          )}
-        </tbody>
-      </table>
-
-      <form onSubmit={submitItem} className="flex flex-wrap items-end gap-2">
-        <input
-          required
-          placeholder="Item name"
-          value={itemName}
-          onChange={(e) => setItemName(e.target.value)}
-          className="rounded border border-black/20 px-2 py-1 text-sm outline-none focus:border-brand-purple focus:ring-2 focus:ring-brand-purple/30"
-        />
-        <input
-          required
-          placeholder="Rarity"
-          value={rarity}
-          onChange={(e) => setRarity(e.target.value)}
-          className="rounded border border-black/20 px-2 py-1 text-sm outline-none focus:border-brand-purple focus:ring-2 focus:ring-brand-purple/30"
-        />
-        <input
-          required
-          type="number"
-          step="0.01"
-          min="0"
-          max="100"
-          placeholder="Drop rate %"
-          value={dropRate}
-          onChange={(e) => setDropRate(e.target.value)}
-          className="w-28 rounded border border-black/20 px-2 py-1 text-sm outline-none focus:border-brand-purple focus:ring-2 focus:ring-brand-purple/30"
-        />
-        <button
-          type="submit"
-          disabled={addingItem}
-          className="rounded border border-black/20 px-3 py-1 text-sm transition-colors hover:border-brand-purple/50 disabled:opacity-50"
-        >
-          {addingItem ? "Adding…" : "Add item"}
-        </button>
-      </form>
+      {itemsEvent && (
+        <EventItemsDialog event={itemsEvent} onClose={() => setItemsEventId(null)} onChanged={() => void loadEvents()} />
+      )}
     </div>
   );
 }

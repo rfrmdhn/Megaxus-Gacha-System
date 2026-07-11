@@ -17,7 +17,10 @@ export class UsersService {
     const rows = await this.prisma.gachaLog.findMany({
       where: { userId },
       orderBy: { createdAt: 'desc' },
-      include: { item: true, event: true },
+      include: {
+        item: { select: { name: true, rarity: true } },
+        event: { select: { name: true } },
+      },
       ...buildCursorArgs(query.cursor, query.limit),
     });
 

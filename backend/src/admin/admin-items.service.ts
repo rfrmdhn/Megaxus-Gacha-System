@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { GachaCacheService } from '../gacha/gacha-cache.service';
 import { assertDropRatesDoNotExceed100, assertDropRatesEqual100 } from './drop-rate.util';
@@ -59,6 +59,12 @@ export class AdminItemsService {
 
   async remove(itemId: string) {
     const item = await this.assertExists(itemId);
+    const pullCount = await this.prisma.gachaLog.count({ where: { itemId } });
+    if (pullCount > 0) {
+      throw new BadRequestException(
+        'Cannot delete an item that has already been awarded to a player',
+      );
+    }
     // Deleting from an active event can leave it below 100% — GachaService's
     // pull-time check blocks pulls on a misconfigured active event as a backstop.
     await this.prisma.gachaItem.delete({ where: { id: itemId } });
