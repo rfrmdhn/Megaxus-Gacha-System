@@ -25,7 +25,7 @@ This starts Postgres, Redis, the backend (runs pending Prisma migrations automat
 
 ## Installation — Local development
 
-Requires Node.js 22+, and Postgres + Redis running locally (or via Docker: `docker compose up -d postgres redis`).
+Requires Node.js 22+, and Postgres + Redis running locally (or via Docker: `docker compose up -d postgres redis`). Note: `docker-compose.yml` maps Redis to host port **6380** (to avoid clashing with a locally-installed Redis on 6379) — set `REDIS_PORT=6380` in `.env` if you use the Dockerized Redis instead of a native install.
 
 **Backend**
 ```bash
@@ -62,6 +62,7 @@ Base URL: `/api`. Full reference with every endpoint and edge case: [docs/api.md
 | `GET /api/admin/events` | admin | – | `200 [{ "id", "name", "isActive", "items": [...] }]` |
 | `POST /api/admin/events` | admin | `{ "name", "startsAt", "endsAt" }` | `201`, created as a **draft** (`isActive: false`) |
 | `PUT /api/admin/events/:id` | admin | `{ "isActive": true, ... }` | `200`, activating requires items to sum to exactly 100% |
+| `DELETE /api/admin/events/:id` | admin | – | `200` |
 | `POST /api/admin/events/:id/items` | admin | `{ "name", "rarity", "dropRate" }` | `201` |
 | `PUT` / `DELETE /api/admin/items/:id` | admin | `{ "dropRate", ... }` | `200` |
 | `GET /api/admin/history?cursor=&limit=&userId=` | admin | – | `200 { "items": [{ "userEmail", "eventName", "itemName", ... }], "nextCursor" }` |
