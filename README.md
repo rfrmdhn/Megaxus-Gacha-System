@@ -4,10 +4,12 @@ A production-minded gacha event system: users spend coins on weighted-random pul
 
 Full architectural reasoning (why Postgres over Mongo, why atomic `UPDATE` over locking, why Linear Prefix Sum, why SSE) lives in [docs/architecture.md](docs/architecture.md). Database design in [docs/erd.md](docs/erd.md). API reference in [docs/api.md](docs/api.md).
 
+The player-facing app and the admin dashboard are two separate Next.js apps ([frontend-user](frontend-user), [frontend-admin](frontend-admin)) sharing one backend — separate deployables, separate auth surfaces (the admin app rejects non-admin logins outright), no player ever ships admin code to their browser.
+
 ## Stack
 
-- **Backend**: NestJS (TypeScript), PostgreSQL (Prisma ORM), Redis (cache + BullMQ job queue)
-- **Frontend**: Next.js (App Router), Tailwind CSS
+- **Backend**: NestJS (TypeScript), PostgreSQL (Prisma ORM), Redis (cache + BullMQ job queue) — one API shared by both frontends
+- **Frontend**: two Next.js (App Router) apps, Tailwind CSS — `frontend-user` (players) and `frontend-admin` (admins)
 - **Real-time**: Server-Sent Events, fed by a BullMQ worker
 
 ## Installation — Docker (recommended)
@@ -18,9 +20,10 @@ Requires Docker Desktop.
 docker compose up --build
 ```
 
-This starts Postgres, Redis, the backend (runs pending Prisma migrations automatically on boot), and the frontend.
+This starts Postgres, Redis, the backend (runs pending Prisma migrations automatically on boot), and both frontends.
 
-- Frontend: http://localhost:3000
+- User app: http://localhost:3000
+- Admin app: http://localhost:3002
 - Backend API: http://localhost:3001/api
 
 ## Installation — Local development
@@ -37,14 +40,23 @@ npm run start:dev
 ```
 Runs on http://localhost:3001, all routes under `/api`.
 
-**Frontend**
+**User app**
 ```bash
-cd frontend
+cd frontend-user
 npm install
 cp .env.local.example .env.local
 npm run dev
 ```
 Runs on http://localhost:3000.
+
+**Admin app** (separate terminal)
+```bash
+cd frontend-admin
+npm install
+cp .env.local.example .env.local
+npm run dev
+```
+Runs on http://localhost:3002 (`package.json` pins the dev/start scripts to that port so it doesn't clash with the user app on 3000).
 
 ## API documentation
 
@@ -108,11 +120,12 @@ Log out and back in afterward so the JWT picks up the new role.
 
 ## Using the app
 
-1. **Register** at `/register` — new accounts start with 500 coins.
-2. As an **admin**, go to `/admin`: create a draft event, add items with drop rates (they can be added incrementally — only the *active* total must equal exactly 100%), then click **Activate**.
-3. As a **user**, go to `/gacha`, pick the event, and pull (10 coins per pull).
-4. Check `/profile` for your coin balance and pull history.
-5. As an admin, `/admin/history` shows paginated history plus a live feed that updates in real time as pulls happen (Server-Sent Events, fed by a BullMQ worker).
+1. **Register** at `frontend-user` `/register` — new accounts start with 500 coins.
+2. Promote that account to admin (see below), then log in at `frontend-admin` `/login` — the admin app has no register page and its login rejects non-admin accounts.
+3. As an **admin**, on `frontend-admin`'s `/` (Events): create a draft event, add items with drop rates (they can be added incrementally — only the *active* total must equal exactly 100%), then click **Activate**.
+4. As a **user**, on `frontend-user`'s `/gacha`, pick the event, and pull (10 coins per pull).
+5. Check `frontend-user`'s `/profile` for your coin balance and pull history.
+6. As an admin, `frontend-admin`'s `/history` shows paginated history plus a live feed that updates in real time as pulls happen (Server-Sent Events, fed by a BullMQ worker).
 
 ## Running tests
 

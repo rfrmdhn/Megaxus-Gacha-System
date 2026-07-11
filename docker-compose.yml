@@ -46,17 +46,29 @@ services:
       - "3001:3001"
     command: sh -c "npx prisma migrate deploy && node dist/main.js"
 
-  frontend:
+  frontend-user:
     build:
-      context: ./frontend
+      context: ./frontend-user
     restart: unless-stopped
     depends_on:
       - backend
     # NEXT_PUBLIC_API_URL is a browser-side value that Next.js inlines at
-    # build time (frontend/.env.local), not a container runtime env var —
+    # build time (frontend-user/.env.local), not a container runtime env var —
     # setting it here would silently do nothing.
     ports:
       - "3000:3000"
+
+  frontend-admin:
+    build:
+      context: ./frontend-admin
+    restart: unless-stopped
+    depends_on:
+      - backend
+    # NEXT_PUBLIC_API_URL is a browser-side value that Next.js inlines at
+    # build time (frontend-admin/.env.local), not a container runtime env var —
+    # setting it here would silently do nothing.
+    ports:
+      - "3002:3002"
 
 volumes:
   postgres_data:

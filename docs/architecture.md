@@ -7,7 +7,7 @@ Source of truth for *why* — see [erd.md](./erd.md) for schema and [api.md](./a
 | Concern | Choice | Why |
 |---|---|---|
 | Backend | NestJS (Node.js/TypeScript) | Structured modules/DI; first-class libraries for every piece below (Prisma, ioredis, bullmq, native SSE via `@Sse()`). |
-| Frontend | Next.js (React) | SPA-style consumption of the REST API; `EventSource` (SSE) is a native browser API, no extra dependency needed. |
+| Frontend | Next.js (React), split into `frontend-user` and `frontend-admin` | SPA-style consumption of the REST API; `EventSource` (SSE) is a native browser API, no extra dependency needed. Two separate apps sharing one backend so the admin bundle (event/item management, live history) never ships to a player's browser, and each has its own deploy/auth surface — the admin app's login rejects non-admin JWTs outright. |
 | Primary datastore | PostgreSQL | Sole system of record. The core risk being tested — race conditions on a numeric balance — is exactly what relational transactions + row-level locking solve natively. `NUMERIC` gives exact decimal drop rates; `CHECK` constraints give DB-level integrity backstops. Chosen over MongoDB (would require reimplementing these guarantees in app code) and over MySQL (weaker constraint enforcement). |
 | ORM | Prisma | Type-safe schema/migrations; `updateMany` with a `WHERE` guard clause maps directly onto the atomic-update concurrency pattern below without needing raw SQL for the hot path. |
 | Cache | Redis (plain client) | Cache-aside for event/item drop-rate reads, invalidated on admin write — not used for locking. |
