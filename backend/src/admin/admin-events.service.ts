@@ -19,8 +19,11 @@ export class AdminEventsService {
   }
 
   create(dto: CreateEventDto) {
+    const startsAt = new Date(dto.startsAt);
+    const endsAt = new Date(dto.endsAt);
+    assertDateRangeValid(startsAt, endsAt);
     return this.prisma.gachaEvent.create({
-      data: { name: dto.name, startsAt: new Date(dto.startsAt), endsAt: new Date(dto.endsAt) },
+      data: { name: dto.name, startsAt, endsAt },
     });
   }
 
@@ -35,12 +38,18 @@ export class AdminEventsService {
       assertDropRatesEqual100(items.map((i) => i.dropRate));
     }
 
+    const startsAt = dto.startsAt !== undefined ? new Date(dto.startsAt) : event.startsAt;
+    const endsAt = dto.endsAt !== undefined ? new Date(dto.endsAt) : event.endsAt;
+    if (dto.startsAt !== undefined || dto.endsAt !== undefined) {
+      assertDateRangeValid(startsAt, endsAt);
+    }
+
     const updated = await this.prisma.gachaEvent.update({
       where: { id },
       data: {
         ...(dto.name !== undefined ? { name: dto.name } : {}),
-        ...(dto.startsAt !== undefined ? { startsAt: new Date(dto.startsAt) } : {}),
-        ...(dto.endsAt !== undefined ? { endsAt: new Date(dto.endsAt) } : {}),
+        ...(dto.startsAt !== undefined ? { startsAt } : {}),
+        ...(dto.endsAt !== undefined ? { endsAt } : {}),
         ...(dto.isActive !== undefined ? { isActive: dto.isActive } : {}),
       },
     });
@@ -50,6 +59,12 @@ export class AdminEventsService {
 
   async remove(id: string) {
     await this.assertExists(id);
+    const pullCount = await this.prisma.gachaLog.count({ where: { eventId: id } });
+    if (pullCount > 0) {
+      throw new BadRequestException(
+        'Cannot delete an event with existing pull history; deactivate it instead',
+      );
+    }
     await this.prisma.gachaEvent.delete({ where: { id } });
   }
 
