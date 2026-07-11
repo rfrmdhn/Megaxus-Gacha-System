@@ -16,5 +16,6 @@ dist/
 .env.local
 
 
+coverage/
 CLAUDE.md
 AGENTS.md

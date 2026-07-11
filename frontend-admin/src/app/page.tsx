@@ -46,7 +46,7 @@ export default function DashboardPage() {
       {loading ? (
         <p className="text-sm text-black/50">Loading stats…</p>
       ) : stats ? (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
           <StatCard label="Total users" value={stats.totalUsers} />
           <StatCard label="Active events" value={stats.activeEvents} />
           <StatCard label="Total events" value={stats.totalEvents} />

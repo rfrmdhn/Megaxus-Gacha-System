@@ -33,6 +33,19 @@ describe('pickWeightedRandom', () => {
     expect(Math.abs(counts.common / TRIALS - 0.8)).toBeLessThan(TOLERANCE);
   });
 
+  it('falls back to the last item when roll equals totalWeight (floating-point edge case)', () => {
+    const items = [
+      { id: 'first', dropRate: 50 },
+      { id: 'last', dropRate: 50 },
+    ];
+    jest.spyOn(Math, 'random').mockReturnValue(1);
+    try {
+      expect(pickWeightedRandom(items).id).toBe('last');
+    } finally {
+      jest.restoreAllMocks();
+    }
+  });
+
   it('never returns an item with 0% drop rate', () => {
     const items = [
       { id: 'never', dropRate: 0 },
