@@ -44,7 +44,7 @@ export default function DashboardPage() {
       {error && <p className="text-sm text-red-600">{error}</p>}
 
       {loading ? (
-        <p className="text-sm text-black/50 dark:text-white/50">Loading stats…</p>
+        <p className="text-sm text-black/50">Loading stats…</p>
       ) : stats ? (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
           <StatCard label="Total users" value={stats.totalUsers} />

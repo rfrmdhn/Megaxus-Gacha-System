@@ -99,17 +99,17 @@ export default function GachaPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between rounded border border-black/10 p-4 dark:border-white/10">
+      <div className="flex items-center justify-between rounded border border-black/10 p-4">
         <span>
           Signed in as <strong>{profile.email}</strong>
         </span>
-        <span className="rounded-full bg-brand-yellow/20 px-3 py-1 text-lg font-semibold text-amber-700 dark:text-brand-yellow">
+        <span className="rounded-full bg-brand-yellow/20 px-3 py-1 text-lg font-semibold text-amber-700">
           {profile.coins} coins
         </span>
       </div>
 
       {events.length === 0 ? (
-        <p className="text-black/60 dark:text-white/60">No active gacha events right now.</p>
+        <p className="text-black/60">No active gacha events right now.</p>
       ) : (
         <>
           <div>
@@ -117,7 +117,7 @@ export default function GachaPage() {
             <select
               value={selectedEventId ?? ""}
               onChange={(e) => setSelectedEventId(e.target.value)}
-              className="w-full rounded border border-black/20 px-3 py-2 outline-none focus:border-brand-purple focus:ring-2 focus:ring-brand-purple/30 dark:border-white/20"
+              className="w-full rounded border border-black/20 px-3 py-2 outline-none focus:border-brand-purple focus:ring-2 focus:ring-brand-purple/30"
             >
               {events.map((e) => (
                 <option key={e.id} value={e.id}>
@@ -128,7 +128,7 @@ export default function GachaPage() {
           </div>
 
           {items.length > 0 && (
-            <div className="rounded border border-black/10 p-4 dark:border-white/10">
+            <div className="rounded border border-black/10 p-4">
               <h2 className="mb-2 font-medium">Drop rates</h2>
               <ul className="flex flex-col gap-1 text-sm">
                 {items.map((item) => (
@@ -136,7 +136,7 @@ export default function GachaPage() {
                     <span className="flex items-center gap-2">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={getItemIcon(item.rarity)} alt={item.rarity} className="h-6 w-6" />
-                      {item.name} <span className="text-black/50 dark:text-white/50">({item.rarity})</span>
+                      {item.name} <span className="text-black/50">({item.rarity})</span>
                     </span>
                     <span>{item.dropRate}%</span>
                   </li>
@@ -157,13 +157,13 @@ export default function GachaPage() {
 
           {result && (
             <div className="rounded-2xl bg-gradient-to-br from-brand-cyan via-brand-purple to-brand-pink p-[2px] shadow-lg shadow-brand-purple/20">
-              <div className="flex items-center gap-4 rounded-[calc(1rem-2px)] bg-white p-4 dark:bg-neutral-900">
+              <div className="flex items-center gap-4 rounded-[calc(1rem-2px)] bg-white p-4">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={getItemIcon(result.item.rarity)} alt={result.item.rarity} className="h-16 w-16" />
                 <div>
-                  <p className="text-sm text-black/60 dark:text-white/60">You got:</p>
+                  <p className="text-sm text-black/60">You got:</p>
                   <p className="text-xl font-semibold">{result.item.name}</p>
-                  <p className="text-sm capitalize text-black/60 dark:text-white/60">
+                  <p className="text-sm capitalize text-black/60">
                     {result.item.rarity}
                   </p>
                 </div>

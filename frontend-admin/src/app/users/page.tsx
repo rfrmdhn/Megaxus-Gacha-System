@@ -67,19 +67,19 @@ export default function UsersPage() {
         placeholder="Search by email"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
-        className="max-w-sm rounded border border-black/20 px-3 py-2 text-sm outline-none focus:border-brand-purple focus:ring-2 focus:ring-brand-purple/30 dark:border-white/20"
+        className="max-w-sm rounded border border-black/20 px-3 py-2 text-sm outline-none focus:border-brand-purple focus:ring-2 focus:ring-brand-purple/30"
       />
 
       {error && <p className="text-sm text-red-600">{error}</p>}
 
       {loading ? (
-        <p className="text-sm text-black/50 dark:text-white/50">Loading users…</p>
+        <p className="text-sm text-black/50">Loading users…</p>
       ) : users.length === 0 ? (
-        <p className="text-sm text-black/50 dark:text-white/50">No users found.</p>
+        <p className="text-sm text-black/50">No users found.</p>
       ) : (
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-black/10 text-left dark:border-white/10">
+            <tr className="border-b border-black/10 text-left">
               <th className="py-2">Email</th>
               <th className="py-2">Role</th>
               <th className="py-2">Coins</th>
@@ -94,17 +94,17 @@ export default function UsersPage() {
               <Fragment key={u.id}>
                 <tr
                   onClick={() => setExpandedId(expandedId === u.id ? null : u.id)}
-                  className="cursor-pointer border-b border-black/5 hover:bg-brand-purple/5 dark:border-white/5 dark:hover:bg-brand-purple/10"
+                  className="cursor-pointer border-b border-black/5 hover:bg-brand-purple/5"
                 >
                   <td className="py-2">{u.email}</td>
                   <td className="py-2 capitalize">{u.role}</td>
                   <td className="py-2">{u.coins}</td>
                   <td className="py-2">{u.isBanned ? "Yes" : "No"}</td>
                   <td className="py-2">{u.pullCount}</td>
-                  <td className="py-2 text-black/50 dark:text-white/50">
+                  <td className="py-2 text-black/50">
                     {new Date(u.createdAt).toLocaleDateString()}
                   </td>
-                  <td className="py-2 text-right text-black/50 dark:text-white/50">
+                  <td className="py-2 text-right text-black/50">
                     {expandedId === u.id ? "▲" : "▼"}
                   </td>
                 </tr>
@@ -119,7 +119,7 @@ export default function UsersPage() {
         <button
           onClick={() => loadPage(cursor, false)}
           disabled={loadingMore}
-          className="rounded border border-black/20 px-4 py-2 text-sm transition-colors hover:border-brand-purple/50 disabled:opacity-50 dark:border-white/20"
+          className="rounded border border-black/20 px-4 py-2 text-sm transition-colors hover:border-brand-purple/50 disabled:opacity-50"
         >
           {loadingMore ? "Loading…" : "Load more"}
         </button>

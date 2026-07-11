@@ -36,8 +36,10 @@ export default function NavBar() {
     router.push("/login");
   }
 
+  if (pathname === "/login") return null;
+
   return (
-    <header className="border-b border-black/10 bg-gradient-to-r from-brand-cyan/10 via-brand-purple/10 to-brand-pink/10 dark:border-white/10">
+    <header className="border-b border-black/10 bg-gradient-to-r from-brand-cyan/10 via-brand-purple/10 to-brand-pink/10">
       <nav className="mx-auto flex max-w-4xl items-center justify-between px-4 py-3">
         <Link href="/" className="flex items-center gap-2 font-semibold">
           <Image src="/ayodance-logo.jpg" alt="AyoDance Audition" width={112} height={60} className="h-7 w-auto" />
@@ -55,7 +57,7 @@ export default function NavBar() {
                   {link.label}
                 </Link>
               ))}
-              <span className="text-black/50 dark:text-white/50">{user.email}</span>
+              <span className="text-black/50">{user.email}</span>
               <button onClick={logout} className="underline">
                 Logout
               </button>

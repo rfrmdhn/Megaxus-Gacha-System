@@ -79,7 +79,7 @@ export default function AdminHistoryPage() {
     <div className="flex flex-col gap-6">
       <h1 className="border-l-4 border-brand-purple pl-3 text-2xl font-semibold">Live gacha history</h1>
 
-      <div className="rounded border border-black/10 p-4 dark:border-white/10">
+      <div className="rounded border border-black/10 p-4">
         <div className="mb-2 flex items-center gap-2">
           <span
             className={`h-2 w-2 rounded-full ${connected ? "bg-green-500" : "bg-red-500"}`}
@@ -87,7 +87,7 @@ export default function AdminHistoryPage() {
           <span className="text-sm">{connected ? "Live" : "Disconnected"}</span>
         </div>
         {live.length === 0 ? (
-          <p className="text-sm text-black/50 dark:text-white/50">
+          <p className="text-sm text-black/50">
             Waiting for pulls — this list updates in real time as users pull.
           </p>
         ) : (
@@ -109,13 +109,13 @@ export default function AdminHistoryPage() {
         {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
 
         {loading ? (
-          <p className="text-sm text-black/50 dark:text-white/50">Loading history…</p>
+          <p className="text-sm text-black/50">Loading history…</p>
         ) : history.length === 0 ? (
-          <p className="text-sm text-black/50 dark:text-white/50">No history yet.</p>
+          <p className="text-sm text-black/50">No history yet.</p>
         ) : (
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-black/10 text-left dark:border-white/10">
+              <tr className="border-b border-black/10 text-left">
                 <th className="py-2">User</th>
                 <th className="py-2">Event</th>
                 <th className="py-2">Item</th>
@@ -126,13 +126,13 @@ export default function AdminHistoryPage() {
             </thead>
             <tbody>
               {history.map((h) => (
-                <tr key={h.id} className="border-b border-black/5 dark:border-white/5">
+                <tr key={h.id} className="border-b border-black/5">
                   <td className="py-2">{h.userEmail}</td>
                   <td className="py-2">{h.eventName}</td>
                   <td className="py-2">{h.itemName}</td>
                   <td className="py-2 capitalize">{h.rarity}</td>
                   <td className="py-2">{h.coinsSpent}</td>
-                  <td className="py-2 text-black/50 dark:text-white/50">
+                  <td className="py-2 text-black/50">
                     {new Date(h.createdAt).toLocaleString()}
                   </td>
                 </tr>
@@ -144,7 +144,7 @@ export default function AdminHistoryPage() {
           <button
             onClick={() => loadPage(cursor, false)}
             disabled={loadingMore}
-            className="mt-4 rounded border border-black/20 px-4 py-2 text-sm transition-colors hover:border-brand-purple/50 disabled:opacity-50 dark:border-white/20"
+            className="mt-4 rounded border border-black/20 px-4 py-2 text-sm transition-colors hover:border-brand-purple/50 disabled:opacity-50"
           >
             {loadingMore ? "Loading…" : "Load more"}
           </button>

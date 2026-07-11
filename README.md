@@ -20,7 +20,7 @@ Requires Docker Desktop.
 docker compose up --build
 ```
 
-This starts Postgres, Redis, the backend (runs pending Prisma migrations automatically on boot), and both frontends.
+This starts Postgres, Redis, the backend (runs pending Prisma migrations and seeds the admin account automatically on boot — see [Creating an admin user](#creating-an-admin-user)), and both frontends.
 
 - User app: http://localhost:3000
 - Admin app: http://localhost:3002
@@ -35,10 +35,10 @@ Requires Node.js 22+, and Postgres + Redis running locally (or via Docker: `dock
 cd backend
 npm install
 cp .env.example .env   # adjust DATABASE_URL / REDIS_HOST / REDIS_PORT if needed
-npx prisma migrate dev
+npx prisma migrate dev   # also seeds the admin account (see below)
 npm run start:dev
 ```
-Runs on http://localhost:3001, all routes under `/api`.
+Runs on http://localhost:3001, all routes under `/api`. If migrations were already applied earlier and no new one ran, seed explicitly with `npm run db:seed`.
 
 **User app**
 ```bash
@@ -115,8 +115,16 @@ Full ERD with all notes: [docs/erd.md](docs/erd.md).
 
 ## Creating an admin user
 
-There is no public admin-registration endpoint by design (admin access shouldn't be self-service). Register a normal account, then promote it directly in the database:
+There is no public admin-registration endpoint by design (admin access shouldn't be self-service).
 
+**Seeded admin account** — [backend/prisma/seed.js](backend/prisma/seed.js) upserts a ready-to-use admin on every `prisma migrate deploy`/`db seed` run (Docker runs this automatically on boot; see below for local dev):
+```
+email:    admin@admin.com
+password: password123!
+```
+The upsert is a no-op if the account already exists, so it never overwrites a password changed later via the app.
+
+To promote any other account instead, register it normally, then update it directly in the database:
 ```sql
 UPDATE users SET role = 'admin' WHERE email = 'you@example.com';
 ```

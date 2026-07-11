@@ -127,14 +127,14 @@ export default function EventsPage() {
 
       {error && <p className="text-sm text-red-600">{error}</p>}
 
-      <form onSubmit={createEvent} className="flex flex-wrap items-end gap-3 rounded border border-black/10 p-4 dark:border-white/10">
+      <form onSubmit={createEvent} className="flex flex-wrap items-end gap-3 rounded border border-black/10 p-4">
         <div className="flex flex-col gap-1">
           <label className="text-xs">Name</label>
           <input
             required
             value={newEventName}
             onChange={(e) => setNewEventName(e.target.value)}
-            className="rounded border border-black/20 px-2 py-1 outline-none focus:border-brand-purple focus:ring-2 focus:ring-brand-purple/30 dark:border-white/20"
+            className="rounded border border-black/20 px-2 py-1 outline-none focus:border-brand-purple focus:ring-2 focus:ring-brand-purple/30"
           />
         </div>
         <div className="flex flex-col gap-1">
@@ -144,7 +144,7 @@ export default function EventsPage() {
             required
             value={newEventStart}
             onChange={(e) => setNewEventStart(e.target.value)}
-            className="rounded border border-black/20 px-2 py-1 outline-none focus:border-brand-purple focus:ring-2 focus:ring-brand-purple/30 dark:border-white/20"
+            className="rounded border border-black/20 px-2 py-1 outline-none focus:border-brand-purple focus:ring-2 focus:ring-brand-purple/30"
           />
         </div>
         <div className="flex flex-col gap-1">
@@ -154,7 +154,7 @@ export default function EventsPage() {
             required
             value={newEventEnd}
             onChange={(e) => setNewEventEnd(e.target.value)}
-            className="rounded border border-black/20 px-2 py-1 outline-none focus:border-brand-purple focus:ring-2 focus:ring-brand-purple/30 dark:border-white/20"
+            className="rounded border border-black/20 px-2 py-1 outline-none focus:border-brand-purple focus:ring-2 focus:ring-brand-purple/30"
           />
         </div>
         <button
@@ -167,9 +167,9 @@ export default function EventsPage() {
       </form>
 
       {loading ? (
-        <p className="text-sm text-black/50 dark:text-white/50">Loading events…</p>
+        <p className="text-sm text-black/50">Loading events…</p>
       ) : events.length === 0 ? (
-        <p className="text-sm text-black/50 dark:text-white/50">No events yet — create one above.</p>
+        <p className="text-sm text-black/50">No events yet — create one above.</p>
       ) : (
         <div className="flex flex-col gap-6">
           {events.map((event) => (
@@ -221,12 +221,12 @@ function EventCard({
   }
 
   return (
-    <div className="rounded border border-black/10 p-4 transition-colors hover:border-brand-purple/30 dark:border-white/10">
+    <div className="rounded border border-black/10 p-4 transition-colors hover:border-brand-purple/30">
       <div className="mb-3 flex items-center justify-between">
         <div>
           <h2 className="text-lg font-medium">{event.name}</h2>
           <span
-            className={`text-xs ${event.isActive ? "text-green-600" : "text-black/50 dark:text-white/50"}`}
+            className={`text-xs ${event.isActive ? "text-green-600" : "text-black/50"}`}
           >
             {event.isActive ? "Active" : "Draft"} · total drop rate:{" "}
             <span className={total !== 100 ? "text-amber-600" : undefined}>{total}%</span>
@@ -235,7 +235,7 @@ function EventCard({
         <div className="flex gap-2">
           <button
             onClick={() => onToggleActive(event)}
-            className="rounded border border-black/20 px-3 py-1 text-xs transition-colors hover:border-brand-purple/50 dark:border-white/20"
+            className="rounded border border-black/20 px-3 py-1 text-xs transition-colors hover:border-brand-purple/50"
           >
             {event.isActive ? "Deactivate" : "Activate"}
           </button>
@@ -250,7 +250,7 @@ function EventCard({
 
       <table className="mb-3 w-full text-sm">
         <thead>
-          <tr className="text-left text-black/50 dark:text-white/50">
+          <tr className="text-left text-black/50">
             <th className="py-1">Item</th>
             <th className="py-1">Rarity</th>
             <th className="py-1">Drop rate</th>
@@ -260,13 +260,13 @@ function EventCard({
         <tbody>
           {event.items.length === 0 ? (
             <tr>
-              <td colSpan={4} className="py-2 text-black/50 dark:text-white/50">
+              <td colSpan={4} className="py-2 text-black/50">
                 No items yet
               </td>
             </tr>
           ) : (
             event.items.map((item) => (
-              <tr key={item.id} className="border-t border-black/5 dark:border-white/5">
+              <tr key={item.id} className="border-t border-black/5">
                 <td className="py-1">{item.name}</td>
                 <td className="py-1 capitalize">{item.rarity}</td>
                 <td className="py-1">{item.dropRate}%</td>
@@ -287,14 +287,14 @@ function EventCard({
           placeholder="Item name"
           value={itemName}
           onChange={(e) => setItemName(e.target.value)}
-          className="rounded border border-black/20 px-2 py-1 text-sm outline-none focus:border-brand-purple focus:ring-2 focus:ring-brand-purple/30 dark:border-white/20"
+          className="rounded border border-black/20 px-2 py-1 text-sm outline-none focus:border-brand-purple focus:ring-2 focus:ring-brand-purple/30"
         />
         <input
           required
           placeholder="Rarity"
           value={rarity}
           onChange={(e) => setRarity(e.target.value)}
-          className="rounded border border-black/20 px-2 py-1 text-sm outline-none focus:border-brand-purple focus:ring-2 focus:ring-brand-purple/30 dark:border-white/20"
+          className="rounded border border-black/20 px-2 py-1 text-sm outline-none focus:border-brand-purple focus:ring-2 focus:ring-brand-purple/30"
         />
         <input
           required
@@ -305,12 +305,12 @@ function EventCard({
           placeholder="Drop rate %"
           value={dropRate}
           onChange={(e) => setDropRate(e.target.value)}
-          className="w-28 rounded border border-black/20 px-2 py-1 text-sm outline-none focus:border-brand-purple focus:ring-2 focus:ring-brand-purple/30 dark:border-white/20"
+          className="w-28 rounded border border-black/20 px-2 py-1 text-sm outline-none focus:border-brand-purple focus:ring-2 focus:ring-brand-purple/30"
         />
         <button
           type="submit"
           disabled={addingItem}
-          className="rounded border border-black/20 px-3 py-1 text-sm transition-colors hover:border-brand-purple/50 disabled:opacity-50 dark:border-white/20"
+          className="rounded border border-black/20 px-3 py-1 text-sm transition-colors hover:border-brand-purple/50 disabled:opacity-50"
         >
           {addingItem ? "Adding…" : "Add item"}
         </button>

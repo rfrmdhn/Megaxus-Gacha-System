@@ -9,7 +9,7 @@ import { JwtStrategy } from './jwt.strategy';
 const jwtModule = JwtModule.registerAsync({
   imports: [ConfigModule],
   useFactory: (config: ConfigService) => ({
-    secret: config.get<string>('JWT_SECRET', 'dev-secret-change-me'),
+    secret: config.getOrThrow<string>('JWT_SECRET'),
     // Seconds, not a duration string — sidesteps @nestjs/jwt's branded StringValue type.
     // parseInt is required because ConfigService reads raw env strings verbatim.
     signOptions: { expiresIn: parseInt(config.get<string>('JWT_EXPIRES_IN_SECONDS', '86400'), 10) },

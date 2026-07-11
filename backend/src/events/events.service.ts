@@ -24,7 +24,7 @@ export class EventsService {
 
   async getById(eventId: string) {
     const event = await this.prisma.gachaEvent.findUnique({ where: { id: eventId } });
-    if (!event) throw new NotFoundException('Event not found');
+    if (!event || !event.isActive) throw new NotFoundException('Event not found');
 
     const items = await this.gachaCache.getEventItems(eventId);
     return {

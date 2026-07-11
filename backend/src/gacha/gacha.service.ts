@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { GachaCacheService } from './gacha-cache.service';
 import { AdminFeedProducer } from '../queue/admin-feed.producer';
@@ -8,6 +8,8 @@ import { assertDropRatesEqual100 } from '../admin/drop-rate.util';
 
 @Injectable()
 export class GachaService {
+  private readonly logger = new Logger(GachaService.name);
+
   constructor(
     private prisma: PrismaService,
     private gachaCache: GachaCacheService,
@@ -54,16 +56,22 @@ export class GachaService {
       return { log, user };
     });
 
-    // Only after COMMIT succeeds: notify the real-time admin feed.
-    await this.adminFeed.emitPull({
-      userId,
-      userEmail: result.user.email,
-      eventId,
-      eventName: event.name,
-      itemName: result.log.item.name,
-      rarity: result.log.item.rarity,
-      createdAt: result.log.createdAt.toISOString(),
-    });
+    // Only after COMMIT succeeds: notify the real-time admin feed. The pull
+    // itself is already durable at this point, so a queue/Redis failure here
+    // must not surface as a failed pull to the client.
+    try {
+      await this.adminFeed.emitPull({
+        userId,
+        userEmail: result.user.email,
+        eventId,
+        eventName: event.name,
+        itemName: result.log.item.name,
+        rarity: result.log.item.rarity,
+        createdAt: result.log.createdAt.toISOString(),
+      });
+    } catch (err) {
+      this.logger.error('Failed to emit admin feed event for a completed pull', err as Error);
+    }
 
     return {
       item: {

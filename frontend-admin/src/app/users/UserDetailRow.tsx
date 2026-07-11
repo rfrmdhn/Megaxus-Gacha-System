@@ -92,24 +92,24 @@ export function UserDetailRow({
   }
 
   return (
-    <tr className="border-t border-black/5 dark:border-white/5">
+    <tr className="border-t border-black/5">
       <td colSpan={7} className="py-3">
         <div className="flex flex-col gap-4 px-2">
           <div className="flex flex-wrap items-end gap-4">
             <div className="flex flex-col gap-1">
-              <label className="text-xs text-black/50 dark:text-white/50">Coins</label>
+              <label className="text-xs text-black/50">Coins</label>
               <div className="flex gap-2">
                 <input
                   type="number"
                   min="0"
                   value={coinsInput}
                   onChange={(e) => setCoinsInput(e.target.value)}
-                  className="w-28 rounded border border-black/20 px-2 py-1 text-sm outline-none focus:border-brand-purple focus:ring-2 focus:ring-brand-purple/30 dark:border-white/20"
+                  className="w-28 rounded border border-black/20 px-2 py-1 text-sm outline-none focus:border-brand-purple focus:ring-2 focus:ring-brand-purple/30"
                 />
                 <button
                   onClick={saveCoins}
                   disabled={savingCoins || parseInt(coinsInput, 10) === user.coins}
-                  className="rounded border border-black/20 px-3 py-1 text-sm transition-colors hover:border-brand-purple/50 disabled:opacity-50 dark:border-white/20"
+                  className="rounded border border-black/20 px-3 py-1 text-sm transition-colors hover:border-brand-purple/50 disabled:opacity-50"
                 >
                   {savingCoins ? "Saving…" : "Save"}
                 </button>
@@ -117,12 +117,12 @@ export function UserDetailRow({
             </div>
 
             <div className="flex flex-col gap-1">
-              <label className="text-xs text-black/50 dark:text-white/50">Role</label>
+              <label className="text-xs text-black/50">Role</label>
               <select
                 value={user.role}
                 disabled={savingRole}
                 onChange={(e) => changeRole(e.target.value as "user" | "admin")}
-                className="rounded border border-black/20 px-2 py-1 text-sm outline-none focus:border-brand-purple focus:ring-2 focus:ring-brand-purple/30 disabled:opacity-50 dark:border-white/20"
+                className="rounded border border-black/20 px-2 py-1 text-sm outline-none focus:border-brand-purple focus:ring-2 focus:ring-brand-purple/30 disabled:opacity-50"
               >
                 <option value="user">user</option>
                 <option value="admin">admin</option>
@@ -134,7 +134,7 @@ export function UserDetailRow({
               disabled={banning}
               className={`rounded border px-3 py-1 text-sm disabled:opacity-50 ${
                 user.isBanned
-                  ? "border-black/20 dark:border-white/20"
+                  ? "border-black/20"
                   : "border-red-300 text-red-600"
               }`}
             >
@@ -147,9 +147,9 @@ export function UserDetailRow({
           <div>
             <h3 className="mb-2 text-sm font-medium">Recent pulls</h3>
             {loading ? (
-              <p className="text-sm text-black/50 dark:text-white/50">Loading…</p>
+              <p className="text-sm text-black/50">Loading…</p>
             ) : !detail || detail.recentHistory.length === 0 ? (
-              <p className="text-sm text-black/50 dark:text-white/50">No pulls yet.</p>
+              <p className="text-sm text-black/50">No pulls yet.</p>
             ) : (
               <ul className="flex flex-col gap-1 text-sm">
                 {detail.recentHistory.map((h) => (

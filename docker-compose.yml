@@ -44,7 +44,8 @@ services:
       PORT: 3001
     ports:
       - "3001:3001"
-    command: sh -c "npx prisma migrate deploy && node dist/main.js"
+    # Seed is an idempotent upsert (see backend/prisma/seed.js), safe to run on every boot.
+    command: sh -c "npx prisma migrate deploy && npx prisma db seed && node dist/main.js"
 
   frontend-user:
     build:
