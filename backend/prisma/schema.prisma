@@ -1,0 +1,77 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  user
+  admin
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  role         Role     @default(user)
+  coins        Int      @default(500)
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  gachaLogs GachaLog[]
+
+  @@map("users")
+}
+
+model GachaEvent {
+  id        String   @id @default(uuid())
+  name      String
+  isActive  Boolean  @default(false) @map("is_active")
+  startsAt  DateTime @map("starts_at")
+  endsAt    DateTime @map("ends_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  items     GachaItem[]
+  gachaLogs GachaLog[]
+
+  @@map("gacha_events")
+}
+
+model GachaItem {
+  id        String   @id @default(uuid())
+  eventId   String   @map("event_id")
+  name      String
+  rarity    String
+  dropRate  Decimal  @map("drop_rate") @db.Decimal(5, 2)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  event     GachaEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  gachaLogs GachaLog[]
+
+  @@index([eventId])
+  @@map("gacha_items")
+}
+
+model GachaLog {
+  id         String   @id @default(uuid())
+  userId     String   @map("user_id")
+  eventId    String   @map("event_id")
+  itemId     String   @map("item_id")
+  coinsSpent Int      @map("coins_spent")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event GachaEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  item  GachaItem  @relation(fields: [itemId], references: [id], onDelete: Restrict)
+
+  @@index([userId, createdAt])
+  @@index([createdAt])
+  @@map("gacha_logs")
+}

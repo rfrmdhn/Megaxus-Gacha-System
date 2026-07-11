@@ -1,0 +1,20 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+.vscode/
+.idea/
+
+# Safety net — each app has its own more specific .gitignore (backend/, frontend/),
+# these just guard against stray installs/builds run from the repo root.
+node_modules/
+dist/
+.next/
+*.tsbuildinfo
+.env
+.env.local
+
+
+CLAUDE.md
+AGENTS.md
