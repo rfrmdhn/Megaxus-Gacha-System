@@ -1,0 +1,19 @@
+import { IsEmail, IsEnum, IsInt, IsOptional, Min, MinLength } from 'class-validator';
+import { Role } from '../../../generated/prisma';
+
+export class CreateUserDto {
+  @IsEmail()
+  email: string;
+
+  @MinLength(8)
+  password: string;
+
+  @IsOptional()
+  @IsEnum(Role)
+  role?: Role;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  coins?: number;
+}

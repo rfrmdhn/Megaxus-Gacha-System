@@ -8,6 +8,7 @@ describe('AdminUsersController', () => {
     usersService = {
       list: jest.fn(),
       getDetail: jest.fn(),
+      create: jest.fn(),
       update: jest.fn(),
     };
     controller = new AdminUsersController(usersService);
@@ -31,6 +32,17 @@ describe('AdminUsersController', () => {
 
     expect(res).toEqual(user);
     expect(usersService.getDetail).toHaveBeenCalledWith('u1');
+  });
+
+  it('delegates create to usersService', async () => {
+    const created = { id: 'u1', email: 'new@test.com' };
+    usersService.create.mockResolvedValue(created);
+
+    const dto = { email: 'new@test.com', password: 'password123' } as any;
+    const res = await controller.create(dto);
+
+    expect(res).toEqual(created);
+    expect(usersService.create).toHaveBeenCalledWith(dto);
   });
 
   it('delegates update to usersService', async () => {

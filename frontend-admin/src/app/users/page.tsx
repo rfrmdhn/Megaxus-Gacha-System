@@ -1,12 +1,20 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CheckCircleOutlined, EditOutlined, ReloadOutlined, StopOutlined, TeamOutlined } from "@ant-design/icons";
+import {
+  CheckCircleOutlined,
+  EditOutlined,
+  PlusOutlined,
+  ReloadOutlined,
+  StopOutlined,
+  TeamOutlined,
+} from "@ant-design/icons";
 import { apiFetch, ApiError } from "@/lib/api";
 import { useRequireAdmin } from "@/lib/useRequireAdmin";
 import { Card } from "@/components/Card";
 import { IconButton } from "@/components/IconButton";
 import { AdminUser, UserEditDialog } from "./UserEditDialog";
+import { UserCreateDialog } from "./UserCreateDialog";
 
 interface UsersListResponse {
   items: AdminUser[];
@@ -22,7 +30,9 @@ export default function UsersPage() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [roleFilter, setRoleFilter] = useState<"all" | "user" | "admin">("all");
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
+  const [creating, setCreating] = useState(false);
 
   useEffect(() => {
     if (user) void loadPage(null, true);
@@ -75,6 +85,8 @@ export default function UsersPage() {
 
   const editingUser = users.find((u) => u.id === editingUserId) ?? null;
 
+  const filteredUsers = users.filter((u) => roleFilter === "all" || u.role === roleFilter);
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
@@ -82,28 +94,48 @@ export default function UsersPage() {
           <TeamOutlined className="text-brand-purple" />
           Users
         </h1>
-        <button
-          type="button"
-          onClick={() => void loadPage(null, true)}
-          className="flex items-center gap-2 rounded-lg border border-black/15 px-4 py-2 text-sm transition-colors hover:border-brand-purple/50"
-        >
-          <ReloadOutlined /> Reload
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => void loadPage(null, true)}
+            className="flex items-center gap-2 rounded-lg border border-black/15 px-4 py-2 text-sm transition-colors hover:border-brand-purple/50"
+          >
+            <ReloadOutlined /> Reload
+          </button>
+          <button
+            type="button"
+            onClick={() => setCreating(true)}
+            className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-brand-cyan via-brand-purple to-brand-pink px-4 py-2 text-sm font-medium text-white shadow-md shadow-brand-purple/30 transition-opacity hover:opacity-90"
+          >
+            <PlusOutlined /> New user
+          </button>
+        </div>
       </div>
 
       {error && <p className="text-sm text-red-600">{error}</p>}
 
       <Card className="flex flex-col gap-4">
-        <input
-          placeholder="Search by email"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="max-w-xs rounded-lg border border-black/15 px-3 py-2 text-sm outline-none focus:border-brand-purple focus:ring-2 focus:ring-brand-purple/30"
-        />
+        <div className="flex flex-wrap items-center gap-3">
+          <input
+            placeholder="Search by email"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="max-w-xs flex-1 rounded-lg border border-black/15 px-3 py-2 text-sm outline-none focus:border-brand-purple focus:ring-2 focus:ring-brand-purple/30"
+          />
+          <select
+            value={roleFilter}
+            onChange={(e) => setRoleFilter(e.target.value as "all" | "user" | "admin")}
+            className="rounded-lg border border-black/15 px-3 py-2 text-sm outline-none focus:border-brand-purple focus:ring-2 focus:ring-brand-purple/30"
+          >
+            <option value="all">All roles</option>
+            <option value="user">User</option>
+            <option value="admin">Admin</option>
+          </select>
+        </div>
 
         {loading ? (
           <p className="text-sm text-black/50">Loading users…</p>
-        ) : users.length === 0 ? (
+        ) : filteredUsers.length === 0 ? (
           <p className="text-sm text-black/50">No users found.</p>
         ) : (
           <div className="overflow-x-auto">
@@ -120,7 +152,7 @@ export default function UsersPage() {
                 </tr>
               </thead>
               <tbody>
-                {users.map((u) => (
+                {filteredUsers.map((u) => (
                   <tr key={u.id} className="border-b border-black/5">
                     <td className="py-2">{u.email}</td>
                     <td className="py-2 capitalize">{u.role}</td>
@@ -159,6 +191,10 @@ export default function UsersPage() {
 
       {editingUser && (
         <UserEditDialog user={editingUser} onClose={() => setEditingUserId(null)} onPatch={patchUser} />
+      )}
+
+      {creating && (
+        <UserCreateDialog onClose={() => setCreating(false)} onCreated={() => void loadPage(null, true)} />
       )}
     </div>
   );

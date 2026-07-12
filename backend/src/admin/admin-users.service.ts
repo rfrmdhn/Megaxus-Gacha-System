@@ -1,10 +1,13 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
 import { buildCursorArgs, paginate } from '../common/pagination';
 import { AdminUserQueryDto } from './dto/admin-user-query.dto';
+import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 
 const RECENT_HISTORY_LIMIT = 10;
+const BCRYPT_ROUNDS = 10;
 
 @Injectable()
 export class AdminUsersService {
@@ -30,6 +33,33 @@ export class AdminUsersService {
         createdAt: user.createdAt,
       })),
       nextCursor,
+    };
+  }
+
+  async create(dto: CreateUserDto) {
+    const existing = await this.prisma.user.findUnique({ where: { email: dto.email } });
+    if (existing) {
+      throw new ConflictException('Email is already registered');
+    }
+
+    const passwordHash = await bcrypt.hash(dto.password, BCRYPT_ROUNDS);
+    const user = await this.prisma.user.create({
+      data: {
+        email: dto.email,
+        passwordHash,
+        ...(dto.role !== undefined ? { role: dto.role } : {}),
+        ...(dto.coins !== undefined ? { coins: dto.coins } : {}),
+      },
+    });
+
+    return {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      coins: user.coins,
+      isBanned: user.isBanned,
+      pullCount: 0,
+      createdAt: user.createdAt,
     };
   }
 

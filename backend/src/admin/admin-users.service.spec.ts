@@ -1,4 +1,4 @@
-import { NotFoundException } from '@nestjs/common';
+import { ConflictException, NotFoundException } from '@nestjs/common';
 import { AdminUsersService } from './admin-users.service';
 
 function makeUserRow(overrides: Partial<any> = {}) {
@@ -20,7 +20,7 @@ describe('AdminUsersService', () => {
 
   beforeEach(() => {
     prisma = {
-      user: { findMany: jest.fn(), findUnique: jest.fn(), update: jest.fn() },
+      user: { findMany: jest.fn(), findUnique: jest.fn(), update: jest.fn(), create: jest.fn() },
       gachaLog: { findMany: jest.fn() },
     };
     service = new AdminUsersService(prisma);
@@ -64,6 +64,61 @@ describe('AdminUsersService', () => {
       await service.list({ limit: 20 } as any);
 
       expect(prisma.user.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: undefined }));
+    });
+  });
+
+  describe('create', () => {
+    it('throws ConflictException when email already exists', async () => {
+      prisma.user.findUnique.mockResolvedValue(makeUserRow());
+
+      await expect(
+        service.create({ email: 'user@test.com', password: 'password123' }),
+      ).rejects.toThrow(ConflictException);
+      expect(prisma.user.create).not.toHaveBeenCalled();
+    });
+
+    it('hashes the password and creates the user with default role/coins', async () => {
+      prisma.user.findUnique.mockResolvedValue(null);
+      prisma.user.create.mockResolvedValue(
+        makeUserRow({ id: 'new-user', email: 'new@test.com', _count: undefined }),
+      );
+
+      const result = await service.create({ email: 'new@test.com', password: 'password123' });
+
+      expect(prisma.user.create).toHaveBeenCalledWith({
+        data: {
+          email: 'new@test.com',
+          passwordHash: expect.any(String),
+        },
+      });
+      expect(prisma.user.create.mock.calls[0][0].data.passwordHash).not.toBe('password123');
+      expect(result).toEqual({
+        id: 'new-user',
+        email: 'new@test.com',
+        role: 'user',
+        coins: 500,
+        isBanned: false,
+        pullCount: 0,
+        createdAt: makeUserRow().createdAt,
+      });
+    });
+
+    it('passes through an explicit role and coins when provided', async () => {
+      prisma.user.findUnique.mockResolvedValue(null);
+      prisma.user.create.mockResolvedValue(
+        makeUserRow({ id: 'new-user', email: 'new@test.com', role: 'admin', coins: 1000 }),
+      );
+
+      await service.create({ email: 'new@test.com', password: 'password123', role: 'admin' as any, coins: 1000 });
+
+      expect(prisma.user.create).toHaveBeenCalledWith({
+        data: {
+          email: 'new@test.com',
+          passwordHash: expect.any(String),
+          role: 'admin',
+          coins: 1000,
+        },
+      });
     });
   });
 
