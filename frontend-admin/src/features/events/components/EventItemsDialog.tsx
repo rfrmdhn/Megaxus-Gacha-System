@@ -1,6 +1,6 @@
 "use client";
 
-import { ChangeEvent, FormEvent, useEffect, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
 import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
 import { Dialog } from "@/components/molecules/Dialog";
 import { IconButton } from "@/components/atoms/IconButton";
@@ -55,6 +55,37 @@ function ItemThumbnail({ itemId, imageKey }: { itemId: string; imageKey: string 
 
   // eslint-disable-next-line @next/next/no-img-element -- blob object URL, not an optimizable asset
   return <img src={url} alt="" className="h-8 w-8 rounded object-cover" />;
+}
+
+function ImageFilePicker({
+  file,
+  onChange,
+  label,
+}: {
+  file: File | null;
+  onChange: (file: File | null) => void;
+  label: string;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  return (
+    <div className="flex items-center gap-2">
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/png,image/jpeg,image/webp"
+        onChange={(e: ChangeEvent<HTMLInputElement>) => onChange(e.target.files?.[0] ?? null)}
+        className="hidden"
+      />
+      <button
+        type="button"
+        onClick={() => inputRef.current?.click()}
+        className="rounded-lg border border-black/15 px-3 py-1.5 text-sm transition-colors hover:border-brand-purple/50"
+      >
+        {file ? file.name : label}
+      </button>
+    </div>
+  );
 }
 
 function EditItemRow({
@@ -116,15 +147,11 @@ function EditItemRow({
             value={dropRate}
             onChange={(e) => setDropRate(e.target.value)}
           />
-          <label className="flex flex-col gap-0.5 text-[10px] text-black/50">
-            {item.imageKey ? "Replace image" : "Add image"}
-            <input
-              type="file"
-              accept="image/png,image/jpeg,image/webp"
-              onChange={(e: ChangeEvent<HTMLInputElement>) => setFile(e.target.files?.[0] ?? null)}
-              className="text-xs"
-            />
-          </label>
+          <ImageFilePicker
+            file={file}
+            onChange={setFile}
+            label={item.imageKey ? "Replace image" : "Add image"}
+          />
           {item.imageKey && (
             <button type="button" onClick={clearImage} className="text-xs text-red-600 hover:underline">
               Remove image
@@ -297,15 +324,7 @@ export function EventItemsDialog({
             onChange={(e) => setDropRate(e.target.value)}
             className="w-28"
           />
-          <label className="flex flex-col gap-0.5 text-[10px] text-black/50">
-            Image (optional)
-            <input
-              type="file"
-              accept="image/png,image/jpeg,image/webp"
-              onChange={(e: ChangeEvent<HTMLInputElement>) => setNewItemFile(e.target.files?.[0] ?? null)}
-              className="text-xs"
-            />
-          </label>
+          <ImageFilePicker file={newItemFile} onChange={setNewItemFile} label="Add image" />
           <button
             type="submit"
             disabled={saving}
