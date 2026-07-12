@@ -150,5 +150,17 @@ describe('AdminUsersService', () => {
         data: { coins: 999, role: 'admin', isBanned: false },
       });
     });
+
+    it('omits isBanned from data when not provided', async () => {
+      prisma.user.findUnique.mockResolvedValue(makeUserRow());
+      prisma.user.update.mockResolvedValue(makeUserRow({ coins: 200 }));
+
+      await service.update('u1', { coins: 200 });
+
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        where: { id: 'u1' },
+        data: { coins: 200 },
+      });
+    });
   });
 });

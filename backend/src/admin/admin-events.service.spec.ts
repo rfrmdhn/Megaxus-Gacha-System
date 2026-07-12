@@ -71,14 +71,14 @@ describe('AdminEventsService', () => {
       expect(result).toEqual(created);
     });
 
-    it('throws BadRequestException when endsAt is not after startsAt', async () => {
-      await expect(
+    it('throws BadRequestException when endsAt is not after startsAt', () => {
+      expect(() =>
         service.create({
           name: 'Spring Event',
           startsAt: '2026-02-01T00:00:00.000Z',
           endsAt: '2026-01-01T00:00:00.000Z',
         }),
-      ).rejects.toThrow(BadRequestException);
+      ).toThrow(BadRequestException);
       expect(prisma.gachaEvent.create).not.toHaveBeenCalled();
     });
   });
