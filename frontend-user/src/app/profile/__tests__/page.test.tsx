@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, act } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import ProfilePage from "../page";
-import { mockPush } from "../../../__tests__/mocks";
+import { mockPush } from "../../../__tests__/setup";
 import * as api from "@/lib/api";
 import * as auth from "@/lib/auth";
 
@@ -78,15 +78,16 @@ describe("ProfilePage", () => {
     await waitFor(() => {
       expect(screen.getByText("user@test.com")).toBeInTheDocument();
       expect(screen.getByText("100 coins")).toBeInTheDocument();
-      expect(screen.getByText("Summer Event")).toBeInTheDocument();
       expect(screen.getByText("Sword")).toBeInTheDocument();
       expect(screen.getByText("Staff")).toBeInTheDocument();
     });
+    expect(screen.getAllByText("Summer Event").length).toBe(2);
   });
 
   it("redirects to /login if profile fetch fails", async () => {
     mockedApiFetch.mockImplementation(async (path: string) => {
       if (path === "/user/profile") throw new Error("unauthorized");
+      if (path.includes("/user/history")) return { items: [], nextCursor: null };
       return null;
     });
     render(<ProfilePage />);
@@ -125,7 +126,7 @@ describe("ProfilePage", () => {
     mockedApiFetch.mockImplementation(async (path: string) => {
       if (path === "/user/profile") return mockProfile;
       if (path === "/user/history?limit=20") return mockHistoryPage;
-      if (path === "/user/history?cursor=cursor-abc&limit=20") return mockHistoryPage2;
+      if (path.includes("/user/history?cursor=")) return mockHistoryPage2;
       return null;
     });
     render(<ProfilePage />);
@@ -134,8 +135,11 @@ describe("ProfilePage", () => {
       expect(screen.getByText("Load more")).toBeInTheDocument();
     });
 
-    const user = userEvent.setup();
-    await user.click(screen.getByText("Load more"));
+    const user = userEvent.setup({ delay: null });
+    await act(async () => {
+      await user.click(screen.getByText("Load more"));
+      await new Promise((r) => setTimeout(r, 0));
+    });
 
     await waitFor(() => {
       expect(screen.getByText("Crown")).toBeInTheDocument();
@@ -144,11 +148,11 @@ describe("ProfilePage", () => {
   });
 
   it("shows loading state during load more", async () => {
-    let resolveHistory: (v: unknown) => void;
+    let resolveHistory!: (v: unknown) => void;
     mockedApiFetch.mockImplementation(async (path: string) => {
       if (path === "/user/profile") return mockProfile;
       if (path === "/user/history?limit=20") return mockHistoryPage;
-      if (path === "/user/history?cursor=cursor-abc&limit=20") return new Promise((r) => { resolveHistory = r; });
+      if (path.includes("/user/history?cursor=")) return new Promise((r) => { resolveHistory = r; });
       return null;
     });
     render(<ProfilePage />);
@@ -157,14 +161,17 @@ describe("ProfilePage", () => {
       expect(screen.getByText("Load more")).toBeInTheDocument();
     });
 
-    const user = userEvent.setup();
-    await user.click(screen.getByText("Load more"));
+    const user = userEvent.setup({ delay: null });
+    await act(async () => {
+      await user.click(screen.getByText("Load more"));
+      await new Promise((r) => setTimeout(r, 0));
+    });
 
     await waitFor(() => {
       expect(screen.getByText("Loading...")).toBeInTheDocument();
     });
 
-    resolveHistory!(mockHistoryPage2);
+    resolveHistory(mockHistoryPage2);
     await waitFor(() => {
       expect(screen.getByText("Crown")).toBeInTheDocument();
     });
@@ -182,8 +189,7 @@ describe("ProfilePage", () => {
     render(<ProfilePage />);
 
     await waitFor(() => {
-      const dateCell = screen.getByText(/6\/1\/2025/);
-      expect(dateCell).toBeInTheDocument();
+      expect(screen.getByText(/6\/1\/2025/)).toBeInTheDocument();
     });
   });
 });

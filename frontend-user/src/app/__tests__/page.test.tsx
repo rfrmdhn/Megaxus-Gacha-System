@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, waitFor } from "@testing-library/react";
 import Home from "../page";
 import * as auth from "@/lib/auth";
-import { mockReplace } from "../../__tests__/mocks";
+import { mockReplace } from "../../__tests__/setup";
 
 vi.mock("@/lib/auth", () => ({
   getCurrentUser: vi.fn(),
@@ -39,9 +39,9 @@ describe("Home page", () => {
     });
   });
 
-  it("renders nothing", () => {
+  it("renders a loading skeleton", () => {
     mockedGetCurrentUser.mockReturnValue(null);
     const { container } = render(<Home />);
-    expect(container.innerHTML).toBe("");
+    expect(container.querySelector(".animate-pulse")).toBeInTheDocument();
   });
 });

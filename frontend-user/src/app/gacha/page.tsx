@@ -1,101 +1,55 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { apiFetch, ApiError } from "@/lib/api";
-import { getCurrentUser } from "@/lib/auth";
-import { getItemIcon } from "@/lib/itemIcon";
+import { CoinBadge } from "@/components/molecules/CoinBadge";
+import { Button } from "@/components/atoms/Button";
+import { Skeleton } from "@/components/Skeleton";
+import { useGacha } from "@/features/gacha/hooks/useGacha";
+import { EventSelector } from "@/features/gacha/components/EventSelector";
+import { DropRateList } from "@/features/gacha/components/DropRateList";
+import { PullResultCard } from "@/features/gacha/components/PullResultCard";
 
-interface GachaEvent {
-  id: string;
-  name: string;
-  startsAt: string;
-  endsAt: string;
-}
-
-interface EventItem {
-  id: string;
-  name: string;
-  rarity: string;
-  dropRate: string;
-}
-
-interface Profile {
-  id: string;
-  email: string;
-  coins: number;
-}
-
-interface PullResult {
-  item: { id: string; name: string; rarity: string };
-  remainingCoins: number;
+function GachaSkeleton() {
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="flex items-center justify-between rounded border border-black/10 p-4">
+        <Skeleton className="h-4 w-40" />
+        <Skeleton className="h-7 w-24 rounded-full" />
+      </div>
+      <div>
+        <Skeleton className="mb-1 h-4 w-16" />
+        <Skeleton className="h-10 w-full rounded" />
+      </div>
+      <div className="rounded border border-black/10 p-4">
+        <Skeleton className="mb-2 h-5 w-28" />
+        <div className="flex flex-col gap-2">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="flex items-center justify-between">
+              <Skeleton className="h-4 w-40" />
+              <Skeleton className="h-4 w-10" />
+            </div>
+          ))}
+        </div>
+      </div>
+      <Skeleton className="h-12 w-48 rounded" />
+    </div>
+  );
 }
 
 export default function GachaPage() {
-  const router = useRouter();
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [events, setEvents] = useState<GachaEvent[]>([]);
-  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
-  const [items, setItems] = useState<EventItem[]>([]);
-  const [pulling, setPulling] = useState(false);
-  const [result, setResult] = useState<PullResult | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    checking,
+    profile,
+    events,
+    selectedEventId,
+    setSelectedEventId,
+    items,
+    pulling,
+    result,
+    error,
+    pull,
+  } = useGacha();
 
-  useEffect(() => {
-    if (!getCurrentUser()) {
-      router.push("/login");
-      return;
-    }
-    void refreshProfile();
-    void loadEvents();
-  }, [router]);
-
-  useEffect(() => {
-    if (!selectedEventId) return;
-    apiFetch<{ items: EventItem[] }>(`/events/${selectedEventId}`)
-      .then((event) => setItems(event.items))
-      .catch(() => setItems([]));
-  }, [selectedEventId]);
-
-  async function refreshProfile() {
-    try {
-      const p = await apiFetch<Profile>("/user/profile");
-      setProfile(p);
-    } catch {
-      router.push("/login");
-    }
-  }
-
-  async function loadEvents() {
-    try {
-      const list = await apiFetch<GachaEvent[]>("/events");
-      setEvents(list);
-      if (list.length > 0) setSelectedEventId(list[0].id);
-    } catch {
-      setEvents([]);
-    }
-  }
-
-  async function pull() {
-    if (!selectedEventId) return;
-    setPulling(true);
-    setError(null);
-    setResult(null);
-    try {
-      const res = await apiFetch<PullResult>("/gacha/pull", {
-        method: "POST",
-        body: JSON.stringify({ eventId: selectedEventId }),
-      });
-      setResult(res);
-      setProfile((p) => (p ? { ...p, coins: res.remainingCoins } : p));
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Pull failed");
-    } finally {
-      setPulling(false);
-    }
-  }
-
-  if (!profile) return <p>Loading...</p>;
+  if (checking || !profile) return <GachaSkeleton />;
 
   return (
     <div className="flex flex-col gap-6">
@@ -103,73 +57,24 @@ export default function GachaPage() {
         <span>
           Signed in as <strong>{profile.email}</strong>
         </span>
-        <span className="rounded-full bg-brand-yellow/20 px-3 py-1 text-lg font-semibold text-amber-700">
-          {profile.coins} coins
-        </span>
+        <CoinBadge coins={profile.coins} />
       </div>
 
       {events.length === 0 ? (
         <p className="text-black/60">No active gacha events right now.</p>
       ) : (
         <>
-          <div>
-            <label className="mb-1 block text-sm font-medium">Event</label>
-            <select
-              value={selectedEventId ?? ""}
-              onChange={(e) => setSelectedEventId(e.target.value)}
-              className="w-full rounded border border-black/20 px-3 py-2 outline-none focus:border-brand-purple focus:ring-2 focus:ring-brand-purple/30"
-            >
-              {events.map((e) => (
-                <option key={e.id} value={e.id}>
-                  {e.name}
-                </option>
-              ))}
-            </select>
-          </div>
+          <EventSelector events={events} selectedEventId={selectedEventId} onChange={setSelectedEventId} />
 
-          {items.length > 0 && (
-            <div className="rounded border border-black/10 p-4">
-              <h2 className="mb-2 font-medium">Drop rates</h2>
-              <ul className="flex flex-col gap-1 text-sm">
-                {items.map((item) => (
-                  <li key={item.id} className="flex items-center justify-between">
-                    <span className="flex items-center gap-2">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={getItemIcon(item.rarity)} alt={item.rarity} className="h-6 w-6" />
-                      {item.name} <span className="text-black/50">({item.rarity})</span>
-                    </span>
-                    <span>{item.dropRate}%</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+          {items.length > 0 && <DropRateList items={items} />}
 
-          <button
-            onClick={pull}
-            disabled={pulling}
-            className="rounded bg-gradient-to-r from-brand-cyan via-brand-purple to-brand-pink px-6 py-3 text-lg font-semibold text-white shadow-md shadow-brand-purple/30 transition-opacity hover:opacity-90 disabled:opacity-50"
-          >
+          <Button onClick={pull} disabled={pulling} className="rounded px-6 py-3 text-lg font-semibold">
             {pulling ? "Pulling..." : "Pull (10 coins)"}
-          </button>
+          </Button>
 
           {error && <p className="text-sm text-red-600">{error}</p>}
 
-          {result && (
-            <div className="rounded-2xl bg-gradient-to-br from-brand-cyan via-brand-purple to-brand-pink p-[2px] shadow-lg shadow-brand-purple/20">
-              <div className="flex items-center gap-4 rounded-[calc(1rem-2px)] bg-white p-4">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={getItemIcon(result.item.rarity)} alt={result.item.rarity} className="h-16 w-16" />
-                <div>
-                  <p className="text-sm text-black/60">You got:</p>
-                  <p className="text-xl font-semibold">{result.item.name}</p>
-                  <p className="text-sm capitalize text-black/60">
-                    {result.item.rarity}
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
+          {result && <PullResultCard result={result} />}
         </>
       )}
     </div>

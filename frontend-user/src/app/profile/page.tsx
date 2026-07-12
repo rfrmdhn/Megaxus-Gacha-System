@@ -1,70 +1,37 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { apiFetch } from "@/lib/api";
-import { getCurrentUser } from "@/lib/auth";
+import { CoinBadge } from "@/components/molecules/CoinBadge";
+import { Button } from "@/components/atoms/Button";
+import { Skeleton, TableSkeleton } from "@/components/Skeleton";
+import { useProfile } from "@/features/profile/hooks/useProfile";
+import { HistoryTable } from "@/features/profile/components/HistoryTable";
 
-interface Profile {
-  id: string;
-  email: string;
-  coins: number;
-}
-
-interface HistoryItem {
-  id: string;
-  eventName: string;
-  itemName: string;
-  rarity: string;
-  coinsSpent: number;
-  createdAt: string;
-}
-
-interface HistoryPage {
-  items: HistoryItem[];
-  nextCursor: string | null;
+function ProfileSkeleton() {
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="flex items-center justify-between rounded border border-black/10 p-4">
+        <Skeleton className="h-4 w-40" />
+        <Skeleton className="h-7 w-24 rounded-full" />
+      </div>
+      <div>
+        <Skeleton className="mb-3 h-6 w-40" />
+        <TableSkeleton cols={5} />
+      </div>
+    </div>
+  );
 }
 
 export default function ProfilePage() {
-  const router = useRouter();
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [history, setHistory] = useState<HistoryItem[]>([]);
-  const [cursor, setCursor] = useState<string | null>(null);
-  const [hasMore, setHasMore] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const { checking, profile, history, hasMore, loading, loadMore } = useProfile();
 
-  useEffect(() => {
-    if (!getCurrentUser()) {
-      router.push("/login");
-      return;
-    }
-    apiFetch<Profile>("/user/profile")
-      .then(setProfile)
-      .catch(() => router.push("/login"));
-    void loadPage(null, true);
-  }, [router]);
-
-  async function loadPage(after: string | null, replace: boolean) {
-    setLoading(true);
-    try {
-      const qs = after ? `?cursor=${after}&limit=20` : "?limit=20";
-      const page = await apiFetch<HistoryPage>(`/user/history${qs}`);
-      setHistory((prev) => (replace ? page.items : [...prev, ...page.items]));
-      setCursor(page.nextCursor);
-      setHasMore(page.nextCursor !== null);
-    } finally {
-      setLoading(false);
-    }
-  }
+  if (checking || !profile) return <ProfileSkeleton />;
 
   return (
     <div className="flex flex-col gap-6">
       {profile && (
         <div className="flex items-center justify-between rounded border border-black/10 p-4">
           <span>{profile.email}</span>
-          <span className="rounded-full bg-brand-yellow/20 px-3 py-1 text-lg font-semibold text-amber-700">
-            {profile.coins} coins
-          </span>
+          <CoinBadge coins={profile.coins} />
         </div>
       )}
 
@@ -73,39 +40,17 @@ export default function ProfilePage() {
         {history.length === 0 && !loading ? (
           <p className="text-black/60">No pulls yet.</p>
         ) : (
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-black/10 text-left">
-                <th className="py-2">Event</th>
-                <th className="py-2">Item</th>
-                <th className="py-2">Rarity</th>
-                <th className="py-2">Cost</th>
-                <th className="py-2">When</th>
-              </tr>
-            </thead>
-            <tbody>
-              {history.map((h) => (
-                <tr key={h.id} className="border-b border-black/5">
-                  <td className="py-2">{h.eventName}</td>
-                  <td className="py-2">{h.itemName}</td>
-                  <td className="py-2 capitalize">{h.rarity}</td>
-                  <td className="py-2">{h.coinsSpent}</td>
-                  <td className="py-2 text-black/50">
-                    {new Date(h.createdAt).toLocaleString()}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <HistoryTable history={history} />
         )}
         {hasMore && (
-          <button
-            onClick={() => loadPage(cursor, false)}
+          <Button
+            variant="secondary"
+            onClick={loadMore}
             disabled={loading}
-            className="mt-4 rounded border border-black/20 px-4 py-2 text-sm transition-colors hover:border-brand-purple/50"
+            className="mt-4 rounded px-4 py-2 text-sm"
           >
             {loading ? "Loading..." : "Load more"}
-          </button>
+          </Button>
         )}
       </div>
     </div>

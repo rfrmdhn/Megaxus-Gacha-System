@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import LoginPage from "../page";
-import { mockPush } from "../../../__tests__/mocks";
+import { mockPush } from "../../../__tests__/setup";
 import * as api from "@/lib/api";
 import * as auth from "@/lib/auth";
 
@@ -37,7 +37,7 @@ describe("LoginPage", () => {
 
   it("renders login form", () => {
     render(<LoginPage />);
-    expect(screen.getByText("Log in")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Log in" })).toBeInTheDocument();
     expect(screen.getByPlaceholderText("Email")).toBeInTheDocument();
     expect(screen.getByPlaceholderText("Password")).toBeInTheDocument();
     expect(screen.getByText("Register")).toBeInTheDocument();
@@ -45,7 +45,7 @@ describe("LoginPage", () => {
   });
 
   it("submits login and redirects on success", async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     mockedApiFetch.mockResolvedValue({ token: "jwt-token" });
     render(<LoginPage />);
 
@@ -64,7 +64,7 @@ describe("LoginPage", () => {
   });
 
   it("displays API error message", async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     mockedApiFetch.mockRejectedValue(makeApiError("Invalid credentials", 401));
     render(<LoginPage />);
 
@@ -78,7 +78,7 @@ describe("LoginPage", () => {
   });
 
   it("displays generic error for non-ApiError", async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     mockedApiFetch.mockRejectedValue(new Error("network error"));
     render(<LoginPage />);
 
@@ -92,7 +92,7 @@ describe("LoginPage", () => {
   });
 
   it("shows loading state during submission", async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     let resolveFetch!: (v: unknown) => void;
     mockedApiFetch.mockImplementation(() => new Promise((r) => { resolveFetch = r; }));
     render(<LoginPage />);
@@ -108,7 +108,7 @@ describe("LoginPage", () => {
 
     resolveFetch({ token: "t" });
     await waitFor(() => {
-      expect(screen.getByText("Log in")).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "Log in" })).toBeInTheDocument();
     });
   });
 });

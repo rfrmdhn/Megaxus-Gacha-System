@@ -23,7 +23,7 @@ it("redirects to login when no user", () => {
 
   const { result } = renderHook(() => useRequireAdmin());
 
-  expect(result.current).toBeNull();
+  expect(result.current).toEqual({ user: null, checking: true });
   expect(mockRouterPush).toHaveBeenCalledWith("/login");
 });
 
@@ -43,6 +43,6 @@ it("returns user for admin users", () => {
 
   const { result } = renderHook(() => useRequireAdmin());
 
-  expect(result.current).toEqual(fakeUser);
+  expect(result.current).toEqual({ user: fakeUser, checking: false });
   expect(mockRouterPush).not.toHaveBeenCalled();
 });

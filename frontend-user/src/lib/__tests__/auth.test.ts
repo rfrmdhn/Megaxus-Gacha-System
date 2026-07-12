@@ -51,7 +51,7 @@ describe("decodeToken", () => {
     const token = `${header}.${body}.sig`;
     const decoded = decodeToken(token);
     expect(decoded).toBeTruthy();
-    expect(decoded!.extra).toBe("a/b");
+    expect((decoded as unknown as { extra: string }).extra).toBe("a/b");
   });
 
   it("returns null for invalid token", () => {

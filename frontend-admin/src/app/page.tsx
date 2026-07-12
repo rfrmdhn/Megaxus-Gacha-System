@@ -1,41 +1,34 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { apiFetch, ApiError } from "@/lib/api";
 import { useRequireAdmin } from "@/lib/useRequireAdmin";
-import { StatCard } from "@/components/StatCard";
+import { StatCard } from "@/components/molecules/StatCard";
+import { Skeleton } from "@/components/atoms/Skeleton";
+import { useStats } from "@/features/stats/hooks/useStats";
 
-interface AdminStats {
-  totalUsers: number;
-  activeEvents: number;
-  totalEvents: number;
-  pullsToday: number;
-  totalPulls: number;
-  totalCoinsSpent: number;
+function DashboardSkeleton() {
+  return (
+    <div className="flex flex-col gap-6">
+      <Skeleton className="h-8 w-40" />
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className="overflow-hidden rounded-lg border border-black/10">
+            <div className="h-1 bg-black/10" />
+            <div className="flex flex-col gap-2 p-4">
+              <Skeleton className="h-3 w-20" />
+              <Skeleton className="h-6 w-12" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 export default function DashboardPage() {
-  const user = useRequireAdmin();
-  const [stats, setStats] = useState<AdminStats | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { user, checking } = useRequireAdmin();
+  const { stats, loading, error } = useStats(user);
 
-  async function loadStats() {
-    try {
-      const data = await apiFetch<AdminStats>("/admin/stats");
-      setStats(data);
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Failed to load stats");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    // loadStats' setState calls happen after an await, not synchronously here.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (user) void loadStats();
-  }, [user]);
+  if (checking) return <DashboardSkeleton />;
 
   return (
     <div className="flex flex-col gap-6">

@@ -2,7 +2,7 @@
 
 A production-minded gacha event system: users spend coins on weighted-random pulls, admins configure event drop rates, and an admin dashboard monitors pulls in real time. Built as a technical assessment focused on concurrency safety, fair weighted-random sampling, and clean API/architecture design.
 
-Full architectural reasoning (why Postgres over Mongo, why atomic `UPDATE` over locking, why Linear Prefix Sum, why SSE) lives in [docs/architecture.md](docs/architecture.md). Database design in [docs/erd.md](docs/erd.md). API reference in [docs/api.md](docs/api.md).
+Each app documents itself — every subproject has its own `docs/` folder. Full architectural reasoning (why Postgres over Mongo, why atomic `UPDATE` over locking, why Linear Prefix Sum, why SSE) lives in [backend/docs/adr.md](backend/docs/adr.md). Database design in [backend/docs/data-model.md](backend/docs/data-model.md). API reference in [backend/docs/api.md](backend/docs/api.md). See [Documentation](#documentation) below for the full index across all three apps.
 
 The player-facing app and the admin dashboard are two separate Next.js apps ([frontend-user](frontend-user), [frontend-admin](frontend-admin)) sharing one backend — separate deployables, separate auth surfaces (the admin app rejects non-admin logins outright), no player ever ships admin code to their browser.
 
@@ -60,7 +60,7 @@ Runs on http://localhost:3002 (`package.json` pins the dev/start scripts to that
 
 ## API documentation
 
-Base URL: `/api`. Full reference with every endpoint and edge case: [docs/api.md](docs/api.md).
+Base URL: `/api`. Full reference with every endpoint and edge case: [backend/docs/api.md](backend/docs/api.md).
 
 | Endpoint | Auth | Request | Response |
 |---|---|---|---|
@@ -111,7 +111,7 @@ gacha_logs                  ├─ name / rarity
 - `gacha_logs` is append-only: the permanent record of every coin spent and item received.
 - An event's items must sum to exactly 100% once `is_active = true`; while still a draft, they can be built up incrementally.
 
-Full ERD with all notes: [docs/erd.md](docs/erd.md).
+Full schema with all notes: [backend/docs/data-model.md](backend/docs/data-model.md).
 
 ## Creating an admin user
 
@@ -153,7 +153,19 @@ npm run test:e2e       # e2e — includes a concurrency test that fires 15 simul
 
 ## Key design decisions (short version)
 
-- **Coin deduction race conditions**: a single atomic `UPDATE users SET coins = coins - 10 WHERE id = ? AND coins >= 10`, wrapped in the same DB transaction as the item roll and the history log write. No separate read-then-write step exists, so there's no window for a race — proven by the concurrency e2e test above. See [docs/architecture.md](docs/architecture.md#concurrency-control-for-coin-deduction).
-- **Weighted random**: Linear Prefix Sum over each event's (small, admin-curated) item list — simplest correct approach at this scale; see [docs/architecture.md](docs/architecture.md#weighted-random-algorithm) for why Binary Search / Alias Method aren't worth their added complexity here.
-- **Drop rates must sum to 100%**: enforced with a draft → active lifecycle so admins can build up an event's items one at a time, rather than requiring every single write to already total 100%. See [docs/architecture.md](docs/architecture.md#drop-rate-sum-validation-draft-vs-active).
+- **Coin deduction race conditions**: a single atomic `UPDATE users SET coins = coins - 10 WHERE id = ? AND coins >= 10`, wrapped in the same DB transaction as the item roll and the history log write. No separate read-then-write step exists, so there's no window for a race — proven by the concurrency e2e test above. See ADR-002 in [backend/docs/adr.md](backend/docs/adr.md).
+- **Weighted random**: Linear Prefix Sum over each event's (small, admin-curated) item list — simplest correct approach at this scale; see ADR-003 in [backend/docs/adr.md](backend/docs/adr.md) for why Binary Search / Alias Method aren't worth their added complexity here.
+- **Drop rates must sum to 100%**: enforced with a draft → active lifecycle so admins can build up an event's items one at a time, rather than requiring every single write to already total 100%. See ADR-004 in [backend/docs/adr.md](backend/docs/adr.md).
 - **Drop-rate storage**: `NUMERIC(5,2)`, not floating point — avoids the classic bug where percentages that should sum to exactly 100 fail a float equality check due to binary rounding.
+
+## Documentation
+
+Each app documents itself independently — there is no shared root `docs/` folder:
+
+| App | Docs |
+|---|---|
+| `backend` | [backend/docs/](backend/docs/) — architecture, ADRs, data model, auth, API reference, per-feature specs, known issues, testing, AI guidelines, code-audit workflow |
+| `frontend-admin` | [frontend-admin/docs/](frontend-admin/docs/) — architecture, core infrastructure, component API, data types, per-feature specs, known issues, testing, AI guidelines, code-audit workflow |
+| `frontend-user` | [frontend-user/docs/](frontend-user/docs/) — architecture, core infrastructure, component API, data types, per-feature specs, known issues, testing, AI guidelines, code-audit workflow |
+
+Start with each app's `docs/architecture.md`, then `docs/known-issues.md` for anything you're about to touch.

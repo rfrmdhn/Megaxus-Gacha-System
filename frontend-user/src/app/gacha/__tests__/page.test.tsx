@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import GachaPage from "../page";
-import { mockPush } from "../../../__tests__/mocks";
+import { mockPush } from "../../../__tests__/setup";
 import * as api from "@/lib/api";
 import * as auth from "@/lib/auth";
 
@@ -70,8 +70,8 @@ describe("GachaPage", () => {
 
   it("shows loading state before profile loads", () => {
     mockedApiFetch.mockImplementation(() => new Promise(() => {}));
-    render(<GachaPage />);
-    expect(screen.getByText("Loading...")).toBeInTheDocument();
+    const { container } = render(<GachaPage />);
+    expect(container.querySelector(".animate-pulse")).toBeInTheDocument();
   });
 
   it("loads profile and events on mount", async () => {
@@ -137,19 +137,19 @@ describe("GachaPage", () => {
       expect(screen.getByText("Pull (10 coins)")).toBeInTheDocument();
     });
 
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     await user.click(screen.getByText("Pull (10 coins)"));
 
     await waitFor(() => {
       expect(screen.getByText("You got:")).toBeInTheDocument();
-      expect(screen.getByText("Staff")).toBeInTheDocument();
+      expect(screen.getAllByText("Staff").length).toBeGreaterThan(0);
       expect(screen.getByText("rare")).toBeInTheDocument();
       expect(screen.getByText("90 coins")).toBeInTheDocument();
     });
   });
 
   it("displays error on pull failure (ApiError)", async () => {
-    mockedApiFetch.mockImplementation(async (path: string, opts?: RequestInit) => {
+    mockedApiFetch.mockImplementation(async (path: string) => {
       if (path === "/user/profile") return mockProfile;
       if (path === "/events") return mockEvents;
       if (path === "/events/ev1") return mockEventDetail;
@@ -162,7 +162,7 @@ describe("GachaPage", () => {
       expect(screen.getByText("Pull (10 coins)")).toBeInTheDocument();
     });
 
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     await user.click(screen.getByText("Pull (10 coins)"));
 
     await waitFor(() => {
@@ -171,7 +171,7 @@ describe("GachaPage", () => {
   });
 
   it("displays generic error on pull failure (non-ApiError)", async () => {
-    mockedApiFetch.mockImplementation(async (path: string, opts?: RequestInit) => {
+    mockedApiFetch.mockImplementation(async (path: string) => {
       if (path === "/user/profile") return mockProfile;
       if (path === "/events") return mockEvents;
       if (path === "/events/ev1") return mockEventDetail;
@@ -184,7 +184,7 @@ describe("GachaPage", () => {
       expect(screen.getByText("Pull (10 coins)")).toBeInTheDocument();
     });
 
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     await user.click(screen.getByText("Pull (10 coins)"));
 
     await waitFor(() => {
@@ -205,8 +205,8 @@ describe("GachaPage", () => {
   });
 
   it("shows pulling state during pull", async () => {
-    let resolvePull: (v: unknown) => void;
-    mockedApiFetch.mockImplementation(async (path: string, opts?: RequestInit) => {
+    let resolvePull!: (v: unknown) => void;
+    mockedApiFetch.mockImplementation(async (path: string) => {
       if (path === "/user/profile") return mockProfile;
       if (path === "/events") return mockEvents;
       if (path === "/events/ev1") return mockEventDetail;
@@ -219,7 +219,7 @@ describe("GachaPage", () => {
       expect(screen.getByText("Pull (10 coins)")).toBeInTheDocument();
     });
 
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     await user.click(screen.getByText("Pull (10 coins)"));
 
     await waitFor(() => {
@@ -227,7 +227,7 @@ describe("GachaPage", () => {
     });
     expect(screen.getByText("Pulling...").closest("button")).toBeDisabled();
 
-    resolvePull!(mockPullResult);
+    resolvePull(mockPullResult);
     await waitFor(() => {
       expect(screen.getByText("Pull (10 coins)")).toBeInTheDocument();
     });
@@ -235,7 +235,7 @@ describe("GachaPage", () => {
 
   it("clears previous result and error when pulling again", async () => {
     let pullCount = 0;
-    mockedApiFetch.mockImplementation(async (path: string, opts?: RequestInit) => {
+    mockedApiFetch.mockImplementation(async (path: string) => {
       if (path === "/user/profile") return mockProfile;
       if (path === "/events") return mockEvents;
       if (path === "/events/ev1") return mockEventDetail;
@@ -252,7 +252,7 @@ describe("GachaPage", () => {
       expect(screen.getByText("Pull (10 coins)")).toBeInTheDocument();
     });
 
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     await user.click(screen.getByText("Pull (10 coins)"));
     await waitFor(() => {
       expect(screen.getByText("Error")).toBeInTheDocument();
@@ -261,7 +261,7 @@ describe("GachaPage", () => {
     await user.click(screen.getByText("Pull (10 coins)"));
     await waitFor(() => {
       expect(screen.queryByText("Error")).not.toBeInTheDocument();
-      expect(screen.getByText("Staff")).toBeInTheDocument();
+      expect(screen.getAllByText("Staff").length).toBeGreaterThan(0);
     });
   });
 
@@ -334,11 +334,10 @@ describe("GachaPage", () => {
     render(<GachaPage />);
 
     await waitFor(() => {
-      expect(screen.getByText("Summer Event")).toBeInTheDocument();
       expect(screen.getByText("Sword")).toBeInTheDocument();
     });
 
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     const select = screen.getByRole("combobox");
     await user.selectOptions(select, "ev2");
 

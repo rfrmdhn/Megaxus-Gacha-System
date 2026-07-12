@@ -14,14 +14,9 @@ jest.mock("@/lib/api", () => ({
   },
 }));
 
+const mockAdminUser = { sub: "admin1", email: "admin@test.com", role: "admin", iat: 0, exp: 9999999999 };
 jest.mock("@/lib/useRequireAdmin", () => ({
-  useRequireAdmin: jest.fn(() => ({
-    sub: "admin1",
-    email: "admin@test.com",
-    role: "admin",
-    iat: 0,
-    exp: 9999999999,
-  })),
+  useRequireAdmin: jest.fn(() => ({ user: mockAdminUser, checking: false })),
 }));
 
 const mockEvents = [

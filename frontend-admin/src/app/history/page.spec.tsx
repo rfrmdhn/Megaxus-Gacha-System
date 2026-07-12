@@ -15,14 +15,9 @@ jest.mock("@/lib/api", () => ({
   sseUrl: (path: string) => path,
 }));
 
+const mockAdminUser = { sub: "admin1", email: "admin@test.com", role: "admin", iat: 0, exp: 9999999999 };
 jest.mock("@/lib/useRequireAdmin", () => ({
-  useRequireAdmin: jest.fn(() => ({
-    sub: "admin1",
-    email: "admin@test.com",
-    role: "admin",
-    iat: 0,
-    exp: 9999999999,
-  })),
+  useRequireAdmin: jest.fn(() => ({ user: mockAdminUser, checking: false })),
 }));
 
 function makeHistoryPage(overrides: any = {}): any {
@@ -51,9 +46,9 @@ class MockEventSource {
   close = jest.fn();
 
   constructor(public url: string) {
-    setTimeout(() => {
+    queueMicrotask(() => {
       if (this.onopen) this.onopen();
-    }, 10);
+    });
   }
 }
 
@@ -89,7 +84,7 @@ it("shows empty state", async () => {
 
   render(<EventHistoryPage />);
 
-  expect(await screen.findByText("No history yet.")).toBeInTheDocument();
+  expect(await screen.findByText("No history found.")).toBeInTheDocument();
 });
 
 it("shows load more button when hasMore", async () => {
@@ -120,15 +115,9 @@ it("loads more on click", async () => {
     nextCursor: null,
   });
 
-  const page1 = makeHistoryPage({ nextCursor: "cursor-2" });
-
-  let callIndex = 0;
-  mockApiFetch.mockImplementation((...args: any[]) => {
-    callIndex++;
-    console.log("mockApiFetch call #" + callIndex, "args:", args[0]);
-    if (callIndex === 1) return Promise.resolve(page1);
-    return Promise.resolve(page2);
-  });
+  mockApiFetch.mockResolvedValueOnce(makeHistoryPage({ nextCursor: "cursor-2" }));
+  mockApiFetch.mockResolvedValueOnce(page2);
+  mockApiFetch.mockResolvedValue(makeHistoryPage());
 
   render(<EventHistoryPage />);
 
