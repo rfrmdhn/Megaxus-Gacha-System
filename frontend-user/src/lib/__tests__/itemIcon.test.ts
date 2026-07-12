@@ -10,10 +10,6 @@ describe("getItemIcon", () => {
     expect(getItemIcon("rare")).toBe("/assets/items/rare.svg");
   });
 
-  it("returns epic icon for 'epic'", () => {
-    expect(getItemIcon("epic")).toBe("/assets/items/epic.svg");
-  });
-
   it("returns legendary icon for 'legendary'", () => {
     expect(getItemIcon("legendary")).toBe("/assets/items/legendary.svg");
   });
@@ -21,7 +17,6 @@ describe("getItemIcon", () => {
   it("is case-insensitive", () => {
     expect(getItemIcon("Common")).toBe("/assets/items/common.svg");
     expect(getItemIcon("RARE")).toBe("/assets/items/rare.svg");
-    expect(getItemIcon("Epic")).toBe("/assets/items/epic.svg");
     expect(getItemIcon("LEGENDARY")).toBe("/assets/items/legendary.svg");
   });
 
@@ -33,6 +28,7 @@ describe("getItemIcon", () => {
   it("returns the default icon for unknown rarity", () => {
     expect(getItemIcon("unknown")).toBe("/assets/items/default.svg");
     expect(getItemIcon("mythic")).toBe("/assets/items/default.svg");
+    expect(getItemIcon("epic")).toBe("/assets/items/default.svg");
   });
 
   it("returns the default icon for empty string", () => {

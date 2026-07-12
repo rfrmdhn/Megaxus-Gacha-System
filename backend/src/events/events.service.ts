@@ -42,7 +42,19 @@ export class EventsService {
         name: item.name,
         rarity: item.rarity,
         dropRate: item.dropRate.toFixed(2),
+        imageKey: item.imageKey,
       })),
     };
+  }
+
+  // Public counterpart to the admin item-image endpoint: players fetch item
+  // artwork here without needing an admin token. Only the raw bytes are exposed.
+  async getItemImage(itemId: string): Promise<StoredObject> {
+    const item = await this.prisma.gachaItem.findUnique({
+      where: { id: itemId },
+      select: { imageKey: true },
+    });
+    if (!item?.imageKey) throw new NotFoundException('Item has no image');
+    return this.storage.getObject(item.imageKey);
   }
 }

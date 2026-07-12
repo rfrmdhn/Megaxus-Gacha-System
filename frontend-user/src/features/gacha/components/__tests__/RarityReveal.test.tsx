@@ -21,7 +21,7 @@ function renderReveal(rarity: Rarity, extra: Partial<React.ComponentProps<typeof
 describe("RarityReveal", () => {
   afterEach(() => vi.useRealTimers());
 
-  it.each<Rarity>(["common", "rare", "epic", "legendary"])(
+  it.each<Rarity>(["common", "rare", "legendary"])(
     "starts charging and charges the portal sound for %s",
     (rarity) => {
       const props = renderReveal(rarity);

@@ -394,7 +394,7 @@ describe("GachaPage", () => {
       { id: "ev2", name: "Winter Event", startsAt: "2025-06-01", endsAt: "2025-12-31" },
     ];
     const mockEventDetail2 = {
-      items: [{ id: "i4", name: "Shield", rarity: "epic", dropRate: "100" }],
+      items: [{ id: "i4", name: "Shield", rarity: "rare", dropRate: "100" }],
     };
     mockedApiFetch.mockImplementation(async (path: string) => {
       if (path === "/user/profile") return mockProfile;
@@ -426,7 +426,7 @@ describe("GachaPage", () => {
       { id: "ev2", name: "Winter Event", startsAt: "2025-06-01", endsAt: "2025-12-31" },
     ];
     const mockEventDetail2 = {
-      items: [{ id: "i4", name: "Shield", rarity: "epic", dropRate: "100" }],
+      items: [{ id: "i4", name: "Shield", rarity: "rare", dropRate: "100" }],
     };
     setSearchParams({ eventId: "ev2" });
     mockedApiFetch.mockImplementation(async (path: string) => {
