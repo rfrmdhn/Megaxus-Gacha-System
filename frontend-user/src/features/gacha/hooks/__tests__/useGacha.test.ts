@@ -23,7 +23,7 @@ vi.mock("../../api", () => ({
   pullMany: vi.fn(),
 }));
 vi.mock("@/features/profile/api", () => ({ getProfile: vi.fn() }));
-vi.mock("@/lib/useRequireAuth", () => ({ useRequireAuth: vi.fn(() => ({ checking: false })) }));
+vi.mock("@/lib/useRequireAuth", () => ({ useRequireAuth: vi.fn(() => ({ user: null, checking: false })) }));
 
 const events = [
   { id: "ev1", name: "One", startsAt: "", endsAt: "" },
@@ -35,6 +35,7 @@ const multi = {
     { item: { id: "a", name: "A", rarity: "common" }, remainingCoins: 90 },
     { item: { id: "b", name: "B", rarity: "legendary" }, remainingCoins: 0 },
   ],
+  bestRarity: "legendary",
   remainingCoins: 0,
 };
 
@@ -55,7 +56,7 @@ async function renderReady(initial?: string | null) {
 describe("useGacha", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(requireAuth.useRequireAuth).mockReturnValue({ checking: false });
+    vi.mocked(requireAuth.useRequireAuth).mockReturnValue({ user: null, checking: false });
     primeHappyPath();
   });
 
@@ -99,7 +100,7 @@ describe("useGacha", () => {
       await result.current.pull();
     });
     expect(result.current.revealing).toBe(true);
-    expect(result.current.revealResult).toEqual(single);
+    expect(result.current.pending).toEqual({ type: "single", result: single });
     expect(result.current.result).toBeNull();
 
     act(() => result.current.commitReveal());
@@ -148,12 +149,12 @@ describe("useGacha", () => {
     expect(gachaApi.pull).not.toHaveBeenCalled();
   });
 
-  it("reveals a 10x pull with the rarest as the headline", async () => {
+  it("reveals a 10x pull carrying the full batch for the animation", async () => {
     const { result } = await renderReady();
     await act(async () => {
       await result.current.pullTen();
     });
-    expect(result.current.revealResult?.item.rarity).toBe("legendary");
+    expect(result.current.pending).toEqual({ type: "multi", data: multi });
     act(() => result.current.commitReveal());
     expect(result.current.multiResult?.results).toHaveLength(2);
     expect(result.current.profile?.coins).toBe(0);
@@ -330,7 +331,7 @@ describe("useGacha", () => {
 describe("useGacha auto-summon loop", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(requireAuth.useRequireAuth).mockReturnValue({ checking: false });
+    vi.mocked(requireAuth.useRequireAuth).mockReturnValue({ user: null, checking: false });
     primeHappyPath(100);
     vi.useFakeTimers();
   });

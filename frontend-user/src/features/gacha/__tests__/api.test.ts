@@ -31,43 +31,32 @@ describe("gacha api", () => {
     });
   });
 
-  it("pullMany runs N sequential pulls and reports the final balance", async () => {
-    let coins = 100;
-    mockedApiFetch.mockImplementation(async () => pullResult("x", (coins -= 10)));
-    const res = await pullMany("ev1", 3);
-    expect(res.results).toHaveLength(3);
-    expect(res.remainingCoins).toBe(70);
-    expect(mockedApiFetch).toHaveBeenCalledTimes(3);
-  });
-
-  it("stops early and keeps partial results on an ApiError mid-batch", async () => {
-    let call = 0;
-    mockedApiFetch.mockImplementation(async () => {
-      call++;
-      if (call === 3) throw new api.ApiError("Insufficient coins", 400);
-      return pullResult(String(call), 100 - call * 10);
+  it("pullMany posts to /gacha/pull-bulk and maps the bulk response", async () => {
+    mockedApiFetch.mockResolvedValue({
+      items: [
+        { id: "a", name: "A", rarity: "common" },
+        { id: "b", name: "B", rarity: "rare" },
+      ],
+      bestRarity: "rare",
+      remainingCoins: 80,
     });
-    const res = await pullMany("ev1", 10);
-    expect(res.results).toHaveLength(2);
+
+    const res = await pullMany("ev1", 2);
+
+    expect(mockedApiFetch).toHaveBeenCalledWith("/gacha/pull-bulk", {
+      method: "POST",
+      body: JSON.stringify({ eventId: "ev1", count: 2 }),
+    });
+    expect(res.results).toEqual([
+      { item: { id: "a", name: "A", rarity: "common" }, remainingCoins: 80 },
+      { item: { id: "b", name: "B", rarity: "rare" }, remainingCoins: 80 },
+    ]);
+    expect(res.bestRarity).toBe("rare");
     expect(res.remainingCoins).toBe(80);
   });
 
-  it("rethrows an ApiError on the very first pull", async () => {
+  it("propagates errors from the bulk endpoint", async () => {
     mockedApiFetch.mockRejectedValue(new api.ApiError("Insufficient coins", 400));
     await expect(pullMany("ev1", 10)).rejects.toBeInstanceOf(api.ApiError);
-  });
-
-  it("rethrows non-ApiError failures", async () => {
-    mockedApiFetch
-      .mockResolvedValueOnce(pullResult("1", 90))
-      .mockRejectedValueOnce(new Error("network"));
-    await expect(pullMany("ev1", 10)).rejects.toThrow("network");
-  });
-
-  it("returns a zero balance when count is zero", async () => {
-    const res = await pullMany("ev1", 0);
-    expect(res.results).toHaveLength(0);
-    expect(res.remainingCoins).toBe(0);
-    expect(mockedApiFetch).not.toHaveBeenCalled();
   });
 });

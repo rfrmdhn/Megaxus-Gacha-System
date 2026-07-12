@@ -43,6 +43,15 @@ const mockPullResult = {
   item: { id: "i2", name: "Staff", rarity: "rare" },
   remainingCoins: 90,
 };
+const mockBulkResult = {
+  items: Array.from({ length: 10 }, (_, i) => ({
+    id: `i${i}`,
+    name: "Sword",
+    rarity: "common",
+  })),
+  bestRarity: "rare",
+  remainingCoins: 0,
+};
 
 function setupAuth() {
   mockedGetCurrentUser.mockReturnValue({
@@ -455,7 +464,7 @@ describe("GachaPage", () => {
       if (path === "/user/profile") return mockProfile;
       if (path === "/events") return mockEvents;
       if (path === "/events/ev1") return mockEventDetail;
-      if (path === "/gacha/pull" && opts?.method === "POST") return mockPullResult;
+      if (path === "/gacha/pull-bulk" && opts?.method === "POST") return mockBulkResult;
       return null;
     });
     render(<GachaPage />);
@@ -468,6 +477,29 @@ describe("GachaPage", () => {
     await waitFor(() => expect(screen.getByText("Summon results (10)")).toBeInTheDocument());
     await user.click(screen.getByText("Continue"));
     await waitFor(() => expect(screen.queryByText("Summon results (10)")).not.toBeInTheDocument());
+  });
+
+  it("plays one 10x cinematic buildup (keyed on bestRarity) then reveals the whole grid", async () => {
+    mockedApiFetch.mockImplementation(async (path: string, opts?: RequestInit) => {
+      if (path === "/user/profile") return mockProfile;
+      if (path === "/events") return mockEvents;
+      if (path === "/events/ev1") return mockEventDetail;
+      if (path === "/gacha/pull-bulk" && opts?.method === "POST") return mockBulkResult;
+      return null;
+    });
+    render(<GachaPage />);
+    await waitFor(() => expect(screen.getByText("Pull (10 coins)")).toBeInTheDocument());
+
+    const user = userEvent.setup({ delay: null });
+    await user.click(screen.getByText("Summon 10x (100 coins)"));
+
+    // A single buildup plays, keyed on the backend's bestRarity ("rare").
+    await waitFor(() => expect(screen.getByText("Opening...")).toBeInTheDocument());
+    expect(screen.getByTestId("rarity-reveal")).toHaveAttribute("data-rarity", "rare");
+
+    // Skip to the payload: all ten cards, revealed together.
+    await user.click(screen.getByRole("button", { name: "Skip" }));
+    await waitFor(() => expect(screen.getByText("Summon results (10)")).toBeInTheDocument());
   });
 
   it("toggles sound on and off", async () => {

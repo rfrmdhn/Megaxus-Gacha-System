@@ -22,6 +22,15 @@ describe("normalizeRarity", () => {
     expect(normalizeRarity("mythic")).toBe("common");
     expect(normalizeRarity("")).toBe("common");
   });
+
+  it("detects a known tier keyword inside a free-form label", () => {
+    expect(normalizeRarity("Rare Rarity")).toBe("rare");
+    expect(normalizeRarity("Epic loot")).toBe("epic");
+  });
+
+  it("resolves the highest tier when several keywords appear", () => {
+    expect(normalizeRarity("rare legendary bundle")).toBe("legendary");
+  });
 });
 
 describe("getTreatment", () => {

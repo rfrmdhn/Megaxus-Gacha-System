@@ -4,7 +4,7 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '../../generated/prisma';
 import { PrismaService } from '../prisma/prisma.service';
 import { CachedGachaItem, GachaCacheService } from './gacha-cache.service';
 import { AdminFeedProducer } from '../queue/admin-feed.producer';

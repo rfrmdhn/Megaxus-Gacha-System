@@ -206,10 +206,24 @@ export const RARITY_TREATMENTS: Record<Rarity, RarityTreatment> = {
   },
 };
 
+/**
+ * Detect a known tier in a free-form backend rarity string, or null if none is
+ * present. Backend rarity is admin-typed (e.g. "Legendary Rarity"), so beyond an
+ * exact match we scan for a tier keyword anywhere in the string — rarest-first,
+ * so a multi-keyword value resolves to its highest tier.
+ */
+export function matchRarity(raw: string): Rarity | null {
+  const text = raw.toLowerCase().trim();
+  if (RARITIES.includes(text as Rarity)) return text as Rarity;
+  for (let i = RARITIES.length - 1; i >= 0; i--) {
+    if (text.includes(RARITIES[i])) return RARITIES[i];
+  }
+  return null;
+}
+
 /** Coerce any backend rarity string into a known tier, defaulting to common. */
 export function normalizeRarity(raw: string): Rarity {
-  const key = raw.toLowerCase() as Rarity;
-  return RARITIES.includes(key) ? key : "common";
+  return matchRarity(raw) ?? "common";
 }
 
 /** Convenience accessor with graceful fallback. */

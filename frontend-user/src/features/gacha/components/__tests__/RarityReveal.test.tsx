@@ -14,7 +14,7 @@ function renderReveal(rarity: Rarity, extra: Partial<React.ComponentProps<typeof
     onContinue: vi.fn(),
     ...extra,
   };
-  render(<RarityReveal {...props} />);
+  render(<RarityReveal {...(props as React.ComponentProps<typeof RarityReveal>)} />);
   return props;
 }
 
@@ -75,5 +75,52 @@ describe("RarityReveal", () => {
     const props = renderReveal("common", { reducedMotion: true });
     fireEvent.click(screen.getByRole("button", { name: "Continue" }));
     expect(props.onContinue).toHaveBeenCalled();
+  });
+
+  const multi = {
+    results: [
+      { item: { id: "a", name: "A", rarity: "common" }, remainingCoins: 0 },
+      { item: { id: "b", name: "B", rarity: "rare" }, remainingCoins: 0 },
+    ],
+    bestRarity: "rare",
+    remainingCoins: 0,
+  };
+
+  it("keys a bulk buildup on bestRarity and reveals every card", () => {
+    render(
+      <RarityReveal
+        multi={multi}
+        speed={1}
+        reducedMotion
+        onSound={vi.fn()}
+        onVibrate={vi.fn()}
+        onComplete={vi.fn()}
+        onContinue={vi.fn()}
+      />,
+    );
+    expect(screen.getByTestId("rarity-reveal")).toHaveAttribute("data-rarity", "rare");
+    expect(screen.getByTestId("multi-summon-results")).toBeInTheDocument();
+    expect(screen.getAllByTestId("reward-card")).toHaveLength(2);
+  });
+
+  it("plays a bulk buildup then reveals the grid and dismisses via Continue", () => {
+    vi.useFakeTimers();
+    const onContinue = vi.fn();
+    render(
+      <RarityReveal
+        multi={multi}
+        speed={1}
+        reducedMotion={false}
+        onSound={vi.fn()}
+        onVibrate={vi.fn()}
+        onComplete={vi.fn()}
+        onContinue={onContinue}
+      />,
+    );
+    expect(screen.getByText("Opening...")).toBeInTheDocument();
+    stepThrough("rare");
+    expect(screen.getByTestId("multi-summon-results")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    expect(onContinue).toHaveBeenCalled();
   });
 });

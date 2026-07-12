@@ -25,12 +25,17 @@ describe("getItemIcon", () => {
     expect(getItemIcon("LEGENDARY")).toBe("/assets/items/legendary.svg");
   });
 
-  it("returns default icon for unknown rarity", () => {
+  it("matches a known tier keyword inside a free-form label", () => {
+    expect(getItemIcon("Rare Rarity")).toBe("/assets/items/rare.svg");
+    expect(getItemIcon("Legendary drop")).toBe("/assets/items/legendary.svg");
+  });
+
+  it("returns the default icon for unknown rarity", () => {
     expect(getItemIcon("unknown")).toBe("/assets/items/default.svg");
     expect(getItemIcon("mythic")).toBe("/assets/items/default.svg");
   });
 
-  it("returns default icon for empty string", () => {
+  it("returns the default icon for empty string", () => {
     expect(getItemIcon("")).toBe("/assets/items/default.svg");
   });
 });
