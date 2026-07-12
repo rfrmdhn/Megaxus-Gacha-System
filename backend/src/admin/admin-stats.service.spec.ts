@@ -15,7 +15,14 @@ describe('AdminStatsService', () => {
   });
 
   it('aggregates every metric from the transaction into the stats DTO', async () => {
-    prisma.$transaction.mockResolvedValue([42, 3, 7, 15, 1200, { _sum: { coinsSpent: 3400 } }]);
+    prisma.$transaction.mockResolvedValue([
+      42,
+      3,
+      7,
+      15,
+      1200,
+      { _sum: { coinsSpent: 3400 } },
+    ]);
 
     const result = await service.getStats();
 
@@ -30,7 +37,14 @@ describe('AdminStatsService', () => {
   });
 
   it('defaults totalCoinsSpent to 0 when no pulls have ever happened', async () => {
-    prisma.$transaction.mockResolvedValue([0, 0, 0, 0, 0, { _sum: { coinsSpent: null } }]);
+    prisma.$transaction.mockResolvedValue([
+      0,
+      0,
+      0,
+      0,
+      0,
+      { _sum: { coinsSpent: null } },
+    ]);
 
     const result = await service.getStats();
 
@@ -38,7 +52,14 @@ describe('AdminStatsService', () => {
   });
 
   it('runs all counts inside a single transaction', async () => {
-    prisma.$transaction.mockResolvedValue([0, 0, 0, 0, 0, { _sum: { coinsSpent: null } }]);
+    prisma.$transaction.mockResolvedValue([
+      0,
+      0,
+      0,
+      0,
+      0,
+      { _sum: { coinsSpent: null } },
+    ]);
 
     await service.getStats();
 

@@ -30,7 +30,7 @@ describe('AdminEventsController', () => {
     const dto = { name: 'Event', startsAt: '2026-01-01', endsAt: '2026-02-01' };
     eventsService.create.mockResolvedValue({ id: 'evt-1', ...dto });
 
-    const result = await controller.create(dto as any);
+    const result = await controller.create(dto);
 
     expect(eventsService.create).toHaveBeenCalledWith(dto);
     expect(result.id).toBe('evt-1');
@@ -39,9 +39,11 @@ describe('AdminEventsController', () => {
   it('delegates update to eventsService', async () => {
     eventsService.update.mockResolvedValue({ id: 'evt-1', name: 'Updated' });
 
-    const result = await controller.update('evt-1', { name: 'Updated' } as any);
+    const result = await controller.update('evt-1', { name: 'Updated' });
 
-    expect(eventsService.update).toHaveBeenCalledWith('evt-1', { name: 'Updated' });
+    expect(eventsService.update).toHaveBeenCalledWith('evt-1', {
+      name: 'Updated',
+    });
     expect(result.name).toBe('Updated');
   });
 
@@ -57,7 +59,7 @@ describe('AdminEventsController', () => {
     const dto = { name: 'Sword', rarity: 'rare', dropRate: 50 };
     itemsService.create.mockResolvedValue({ id: 'item-1' });
 
-    const result = await controller.addItem('evt-1', dto as any);
+    const result = await controller.addItem('evt-1', dto);
 
     expect(itemsService.create).toHaveBeenCalledWith('evt-1', dto);
     expect(result.id).toBe('item-1');

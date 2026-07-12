@@ -1,4 +1,8 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
 import { buildCursorArgs, paginate } from '../common/pagination';
@@ -15,7 +19,9 @@ export class AdminUsersService {
 
   async list(query: AdminUserQueryDto) {
     const rows = await this.prisma.user.findMany({
-      where: query.email ? { email: { contains: query.email, mode: 'insensitive' } } : undefined,
+      where: query.email
+        ? { email: { contains: query.email, mode: 'insensitive' } }
+        : undefined,
       orderBy: { createdAt: 'desc' },
       include: { _count: { select: { gachaLogs: true } } },
       ...buildCursorArgs(query.cursor, query.limit),
@@ -37,7 +43,9 @@ export class AdminUsersService {
   }
 
   async create(dto: CreateUserDto) {
-    const existing = await this.prisma.user.findUnique({ where: { email: dto.email } });
+    const existing = await this.prisma.user.findUnique({
+      where: { email: dto.email },
+    });
     if (existing) {
       throw new ConflictException('Email is already registered');
     }

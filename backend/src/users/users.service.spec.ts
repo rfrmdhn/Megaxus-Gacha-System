@@ -37,7 +37,9 @@ describe('UsersService', () => {
     it('throws NotFoundException when user does not exist', async () => {
       prisma.user.findUnique.mockResolvedValue(null);
 
-      await expect(service.getProfile('missing')).rejects.toThrow(NotFoundException);
+      await expect(service.getProfile('missing')).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('returns mapped profile when user exists', async () => {
@@ -45,7 +47,11 @@ describe('UsersService', () => {
 
       const result = await service.getProfile('user-1');
 
-      expect(result).toEqual({ id: 'user-1', email: 'user@test.com', coins: 500 });
+      expect(result).toEqual({
+        id: 'user-1',
+        email: 'user@test.com',
+        coins: 500,
+      });
     });
   });
 
@@ -53,7 +59,7 @@ describe('UsersService', () => {
     it('returns mapped history items', async () => {
       prisma.gachaLog.findMany.mockResolvedValue([makeLog()]);
 
-      const result = await service.getHistory('user-1', { limit: 20 } as any);
+      const result = await service.getHistory('user-1', { limit: 20 });
 
       expect(result.items).toEqual([
         {
@@ -69,10 +75,12 @@ describe('UsersService', () => {
     });
 
     it('returns nextCursor when there are more rows', async () => {
-      const rows = Array.from({ length: 21 }, (_, i) => makeLog({ id: `log-${i}` }));
+      const rows = Array.from({ length: 21 }, (_, i) =>
+        makeLog({ id: `log-${i}` }),
+      );
       prisma.gachaLog.findMany.mockResolvedValue(rows);
 
-      const result = await service.getHistory('user-1', { limit: 20 } as any);
+      const result = await service.getHistory('user-1', { limit: 20 });
 
       expect(result.items).toHaveLength(20);
       expect(result.nextCursor).toBe('log-19');
@@ -81,7 +89,10 @@ describe('UsersService', () => {
     it('passes cursor args for pagination', async () => {
       prisma.gachaLog.findMany.mockResolvedValue([]);
 
-      await service.getHistory('user-1', { cursor: 'some-cursor', limit: 10 } as any);
+      await service.getHistory('user-1', {
+        cursor: 'some-cursor',
+        limit: 10,
+      });
 
       expect(prisma.gachaLog.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -96,7 +107,7 @@ describe('UsersService', () => {
     it('selects only the fields it needs from item/event relations', async () => {
       prisma.gachaLog.findMany.mockResolvedValue([]);
 
-      await service.getHistory('user-1', { limit: 20 } as any);
+      await service.getHistory('user-1', { limit: 20 });
 
       expect(prisma.gachaLog.findMany).toHaveBeenCalledWith(
         expect.objectContaining({

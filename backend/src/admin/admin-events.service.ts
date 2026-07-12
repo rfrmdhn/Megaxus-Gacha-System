@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { GachaCacheService } from '../gacha/gacha-cache.service';
 import { assertDropRatesEqual100 } from './drop-rate.util';
@@ -44,8 +48,10 @@ export class AdminEventsService {
       assertDropRatesEqual100(items.map((i) => i.dropRate));
     }
 
-    const startsAt = dto.startsAt !== undefined ? new Date(dto.startsAt) : event.startsAt;
-    const endsAt = dto.endsAt !== undefined ? new Date(dto.endsAt) : event.endsAt;
+    const startsAt =
+      dto.startsAt !== undefined ? new Date(dto.startsAt) : event.startsAt;
+    const endsAt =
+      dto.endsAt !== undefined ? new Date(dto.endsAt) : event.endsAt;
     if (dto.startsAt !== undefined || dto.endsAt !== undefined) {
       assertDateRangeValid(startsAt, endsAt);
     }
@@ -65,7 +71,9 @@ export class AdminEventsService {
 
   async remove(id: string) {
     await this.assertExists(id);
-    const pullCount = await this.prisma.gachaLog.count({ where: { eventId: id } });
+    const pullCount = await this.prisma.gachaLog.count({
+      where: { eventId: id },
+    });
     if (pullCount > 0) {
       throw new BadRequestException(
         'Cannot delete an event with existing pull history; deactivate it instead',

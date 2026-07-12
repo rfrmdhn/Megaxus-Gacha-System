@@ -9,15 +9,23 @@ export class AdminStatsService {
     const startOfToday = new Date();
     startOfToday.setHours(0, 0, 0, 0);
 
-    const [totalUsers, activeEvents, totalEvents, pullsToday, totalPulls, coinsAgg] =
-      await this.prisma.$transaction([
-        this.prisma.user.count(),
-        this.prisma.gachaEvent.count({ where: { isActive: true } }),
-        this.prisma.gachaEvent.count(),
-        this.prisma.gachaLog.count({ where: { createdAt: { gte: startOfToday } } }),
-        this.prisma.gachaLog.count(),
-        this.prisma.gachaLog.aggregate({ _sum: { coinsSpent: true } }),
-      ]);
+    const [
+      totalUsers,
+      activeEvents,
+      totalEvents,
+      pullsToday,
+      totalPulls,
+      coinsAgg,
+    ] = await this.prisma.$transaction([
+      this.prisma.user.count(),
+      this.prisma.gachaEvent.count({ where: { isActive: true } }),
+      this.prisma.gachaEvent.count(),
+      this.prisma.gachaLog.count({
+        where: { createdAt: { gte: startOfToday } },
+      }),
+      this.prisma.gachaLog.count(),
+      this.prisma.gachaLog.aggregate({ _sum: { coinsSpent: true } }),
+    ]);
 
     return {
       totalUsers,

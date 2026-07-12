@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module';
 import { GachaModule } from '../gacha/gacha.module';
 import { QueueModule } from '../queue/queue.module';
+import { StorageModule } from '../storage/storage.module';
 import { AdminEventsService } from './admin-events.service';
 import { AdminItemsService } from './admin-items.service';
 import { AdminHistoryService } from './admin-history.service';
@@ -14,7 +15,7 @@ import { AdminUsersController } from './admin-users.controller';
 import { AdminStatsController } from './admin-stats.controller';
 
 @Module({
-  imports: [AuthModule, GachaModule, QueueModule],
+  imports: [AuthModule, GachaModule, QueueModule, StorageModule],
   controllers: [
     AdminEventsController,
     AdminItemsController,

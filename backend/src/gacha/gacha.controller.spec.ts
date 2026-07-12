@@ -17,7 +17,7 @@ describe('GachaController', () => {
       remainingCoins: 490,
     });
 
-    const result = await controller.pull(user as any, dto as any);
+    const result = await controller.pull(user as any, dto);
 
     expect(gachaService.pull).toHaveBeenCalledWith('user-1', 'evt-1');
     expect(result.item.name).toBe('Sword');

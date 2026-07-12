@@ -3,8 +3,12 @@ jest.mock('@nestjs/bullmq', () => ({
     forRootAsync: jest.fn().mockReturnValue(class {}),
     registerQueue: jest.fn().mockReturnValue(class {}),
   },
-  InjectQueue: function () { return function () {}; },
-  Processor: function () { return class {}; },
+  InjectQueue: function () {
+    return function () {};
+  },
+  Processor: function () {
+    return class {};
+  },
   WorkerHost: class {},
 }));
 jest.mock('@nestjs/config', () => ({

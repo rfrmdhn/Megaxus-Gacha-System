@@ -13,7 +13,9 @@ function sumOf(rates: (Decimal | number | string)[]): Decimal {
  * so only reject if the running total would exceed 100 — it doesn't need to hit
  * exactly 100 until the event is activated.
  */
-export function assertDropRatesDoNotExceed100(rates: (Decimal | number | string)[]): void {
+export function assertDropRatesDoNotExceed100(
+  rates: (Decimal | number | string)[],
+): void {
   const total = sumOf(rates);
   if (total.greaterThan(new Decimal(100))) {
     throw new BadRequestException(
@@ -26,7 +28,9 @@ export function assertDropRatesDoNotExceed100(rates: (Decimal | number | string)
  * Used when activating an event, and as a pull-time defense-in-depth check:
  * an active event's items must sum to exactly 100 — no partial configuration.
  */
-export function assertDropRatesEqual100(rates: (Decimal | number | string)[]): void {
+export function assertDropRatesEqual100(
+  rates: (Decimal | number | string)[],
+): void {
   const total = sumOf(rates);
   if (!total.equals(new Decimal(100))) {
     throw new BadRequestException(

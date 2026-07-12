@@ -34,7 +34,10 @@ export class GachaCacheService {
       where: { eventId },
       select: { id: true, name: true, rarity: true, dropRate: true },
     });
-    const serializable = items.map((item) => ({ ...item, dropRate: Number(item.dropRate) }));
+    const serializable = items.map((item) => ({
+      ...item,
+      dropRate: Number(item.dropRate),
+    }));
     await this.redis.set(cacheKey(eventId), JSON.stringify(serializable));
     return serializable;
   }

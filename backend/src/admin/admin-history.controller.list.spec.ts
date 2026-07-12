@@ -25,7 +25,7 @@ describe('AdminHistoryController#list', () => {
     const result = { items: [], nextCursor: null };
     historyService.list.mockResolvedValue(result);
 
-    const res = await controller.list(query as any);
+    const res = await controller.list(query);
 
     expect(historyService.list).toHaveBeenCalledWith(query);
     expect(res).toEqual(result);

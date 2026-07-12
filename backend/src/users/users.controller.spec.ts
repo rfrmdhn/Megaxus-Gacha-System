@@ -26,7 +26,9 @@ describe('UsersController', () => {
     const history = { items: [], nextCursor: null };
     usersService.getHistory.mockResolvedValue(history);
 
-    const result = await controller.getHistory({ id: 'u1' } as any, { limit: 20 } as any);
+    const result = await controller.getHistory({ id: 'u1' } as any, {
+      limit: 20,
+    });
 
     expect(result).toEqual(history);
     expect(usersService.getHistory).toHaveBeenCalledWith('u1', { limit: 20 });

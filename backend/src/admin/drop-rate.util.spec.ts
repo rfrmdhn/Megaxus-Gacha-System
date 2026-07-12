@@ -1,5 +1,8 @@
 import { BadRequestException } from '@nestjs/common';
-import { assertDropRatesEqual100, assertDropRatesDoNotExceed100 } from './drop-rate.util';
+import {
+  assertDropRatesEqual100,
+  assertDropRatesDoNotExceed100,
+} from './drop-rate.util';
 
 describe('drop-rate.util', () => {
   describe('assertDropRatesEqual100', () => {
@@ -12,15 +15,21 @@ describe('drop-rate.util', () => {
     });
 
     it('does not throw for decimal rates that sum to 100', () => {
-      expect(() => assertDropRatesEqual100([33.33, 33.33, 33.34])).not.toThrow();
+      expect(() =>
+        assertDropRatesEqual100([33.33, 33.33, 33.34]),
+      ).not.toThrow();
     });
 
     it('throws BadRequestException when rates sum to less than 100', () => {
-      expect(() => assertDropRatesEqual100([50, 30])).toThrow(BadRequestException);
+      expect(() => assertDropRatesEqual100([50, 30])).toThrow(
+        BadRequestException,
+      );
     });
 
     it('throws BadRequestException when rates sum to more than 100', () => {
-      expect(() => assertDropRatesEqual100([50, 60])).toThrow(BadRequestException);
+      expect(() => assertDropRatesEqual100([50, 60])).toThrow(
+        BadRequestException,
+      );
     });
 
     it('throws for empty rates', () => {
@@ -51,7 +60,9 @@ describe('drop-rate.util', () => {
     });
 
     it('throws BadRequestException when rates exceed 100', () => {
-      expect(() => assertDropRatesDoNotExceed100([50, 60])).toThrow(BadRequestException);
+      expect(() => assertDropRatesDoNotExceed100([50, 60])).toThrow(
+        BadRequestException,
+      );
     });
 
     it('includes the actual total in the error message', () => {

@@ -265,6 +265,42 @@ describe("useGacha", () => {
     expect(result.current.result).toEqual(single);
   });
 
+  it("does not auto-pull without a selected event", async () => {
+    vi.mocked(gachaApi.listEvents).mockResolvedValue([]);
+    const { result } = renderHook(() => useGacha());
+    await waitFor(() => expect(result.current.profile).not.toBeNull());
+    act(() => result.current.toggleAuto());
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(gachaApi.pull).not.toHaveBeenCalled();
+  });
+
+  it("does not auto-pull without a profile", async () => {
+    vi.mocked(profileApi.getProfile).mockReturnValue(new Promise(() => {}));
+    const { result } = renderHook(() => useGacha());
+    await waitFor(() => expect(result.current.selectedEventId).toBe("ev1"));
+    act(() => result.current.toggleAuto());
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(gachaApi.pull).not.toHaveBeenCalled();
+  });
+
+  it("does not auto-pull while a reveal is pending", async () => {
+    const { result } = await renderReady();
+    await act(async () => {
+      await result.current.pull();
+    });
+    expect(result.current.revealing).toBe(true);
+    act(() => result.current.toggleAuto());
+    await act(async () => {
+      await Promise.resolve();
+    });
+    // Only the manual pull happened; auto did not schedule another.
+    expect(gachaApi.pull).toHaveBeenCalledTimes(1);
+  });
+
   it("applies pulls immediately under reduced motion", async () => {
     const original = window.matchMedia;
     window.matchMedia = vi.fn().mockReturnValue({

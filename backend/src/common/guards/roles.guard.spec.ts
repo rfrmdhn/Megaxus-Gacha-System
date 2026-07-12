@@ -43,18 +43,24 @@ describe('RolesGuard', () => {
   it('throws ForbiddenException when user does not have the required role', () => {
     jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue([Role.admin]);
 
-    expect(() => guard.canActivate(makeContext({ role: 'user' }))).toThrow(ForbiddenException);
+    expect(() => guard.canActivate(makeContext({ role: 'user' }))).toThrow(
+      ForbiddenException,
+    );
   });
 
   it('throws ForbiddenException when user is undefined', () => {
     jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue([Role.admin]);
 
-    expect(() => guard.canActivate(makeContext(undefined))).toThrow(ForbiddenException);
+    expect(() => guard.canActivate(makeContext(undefined))).toThrow(
+      ForbiddenException,
+    );
   });
 
   it('throws ForbiddenException when user object has no role', () => {
     jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue([Role.admin]);
 
-    expect(() => guard.canActivate(makeContext({}))).toThrow(ForbiddenException);
+    expect(() => guard.canActivate(makeContext({}))).toThrow(
+      ForbiddenException,
+    );
   });
 });

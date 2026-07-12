@@ -1,4 +1,4 @@
-import { apiFetch, ApiError, sseUrl } from "./api";
+import { apiFetch, apiFetchBlob, ApiError, sseUrl } from "./api";
 
 const ORIGIN = "http://localhost:3001";
 
@@ -95,6 +95,39 @@ describe("apiFetch", () => {
     );
 
     await expect(apiFetch("/error")).rejects.toThrow("Server Error");
+  });
+
+  it("omits Content-Type when the body is FormData", async () => {
+    const fetchMock = jest.spyOn(globalThis, "fetch" as any).mockResolvedValue(mockResponse({ ok: true }, 200));
+
+    await apiFetch("/upload", { method: "POST", body: new FormData() });
+    const callArgs = fetchMock.mock.calls[0] as [string, any];
+    expect(callArgs[1].headers["Content-Type"]).toBeUndefined();
+  });
+});
+
+describe("apiFetchBlob", () => {
+  it("returns the response body as a blob with an Authorization header", async () => {
+    localStorage.setItem("gacha_token", "my-token");
+    const blob = new Blob(["image-bytes"], { type: "image/png" });
+    const fetchMock = jest
+      .spyOn(globalThis, "fetch" as any)
+      .mockResolvedValue(new Response(blob, { status: 200 }));
+
+    const result = await apiFetchBlob("/admin/items/item-1/image");
+
+    const callArgs = fetchMock.mock.calls[0] as [string, any];
+    expect(callArgs[0]).toBe(`${ORIGIN}/admin/items/item-1/image`);
+    expect(callArgs[1].headers.Authorization).toBe("Bearer my-token");
+    expect(result).toBeInstanceOf(Blob);
+  });
+
+  it("throws ApiError on non-ok response", async () => {
+    jest
+      .spyOn(globalThis, "fetch" as any)
+      .mockResolvedValue(new Response(null, { status: 404, statusText: "Not Found" }));
+
+    await expect(apiFetchBlob("/missing")).rejects.toThrow("Not Found");
   });
 });
 

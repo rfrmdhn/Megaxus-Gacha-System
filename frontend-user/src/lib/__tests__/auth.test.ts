@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { saveToken, clearToken, getToken, decodeToken, getCurrentUser } from "../auth";
 
 function makeToken(payload: Record<string, unknown>): string {
@@ -13,6 +13,15 @@ describe("saveToken", () => {
   it("stores token in localStorage", () => {
     saveToken("my-token");
     expect(localStorage.getItem("gacha_token")).toBe("my-token");
+  });
+});
+
+describe("getToken on the server", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("returns null when window is undefined (SSR)", () => {
+    vi.stubGlobal("window", undefined);
+    expect(getToken()).toBeNull();
   });
 });
 

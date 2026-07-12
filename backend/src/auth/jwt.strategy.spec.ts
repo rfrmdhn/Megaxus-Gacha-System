@@ -16,7 +16,11 @@ describe('JwtStrategy', () => {
     prisma.user.findUnique.mockResolvedValue(null);
 
     await expect(
-      strategy.validate({ sub: 'missing-user', email: 'test@test.com', role: 'user' }),
+      strategy.validate({
+        sub: 'missing-user',
+        email: 'test@test.com',
+        role: 'user',
+      }),
     ).rejects.toThrow(UnauthorizedException);
   });
 

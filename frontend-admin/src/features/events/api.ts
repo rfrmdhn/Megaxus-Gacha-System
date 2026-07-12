@@ -1,5 +1,5 @@
-import { apiFetch } from "@/lib/api";
-import { AdminEvent } from "./types";
+import { apiFetch, apiFetchBlob } from "@/lib/api";
+import { AdminEvent, AdminItem } from "./types";
 
 export interface EventInput {
   name: string;
@@ -26,10 +26,34 @@ export function deleteEvent(id: string): Promise<void> {
 export function addEventItem(
   eventId: string,
   body: { name: string; rarity: string; dropRate: number },
-): Promise<void> {
-  return apiFetch<void>(`/admin/events/${eventId}/items`, { method: "POST", body: JSON.stringify(body) });
+): Promise<AdminItem> {
+  return apiFetch<AdminItem>(`/admin/events/${eventId}/items`, {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+export function updateItem(
+  itemId: string,
+  body: Partial<{ name: string; rarity: string; dropRate: number }>,
+): Promise<AdminItem> {
+  return apiFetch<AdminItem>(`/admin/items/${itemId}`, { method: "PUT", body: JSON.stringify(body) });
 }
 
 export function deleteItem(itemId: string): Promise<void> {
   return apiFetch<void>(`/admin/items/${itemId}`, { method: "DELETE" });
+}
+
+export function uploadItemImage(itemId: string, file: File): Promise<AdminItem> {
+  const formData = new FormData();
+  formData.append("file", file);
+  return apiFetch<AdminItem>(`/admin/items/${itemId}/image`, { method: "POST", body: formData });
+}
+
+export function removeItemImage(itemId: string): Promise<void> {
+  return apiFetch<void>(`/admin/items/${itemId}/image`, { method: "DELETE" });
+}
+
+export function fetchItemImage(itemId: string): Promise<Blob> {
+  return apiFetchBlob(`/admin/items/${itemId}/image`);
 }

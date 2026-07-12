@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor, act } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import GachaPage from "../page";
 import { mockPush, setSearchParams } from "../../../__tests__/setup";
@@ -138,10 +138,11 @@ describe("GachaPage", () => {
     });
 
     const user = userEvent.setup({ delay: null });
-    await act(async () => {
-      await user.click(screen.getByText("Pull (10 coins)"));
-      await new Promise((r) => setTimeout(r, 100));
-    });
+    await user.click(screen.getByText("Pull (10 coins)"));
+
+    // Reveal starts; fast-forward it with the in-reveal Skip button.
+    await waitFor(() => expect(screen.getByText("Opening...")).toBeInTheDocument());
+    await user.click(screen.getByRole("button", { name: "Skip" }));
 
     await waitFor(() => {
       expect(screen.getByText("You got:")).toBeInTheDocument();
@@ -173,11 +174,15 @@ describe("GachaPage", () => {
     });
     expect(screen.queryByText("You got:")).not.toBeInTheDocument();
 
-    await waitFor(() => {
-      expect(screen.getByText("You got:")).toBeInTheDocument();
-    });
+    // Let the (rare) reveal run to completion on real timers.
+    await waitFor(
+      () => {
+        expect(screen.getByText("You got:")).toBeInTheDocument();
+      },
+      { timeout: 6000 },
+    );
     expect(screen.queryByText("Opening...")).not.toBeInTheDocument();
-  });
+  }, 15000);
 
   it("skips the reveal animation when the skip checkbox is checked", async () => {
     mockedApiFetch.mockImplementation(async (path: string, opts?: RequestInit) => {
@@ -275,6 +280,8 @@ describe("GachaPage", () => {
     });
 
     const user = userEvent.setup({ delay: null });
+    // Skip the reveal so the button returns to its idle label after resolving.
+    await user.click(screen.getByLabelText("Skip animation"));
     await user.click(screen.getByText("Pull (10 coins)"));
 
     await waitFor(() => {
@@ -308,6 +315,7 @@ describe("GachaPage", () => {
     });
 
     const user = userEvent.setup({ delay: null });
+    await user.click(screen.getByLabelText("Skip animation"));
     await user.click(screen.getByText("Pull (10 coins)"));
     await waitFor(() => {
       expect(screen.getByText("Error")).toBeInTheDocument();
@@ -393,7 +401,8 @@ describe("GachaPage", () => {
     });
 
     const user = userEvent.setup({ delay: null });
-    const select = screen.getByRole("combobox");
+    // First combobox is the event selector (the second is the speed control).
+    const select = screen.getAllByRole("combobox")[0];
     await user.selectOptions(select, "ev2");
 
     await waitFor(() => {
@@ -439,5 +448,75 @@ describe("GachaPage", () => {
     await waitFor(() => {
       expect(screen.getByText("Sword")).toBeInTheDocument();
     });
+  });
+
+  it("performs a 10x summon and shows the results grid", async () => {
+    mockedApiFetch.mockImplementation(async (path: string, opts?: RequestInit) => {
+      if (path === "/user/profile") return mockProfile;
+      if (path === "/events") return mockEvents;
+      if (path === "/events/ev1") return mockEventDetail;
+      if (path === "/gacha/pull" && opts?.method === "POST") return mockPullResult;
+      return null;
+    });
+    render(<GachaPage />);
+    await waitFor(() => expect(screen.getByText("Pull (10 coins)")).toBeInTheDocument());
+
+    const user = userEvent.setup({ delay: null });
+    await user.click(screen.getByLabelText("Skip animation"));
+    await user.click(screen.getByText("Summon 10x (100 coins)"));
+
+    await waitFor(() => expect(screen.getByText("Summon results (10)")).toBeInTheDocument());
+    await user.click(screen.getByText("Continue"));
+    await waitFor(() => expect(screen.queryByText("Summon results (10)")).not.toBeInTheDocument());
+  });
+
+  it("toggles sound on and off", async () => {
+    mockedApiFetch.mockImplementation(async (path: string) => {
+      if (path === "/user/profile") return mockProfile;
+      if (path === "/events") return mockEvents;
+      if (path === "/events/ev1") return mockEventDetail;
+      return null;
+    });
+    render(<GachaPage />);
+    await waitFor(() => expect(screen.getByText("🔊 Sound on")).toBeInTheDocument());
+
+    const user = userEvent.setup({ delay: null });
+    await user.click(screen.getByRole("button", { name: "Mute" }));
+    expect(screen.getByText("🔇 Sound off")).toBeInTheDocument();
+  });
+
+  it("requests fullscreen for the stage", async () => {
+    mockedApiFetch.mockImplementation(async (path: string) => {
+      if (path === "/user/profile") return mockProfile;
+      if (path === "/events") return mockEvents;
+      if (path === "/events/ev1") return mockEventDetail;
+      return null;
+    });
+    render(<GachaPage />);
+    await waitFor(() => expect(screen.getByText("⛶ Fullscreen")).toBeInTheDocument());
+
+    const user = userEvent.setup({ delay: null });
+    await user.click(screen.getByText("⛶ Fullscreen"));
+    expect(HTMLElement.prototype.requestFullscreen).toHaveBeenCalled();
+  });
+
+  it("replays the last reveal without spending coins", async () => {
+    mockedApiFetch.mockImplementation(async (path: string, opts?: RequestInit) => {
+      if (path === "/user/profile") return mockProfile;
+      if (path === "/events") return mockEvents;
+      if (path === "/events/ev1") return mockEventDetail;
+      if (path === "/gacha/pull" && opts?.method === "POST") return mockPullResult;
+      return null;
+    });
+    render(<GachaPage />);
+    await waitFor(() => expect(screen.getByText("Pull (10 coins)")).toBeInTheDocument());
+
+    const user = userEvent.setup({ delay: null });
+    await user.click(screen.getByLabelText("Skip animation"));
+    await user.click(screen.getByText("Pull (10 coins)"));
+    await waitFor(() => expect(screen.getByText("You got:")).toBeInTheDocument());
+
+    await user.click(screen.getByText("↺ Replay"));
+    await waitFor(() => expect(screen.getByTestId("rarity-reveal")).toBeInTheDocument());
   });
 });

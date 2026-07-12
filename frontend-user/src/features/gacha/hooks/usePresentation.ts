@@ -19,6 +19,7 @@ export function usePresentation(): Presentation {
 
   useEffect(() => {
     const query = window.matchMedia("(prefers-reduced-motion: reduce)");
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setReducedMotion(query.matches);
     const handler = (event: MediaQueryListEvent) => setReducedMotion(event.matches);
     query.addEventListener("change", handler);

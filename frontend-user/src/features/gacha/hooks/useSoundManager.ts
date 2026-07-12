@@ -31,8 +31,10 @@ export function useSoundManager(): SoundManager {
   // playing a sound never triggers a re-render.
   const howlsRef = useRef<Partial<Record<SoundName, Howl>>>({});
 
-  // Restore the persisted mute preference on mount (client-only effect).
+  // Restore the persisted mute preference on mount (client-only; localStorage
+  // is unavailable during SSR, so this can't be a lazy initializer).
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMuted(window.localStorage.getItem(MUTE_STORAGE_KEY) === "true");
   }, []);
   // Unload all cached sounds on unmount.

@@ -40,6 +40,9 @@ export function useRevealSequence({
     onCompleteRef.current = onComplete;
   });
 
+  // This effect IS the timer-driven phase machine — setting phase on mount and
+  // advancing it on timers is its purpose, not an accidental cascading render.
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (!rarity) {
       setPhase("idle");
@@ -75,6 +78,7 @@ export function useRevealSequence({
 
     return () => timers.forEach(clearTimeout);
   }, [rarity, speed, skip, reducedMotion]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   return { phase, isRevealed: phase === "revealed" };
 }

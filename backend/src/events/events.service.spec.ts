@@ -30,7 +30,10 @@ describe('EventsService', () => {
 
   describe('listActive', () => {
     it('returns active events mapped to the public DTO shape', async () => {
-      const events = [makeEvent(), makeEvent({ id: 'evt-2', name: 'Summer Event' })];
+      const events = [
+        makeEvent(),
+        makeEvent({ id: 'evt-2', name: 'Summer Event' }),
+      ];
       prisma.gachaEvent.findMany.mockResolvedValue(events);
 
       const result = await service.listActive();
@@ -60,11 +63,15 @@ describe('EventsService', () => {
     it('throws NotFoundException when event does not exist', async () => {
       prisma.gachaEvent.findUnique.mockResolvedValue(null);
 
-      await expect(service.getById('missing')).rejects.toThrow(NotFoundException);
+      await expect(service.getById('missing')).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('throws NotFoundException when event exists but is inactive', async () => {
-      prisma.gachaEvent.findUnique.mockResolvedValue(makeEvent({ isActive: false }));
+      prisma.gachaEvent.findUnique.mockResolvedValue(
+        makeEvent({ isActive: false }),
+      );
 
       await expect(service.getById('evt-1')).rejects.toThrow(NotFoundException);
     });

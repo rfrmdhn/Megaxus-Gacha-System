@@ -18,7 +18,7 @@ describe('AdminUsersController', () => {
     const result = { items: [], nextCursor: null };
     usersService.list.mockResolvedValue(result);
 
-    const res = await controller.list({ limit: 20 } as any);
+    const res = await controller.list({ limit: 20 });
 
     expect(res).toEqual(result);
     expect(usersService.list).toHaveBeenCalledWith({ limit: 20 });
@@ -49,7 +49,7 @@ describe('AdminUsersController', () => {
     const updated = { id: 'u1', coins: 999 };
     usersService.update.mockResolvedValue(updated);
 
-    const res = await controller.update('u1', { coins: 999 } as any);
+    const res = await controller.update('u1', { coins: 999 });
 
     expect(res).toEqual(updated);
     expect(usersService.update).toHaveBeenCalledWith('u1', { coins: 999 });

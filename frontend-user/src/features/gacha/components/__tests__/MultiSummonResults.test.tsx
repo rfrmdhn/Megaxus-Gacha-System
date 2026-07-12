@@ -13,7 +13,9 @@ describe("MultiSummonResults", () => {
     const onContinue = vi.fn();
     render(<MultiSummonResults results={results} onContinue={onContinue} />);
     expect(screen.getByText("Summon results (3)")).toBeInTheDocument();
-    expect(screen.getByText("legendary")).toBeInTheDocument();
+    expect(screen.getByText("Best pull:")).toBeInTheDocument();
+    // "legendary" shows in the headline and on card B's badge.
+    expect(screen.getAllByText("legendary").length).toBeGreaterThanOrEqual(2);
     expect(screen.getAllByTestId("reward-card")).toHaveLength(3);
     fireEvent.click(screen.getByText("Continue"));
     expect(onContinue).toHaveBeenCalled();

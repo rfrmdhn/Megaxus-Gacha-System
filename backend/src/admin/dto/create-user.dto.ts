@@ -1,4 +1,12 @@
-import { IsEmail, IsEnum, IsInt, IsOptional, Max, Min, MinLength } from 'class-validator';
+import {
+  IsEmail,
+  IsEnum,
+  IsInt,
+  IsOptional,
+  Max,
+  Min,
+  MinLength,
+} from 'class-validator';
 import { Role } from '../../../generated/prisma';
 
 export class CreateUserDto {

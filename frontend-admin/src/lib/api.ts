@@ -13,8 +13,9 @@ export class ApiError extends Error {
 
 export async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = getToken();
+  const isFormData = options.body instanceof FormData;
   const headers: Record<string, string> = {
-    "Content-Type": "application/json",
+    ...(isFormData ? {} : { "Content-Type": "application/json" }),
     ...(options.headers as Record<string, string>),
   };
   if (token) headers.Authorization = `Bearer ${token}`;
@@ -28,6 +29,18 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}): Prom
     throw new ApiError(message ?? res.statusText, res.status);
   }
   return body as T;
+}
+
+export async function apiFetchBlob(path: string): Promise<Blob> {
+  const token = getToken();
+  const headers: Record<string, string> = {};
+  if (token) headers.Authorization = `Bearer ${token}`;
+
+  const res = await fetch(`${API_URL}${path}`, { headers });
+  if (!res.ok) {
+    throw new ApiError(res.statusText, res.status);
+  }
+  return res.blob();
 }
 
 export function sseUrl(path: string): string {

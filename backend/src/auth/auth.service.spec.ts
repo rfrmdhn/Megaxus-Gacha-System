@@ -19,7 +19,10 @@ describe('AuthService', () => {
 
   describe('register', () => {
     it('throws ConflictException when email already exists', async () => {
-      prisma.user.findUnique.mockResolvedValue({ id: 'existing', email: 'test@test.com' });
+      prisma.user.findUnique.mockResolvedValue({
+        id: 'existing',
+        email: 'test@test.com',
+      });
 
       await expect(
         service.register({ email: 'test@test.com', password: 'password123' }),
@@ -36,7 +39,10 @@ describe('AuthService', () => {
         role: 'user',
       });
 
-      const result = await service.register({ email: 'new@test.com', password: 'password123' });
+      const result = await service.register({
+        email: 'new@test.com',
+        password: 'password123',
+      });
 
       expect(prisma.user.create).toHaveBeenCalledWith({
         data: {
@@ -44,7 +50,11 @@ describe('AuthService', () => {
           passwordHash: expect.any(String),
         },
       });
-      expect(result.user).toEqual({ id: 'new-user', email: 'new@test.com', coins: 500 });
+      expect(result.user).toEqual({
+        id: 'new-user',
+        email: 'new@test.com',
+        coins: 500,
+      });
       expect(result.token).toBe('jwt-token');
       expect(jwt.sign).toHaveBeenCalledWith({
         sub: 'new-user',
@@ -105,7 +115,10 @@ describe('AuthService', () => {
         role: 'user',
       });
 
-      const result = await service.login({ email: 'test@test.com', password: 'password123' });
+      const result = await service.login({
+        email: 'test@test.com',
+        password: 'password123',
+      });
 
       expect(result.token).toBe('jwt-token');
       expect(jwt.sign).toHaveBeenCalledWith({

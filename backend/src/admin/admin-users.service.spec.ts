@@ -20,7 +20,12 @@ describe('AdminUsersService', () => {
 
   beforeEach(() => {
     prisma = {
-      user: { findMany: jest.fn(), findUnique: jest.fn(), update: jest.fn(), create: jest.fn() },
+      user: {
+        findMany: jest.fn(),
+        findUnique: jest.fn(),
+        update: jest.fn(),
+        create: jest.fn(),
+      },
       gachaLog: { findMany: jest.fn() },
     };
     service = new AdminUsersService(prisma);
@@ -30,7 +35,7 @@ describe('AdminUsersService', () => {
     it('projects rows into the list DTO shape and passes through pagination', async () => {
       prisma.user.findMany.mockResolvedValue([makeUserRow()]);
 
-      const result = await service.list({ limit: 20 } as any);
+      const result = await service.list({ limit: 20 });
 
       expect(result.items).toEqual([
         {
@@ -49,7 +54,7 @@ describe('AdminUsersService', () => {
     it('filters by email case-insensitively when provided', async () => {
       prisma.user.findMany.mockResolvedValue([]);
 
-      await service.list({ email: 'Foo', limit: 20 } as any);
+      await service.list({ email: 'Foo', limit: 20 });
 
       expect(prisma.user.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -61,9 +66,11 @@ describe('AdminUsersService', () => {
     it('omits the where clause when no email filter is given', async () => {
       prisma.user.findMany.mockResolvedValue([]);
 
-      await service.list({ limit: 20 } as any);
+      await service.list({ limit: 20 });
 
-      expect(prisma.user.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: undefined }));
+      expect(prisma.user.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: undefined }),
+      );
     });
   });
 
@@ -80,10 +87,17 @@ describe('AdminUsersService', () => {
     it('hashes the password and creates the user with default role/coins', async () => {
       prisma.user.findUnique.mockResolvedValue(null);
       prisma.user.create.mockResolvedValue(
-        makeUserRow({ id: 'new-user', email: 'new@test.com', _count: undefined }),
+        makeUserRow({
+          id: 'new-user',
+          email: 'new@test.com',
+          _count: undefined,
+        }),
       );
 
-      const result = await service.create({ email: 'new@test.com', password: 'password123' });
+      const result = await service.create({
+        email: 'new@test.com',
+        password: 'password123',
+      });
 
       expect(prisma.user.create).toHaveBeenCalledWith({
         data: {
@@ -91,7 +105,9 @@ describe('AdminUsersService', () => {
           passwordHash: expect.any(String),
         },
       });
-      expect(prisma.user.create.mock.calls[0][0].data.passwordHash).not.toBe('password123');
+      expect(prisma.user.create.mock.calls[0][0].data.passwordHash).not.toBe(
+        'password123',
+      );
       expect(result).toEqual({
         id: 'new-user',
         email: 'new@test.com',
@@ -106,10 +122,20 @@ describe('AdminUsersService', () => {
     it('passes through an explicit role and coins when provided', async () => {
       prisma.user.findUnique.mockResolvedValue(null);
       prisma.user.create.mockResolvedValue(
-        makeUserRow({ id: 'new-user', email: 'new@test.com', role: 'admin', coins: 1000 }),
+        makeUserRow({
+          id: 'new-user',
+          email: 'new@test.com',
+          role: 'admin',
+          coins: 1000,
+        }),
       );
 
-      await service.create({ email: 'new@test.com', password: 'password123', role: 'admin' as any, coins: 1000 });
+      await service.create({
+        email: 'new@test.com',
+        password: 'password123',
+        role: 'admin',
+        coins: 1000,
+      });
 
       expect(prisma.user.create).toHaveBeenCalledWith({
         data: {
@@ -126,7 +152,9 @@ describe('AdminUsersService', () => {
     it('throws NotFoundException when the user does not exist', async () => {
       prisma.user.findUnique.mockResolvedValue(null);
 
-      await expect(service.getDetail('missing')).rejects.toThrow(NotFoundException);
+      await expect(service.getDetail('missing')).rejects.toThrow(
+        NotFoundException,
+      );
       expect(prisma.gachaLog.findMany).not.toHaveBeenCalled();
     });
 
@@ -178,7 +206,9 @@ describe('AdminUsersService', () => {
     it('throws NotFoundException when the user does not exist', async () => {
       prisma.user.findUnique.mockResolvedValue(null);
 
-      await expect(service.update('missing', { coins: 100 })).rejects.toThrow(NotFoundException);
+      await expect(service.update('missing', { coins: 100 })).rejects.toThrow(
+        NotFoundException,
+      );
       expect(prisma.user.update).not.toHaveBeenCalled();
     });
 
@@ -198,7 +228,11 @@ describe('AdminUsersService', () => {
       prisma.user.findUnique.mockResolvedValue(makeUserRow());
       prisma.user.update.mockResolvedValue(makeUserRow());
 
-      await service.update('u1', { coins: 999, role: 'admin' as any, isBanned: false });
+      await service.update('u1', {
+        coins: 999,
+        role: 'admin',
+        isBanned: false,
+      });
 
       expect(prisma.user.update).toHaveBeenCalledWith({
         where: { id: 'u1' },

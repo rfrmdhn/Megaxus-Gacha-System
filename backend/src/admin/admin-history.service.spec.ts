@@ -27,7 +27,7 @@ describe('AdminHistoryService', () => {
   it('returns mapped history items with nextCursor null when no more pages', async () => {
     prisma.gachaLog.findMany.mockResolvedValue([makeLog()]);
 
-    const result = await service.list({ limit: 20 } as any);
+    const result = await service.list({ limit: 20 });
 
     expect(result.items).toEqual([
       {
@@ -50,7 +50,7 @@ describe('AdminHistoryService', () => {
     );
     prisma.gachaLog.findMany.mockResolvedValue(rows);
 
-    const result = await service.list({ limit: 20 } as any);
+    const result = await service.list({ limit: 20 });
 
     expect(result.items).toHaveLength(20);
     expect(result.nextCursor).toBe('log-19');
@@ -59,7 +59,7 @@ describe('AdminHistoryService', () => {
   it('filters by userId when provided', async () => {
     prisma.gachaLog.findMany.mockResolvedValue([]);
 
-    await service.list({ userId: 'user-1', limit: 20 } as any);
+    await service.list({ userId: 'user-1', limit: 20 });
 
     expect(prisma.gachaLog.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -71,7 +71,7 @@ describe('AdminHistoryService', () => {
   it('does not filter by userId when not provided', async () => {
     prisma.gachaLog.findMany.mockResolvedValue([]);
 
-    await service.list({ limit: 20 } as any);
+    await service.list({ limit: 20 });
 
     expect(prisma.gachaLog.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -83,7 +83,7 @@ describe('AdminHistoryService', () => {
   it('passes cursor args for pagination', async () => {
     prisma.gachaLog.findMany.mockResolvedValue([]);
 
-    await service.list({ cursor: 'some-cursor', limit: 10 } as any);
+    await service.list({ cursor: 'some-cursor', limit: 10 });
 
     expect(prisma.gachaLog.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -97,7 +97,7 @@ describe('AdminHistoryService', () => {
   it('selects only the fields it needs from item/event/user relations', async () => {
     prisma.gachaLog.findMany.mockResolvedValue([]);
 
-    await service.list({ limit: 20 } as any);
+    await service.list({ limit: 20 });
 
     expect(prisma.gachaLog.findMany).toHaveBeenCalledWith(
       expect.objectContaining({

@@ -19,7 +19,9 @@ describe('GachaCacheService', () => {
 
   describe('getEventItems', () => {
     it('returns cached items when cache hit', async () => {
-      const cached = [{ id: 'item-1', name: 'Sword', rarity: 'rare', dropRate: 50 }];
+      const cached = [
+        { id: 'item-1', name: 'Sword', rarity: 'rare', dropRate: 50 },
+      ];
       redis.get.mockResolvedValue(JSON.stringify(cached));
 
       const result = await service.getEventItems('evt-1');
@@ -56,7 +58,12 @@ describe('GachaCacheService', () => {
     it('converts dropRate from Prisma Decimal to number', async () => {
       redis.get.mockResolvedValue(null);
       prisma.gachaItem.findMany.mockResolvedValue([
-        { id: 'item-1', name: 'Sword', rarity: 'rare', dropRate: { toString: () => '50' } },
+        {
+          id: 'item-1',
+          name: 'Sword',
+          rarity: 'rare',
+          dropRate: { toString: () => '50' },
+        },
       ]);
 
       const result = await service.getEventItems('evt-1');

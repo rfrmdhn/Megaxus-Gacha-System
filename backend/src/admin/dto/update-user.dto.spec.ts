@@ -1,6 +1,10 @@
-jest.mock('../../../../generated/prisma', () => ({
-  Role: { admin: 'admin', user: 'user' },
-}), { virtual: true });
+jest.mock(
+  '../../../../generated/prisma',
+  () => ({
+    Role: { admin: 'admin', user: 'user' },
+  }),
+  { virtual: true },
+);
 
 import { validate } from 'class-validator';
 import { plainToInstance } from 'class-transformer';

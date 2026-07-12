@@ -3,6 +3,7 @@ export interface AdminItem {
   name: string;
   rarity: string;
   dropRate: string;
+  imageKey: string | null;
 }
 
 export interface AdminEvent {

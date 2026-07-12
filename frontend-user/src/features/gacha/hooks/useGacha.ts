@@ -74,6 +74,7 @@ export function useGacha(initialEventId?: string | null) {
     if (!auto || pulling || pending) return;
     if (!selectedEventId || !profile) return;
     if (profile.coins < PULL_COST) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setAuto(false);
       return;
     }

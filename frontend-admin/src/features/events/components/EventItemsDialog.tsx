@@ -1,16 +1,144 @@
 "use client";
 
-import { FormEvent, useState } from "react";
-import { DeleteOutlined } from "@ant-design/icons";
+import { ChangeEvent, FormEvent, useEffect, useState } from "react";
+import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
 import { Dialog } from "@/components/molecules/Dialog";
 import { IconButton } from "@/components/atoms/IconButton";
 import { Input } from "@/components/atoms/Input";
 import { ApiError } from "@/lib/api";
-import { AdminEvent } from "../types";
-import { addEventItem, deleteItem } from "../api";
+import { AdminEvent, AdminItem } from "../types";
+import {
+  addEventItem,
+  deleteItem,
+  fetchItemImage,
+  removeItemImage,
+  updateItem,
+  uploadItemImage,
+} from "../api";
 
 function itemsTotal(items: AdminEvent["items"]): number {
   return items.reduce((sum, i) => sum + parseFloat(i.dropRate), 0);
+}
+
+function ItemThumbnail({ itemId, imageKey }: { itemId: string; imageKey: string | null }) {
+  const [url, setUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!imageKey) {
+      setUrl(null);
+      return;
+    }
+    let objectUrl: string | null = null;
+    let cancelled = false;
+
+    fetchItemImage(itemId).then((blob) => {
+      if (cancelled) return;
+      objectUrl = URL.createObjectURL(blob);
+      setUrl(objectUrl);
+    });
+
+    return () => {
+      cancelled = true;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [itemId, imageKey]);
+
+  if (!url) {
+    return (
+      <div className="flex h-8 w-8 items-center justify-center rounded border border-dashed border-black/15 text-[10px] text-black/30">
+        —
+      </div>
+    );
+  }
+
+  // eslint-disable-next-line @next/next/no-img-element -- blob object URL, not an optimizable asset
+  return <img src={url} alt="" className="h-8 w-8 rounded object-cover" />;
+}
+
+function EditItemRow({
+  item,
+  onSaved,
+  onCancel,
+  onError,
+}: {
+  item: AdminItem;
+  onSaved: () => void;
+  onCancel: () => void;
+  onError: (message: string) => void;
+}) {
+  const [name, setName] = useState(item.name);
+  const [rarity, setRarity] = useState(item.rarity);
+  const [dropRate, setDropRate] = useState(item.dropRate);
+  const [file, setFile] = useState<File | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  async function save(e: FormEvent) {
+    e.preventDefault();
+    setSaving(true);
+    onError("");
+    try {
+      await updateItem(item.id, { name, rarity, dropRate: parseFloat(dropRate) });
+      if (file) await uploadItemImage(item.id, file);
+      onSaved();
+    } catch (err) {
+      onError(err instanceof ApiError ? err.message : "Failed to update item");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function clearImage() {
+    onError("");
+    try {
+      await removeItemImage(item.id);
+      onSaved();
+    } catch (err) {
+      onError(err instanceof ApiError ? err.message : "Failed to remove image");
+    }
+  }
+
+  return (
+    <tr className="border-t border-black/5 bg-black/[0.02]">
+      <td colSpan={5} className="py-2">
+        <form onSubmit={save} className="flex flex-wrap items-end gap-2">
+          <Input size="sm" required value={name} onChange={(e) => setName(e.target.value)} />
+          <Input size="sm" required value={rarity} onChange={(e) => setRarity(e.target.value)} />
+          <Input
+            size="sm"
+            required
+            type="number"
+            step="0.01"
+            min="0"
+            max="100"
+            className="w-24"
+            value={dropRate}
+            onChange={(e) => setDropRate(e.target.value)}
+          />
+          <input
+            type="file"
+            accept="image/png,image/jpeg,image/webp"
+            onChange={(e: ChangeEvent<HTMLInputElement>) => setFile(e.target.files?.[0] ?? null)}
+            className="text-xs"
+          />
+          {item.imageKey && (
+            <button type="button" onClick={clearImage} className="text-xs text-red-600 hover:underline">
+              Remove image
+            </button>
+          )}
+          <button
+            type="submit"
+            disabled={saving}
+            className="rounded-lg border border-black/15 px-3 py-1.5 text-sm transition-colors hover:border-brand-purple/50 disabled:opacity-50"
+          >
+            {saving ? "Saving…" : "Save"}
+          </button>
+          <button type="button" onClick={onCancel} className="text-xs text-black/50 hover:underline">
+            Cancel
+          </button>
+        </form>
+      </td>
+    </tr>
+  );
 }
 
 export function EventItemsDialog({
@@ -25,8 +153,10 @@ export function EventItemsDialog({
   const [itemName, setItemName] = useState("");
   const [rarity, setRarity] = useState("");
   const [dropRate, setDropRate] = useState("");
+  const [newItemFile, setNewItemFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const total = itemsTotal(event.items);
 
   async function addItem(e: FormEvent) {
@@ -34,10 +164,16 @@ export function EventItemsDialog({
     setError(null);
     setSaving(true);
     try {
-      await addEventItem(event.id, { name: itemName, rarity, dropRate: parseFloat(dropRate) });
+      const created = await addEventItem(event.id, {
+        name: itemName,
+        rarity,
+        dropRate: parseFloat(dropRate),
+      });
+      if (newItemFile) await uploadItemImage(created.id, newItemFile);
       setItemName("");
       setRarity("");
       setDropRate("");
+      setNewItemFile(null);
       onChanged();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Failed to add item");
@@ -58,7 +194,7 @@ export function EventItemsDialog({
   }
 
   return (
-    <Dialog title={`Items — ${event.name}`} onClose={onClose} widthClassName="max-w-xl">
+    <Dialog title={`Items — ${event.name}`} onClose={onClose} widthClassName="max-w-2xl">
       <div className="flex flex-col gap-4">
         {error && <p className="text-sm text-red-600">{error}</p>}
 
@@ -72,6 +208,7 @@ export function EventItemsDialog({
         <table className="w-full text-sm">
           <thead>
             <tr className="text-left text-black/50">
+              <th className="py-1">Image</th>
               <th className="py-1">Item</th>
               <th className="py-1">Rarity</th>
               <th className="py-1">Drop rate</th>
@@ -81,26 +218,49 @@ export function EventItemsDialog({
           <tbody>
             {event.items.length === 0 ? (
               <tr>
-                <td colSpan={4} className="py-2 text-black/50">
+                <td colSpan={5} className="py-2 text-black/50">
                   No items yet
                 </td>
               </tr>
             ) : (
-              event.items.map((item) => (
-                <tr key={item.id} className="border-t border-black/5">
-                  <td className="py-1.5">{item.name}</td>
-                  <td className="py-1.5 capitalize">{item.rarity}</td>
-                  <td className="py-1.5">{item.dropRate}%</td>
-                  <td className="py-1.5 text-right">
-                    <IconButton
-                      icon={<DeleteOutlined />}
-                      label="Remove item"
-                      danger
-                      onClick={() => removeItem(item.id)}
-                    />
-                  </td>
-                </tr>
-              ))
+              event.items.map((item) =>
+                editingItemId === item.id ? (
+                  <EditItemRow
+                    key={item.id}
+                    item={item}
+                    onSaved={() => {
+                      setEditingItemId(null);
+                      onChanged();
+                    }}
+                    onCancel={() => setEditingItemId(null)}
+                    onError={(message) => setError(message || null)}
+                  />
+                ) : (
+                  <tr key={item.id} className="border-t border-black/5">
+                    <td className="py-1.5">
+                      <ItemThumbnail itemId={item.id} imageKey={item.imageKey} />
+                    </td>
+                    <td className="py-1.5">{item.name}</td>
+                    <td className="py-1.5 capitalize">{item.rarity}</td>
+                    <td className="py-1.5">{item.dropRate}%</td>
+                    <td className="py-1.5 text-right">
+                      <div className="flex justify-end gap-1">
+                        <IconButton
+                          icon={<EditOutlined />}
+                          label="Edit item"
+                          onClick={() => setEditingItemId(item.id)}
+                        />
+                        <IconButton
+                          icon={<DeleteOutlined />}
+                          label="Remove item"
+                          danger
+                          onClick={() => removeItem(item.id)}
+                        />
+                      </div>
+                    </td>
+                  </tr>
+                ),
+              )
             )}
           </tbody>
         </table>
@@ -131,6 +291,12 @@ export function EventItemsDialog({
             value={dropRate}
             onChange={(e) => setDropRate(e.target.value)}
             className="w-28"
+          />
+          <input
+            type="file"
+            accept="image/png,image/jpeg,image/webp"
+            onChange={(e: ChangeEvent<HTMLInputElement>) => setNewItemFile(e.target.files?.[0] ?? null)}
+            className="text-xs"
           />
           <button
             type="submit"

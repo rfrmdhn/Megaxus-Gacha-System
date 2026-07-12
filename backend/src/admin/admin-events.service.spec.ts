@@ -87,12 +87,16 @@ describe('AdminEventsService', () => {
     it('throws NotFoundException when event does not exist', async () => {
       prisma.gachaEvent.findUnique.mockResolvedValue(null);
 
-      await expect(service.update('missing', {})).rejects.toThrow(NotFoundException);
+      await expect(service.update('missing', {})).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('updates name only when only name is provided', async () => {
       prisma.gachaEvent.findUnique.mockResolvedValue(makeEvent());
-      prisma.gachaEvent.update.mockResolvedValue(makeEvent({ name: 'New Name' }));
+      prisma.gachaEvent.update.mockResolvedValue(
+        makeEvent({ name: 'New Name' }),
+      );
 
       const result = await service.update('evt-1', { name: 'New Name' });
 
@@ -104,8 +108,13 @@ describe('AdminEventsService', () => {
     });
 
     it('validates drop rates when activating a draft event', async () => {
-      prisma.gachaEvent.findUnique.mockResolvedValue(makeEvent({ isActive: false }));
-      prisma.gachaItem.findMany.mockResolvedValue([{ dropRate: 60 }, { dropRate: 40 }]);
+      prisma.gachaEvent.findUnique.mockResolvedValue(
+        makeEvent({ isActive: false }),
+      );
+      prisma.gachaItem.findMany.mockResolvedValue([
+        { dropRate: 60 },
+        { dropRate: 40 },
+      ]);
       prisma.gachaEvent.update.mockResolvedValue(makeEvent({ isActive: true }));
 
       await service.update('evt-1', { isActive: true });
@@ -118,7 +127,9 @@ describe('AdminEventsService', () => {
     });
 
     it('throws BadRequestException when activating with invalid drop rates', async () => {
-      prisma.gachaEvent.findUnique.mockResolvedValue(makeEvent({ isActive: false }));
+      prisma.gachaEvent.findUnique.mockResolvedValue(
+        makeEvent({ isActive: false }),
+      );
       prisma.gachaItem.findMany.mockResolvedValue([{ dropRate: 50 }]);
 
       await expect(service.update('evt-1', { isActive: true })).rejects.toThrow(
@@ -127,7 +138,9 @@ describe('AdminEventsService', () => {
     });
 
     it('does not re-validate drop rates when event is already active', async () => {
-      prisma.gachaEvent.findUnique.mockResolvedValue(makeEvent({ isActive: true }));
+      prisma.gachaEvent.findUnique.mockResolvedValue(
+        makeEvent({ isActive: true }),
+      );
       prisma.gachaEvent.update.mockResolvedValue(makeEvent({ isActive: true }));
 
       await service.update('evt-1', { isActive: true });
@@ -136,7 +149,9 @@ describe('AdminEventsService', () => {
     });
 
     it('does not re-validate drop rates when not changing isActive', async () => {
-      prisma.gachaEvent.findUnique.mockResolvedValue(makeEvent({ isActive: false }));
+      prisma.gachaEvent.findUnique.mockResolvedValue(
+        makeEvent({ isActive: false }),
+      );
       prisma.gachaEvent.update.mockResolvedValue(makeEvent());
 
       await service.update('evt-1', { name: 'Updated' });
@@ -145,7 +160,9 @@ describe('AdminEventsService', () => {
     });
 
     it('invalidates cache when isActive is changed', async () => {
-      prisma.gachaEvent.findUnique.mockResolvedValue(makeEvent({ isActive: false }));
+      prisma.gachaEvent.findUnique.mockResolvedValue(
+        makeEvent({ isActive: false }),
+      );
       prisma.gachaItem.findMany.mockResolvedValue([{ dropRate: 100 }]);
       prisma.gachaEvent.update.mockResolvedValue(makeEvent({ isActive: true }));
 
@@ -204,7 +221,9 @@ describe('AdminEventsService', () => {
     it('throws NotFoundException when event does not exist', async () => {
       prisma.gachaEvent.findUnique.mockResolvedValue(null);
 
-      await expect(service.remove('missing')).rejects.toThrow(NotFoundException);
+      await expect(service.remove('missing')).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('deletes the event when it exists and has no pull history', async () => {
@@ -214,15 +233,21 @@ describe('AdminEventsService', () => {
 
       await service.remove('evt-1');
 
-      expect(prisma.gachaLog.count).toHaveBeenCalledWith({ where: { eventId: 'evt-1' } });
-      expect(prisma.gachaEvent.delete).toHaveBeenCalledWith({ where: { id: 'evt-1' } });
+      expect(prisma.gachaLog.count).toHaveBeenCalledWith({
+        where: { eventId: 'evt-1' },
+      });
+      expect(prisma.gachaEvent.delete).toHaveBeenCalledWith({
+        where: { id: 'evt-1' },
+      });
     });
 
     it('throws BadRequestException when the event has existing pull history', async () => {
       prisma.gachaEvent.findUnique.mockResolvedValue(makeEvent());
       prisma.gachaLog.count.mockResolvedValue(3);
 
-      await expect(service.remove('evt-1')).rejects.toThrow(BadRequestException);
+      await expect(service.remove('evt-1')).rejects.toThrow(
+        BadRequestException,
+      );
       expect(prisma.gachaEvent.delete).not.toHaveBeenCalled();
     });
   });

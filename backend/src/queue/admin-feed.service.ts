@@ -26,6 +26,8 @@ export class AdminFeedService {
   }
 
   stream(): Observable<MessageEvent> {
-    return this.subject.asObservable().pipe(map((event) => ({ data: event, type: 'pull' })));
+    return this.subject
+      .asObservable()
+      .pipe(map((event) => ({ data: event, type: 'pull' })));
   }
 }
