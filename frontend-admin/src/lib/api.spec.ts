@@ -117,7 +117,7 @@ describe("apiFetchBlob", () => {
     const result = await apiFetchBlob("/admin/items/item-1/image");
 
     const callArgs = fetchMock.mock.calls[0] as [string, any];
-    expect(callArgs[0]).toBe(`${ORIGIN}/admin/items/item-1/image`);
+    expect(callArgs[0]).toBe(`${ORIGIN}/api/admin/items/item-1/image`);
     expect(callArgs[1].headers.Authorization).toBe("Bearer my-token");
     expect(result).toBeInstanceOf(Blob);
   });

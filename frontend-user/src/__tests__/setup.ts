@@ -1,6 +1,11 @@
 import "@testing-library/jest-dom/vitest";
 import { afterEach, vi } from "vitest";
+import { configure } from "@testing-library/react";
 import React, { useSyncExternalStore } from "react";
+
+// Coverage instrumentation slows everything down; raise the default async
+// timeout so waitFor/findBy don't flake on the initial data-load waits.
+configure({ asyncUtilTimeout: 5000 });
 
 let _currentPathname = "/";
 const _pathnameListeners = new Set<() => void>();

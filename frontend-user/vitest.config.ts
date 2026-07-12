@@ -12,6 +12,9 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     globals: true,
+    // Reveal animations run on real timers; keep headroom under coverage load.
+    testTimeout: 15000,
+    hookTimeout: 15000,
     setupFiles: ["./src/__tests__/setup.ts"],
     include: ["src/**/*.test.{ts,tsx}"],
     coverage: {
