@@ -1,17 +1,19 @@
 "use client";
 
-import { PullResult } from "../types";
-import { RARITY_TREATMENTS, highestRarity } from "../lib/rarity";
+import { MultiPullResult } from "../types";
+import { getTreatment } from "../lib/rarity";
 import { RewardCard } from "./RewardCard";
 
 interface MultiSummonResultsProps {
-  results: PullResult[];
+  data: MultiPullResult;
   onContinue: () => void;
 }
 
-export function MultiSummonResults({ results, onContinue }: MultiSummonResultsProps) {
-  const best = highestRarity(results.map((r) => r.item.rarity));
-  const bestTreatment = RARITY_TREATMENTS[best];
+export function MultiSummonResults({ data, onContinue }: MultiSummonResultsProps) {
+  const { results, bestRarity } = data;
+  // `bestRarity` is decided by the backend (rarest pull); we only display it.
+  // getTreatment degrades an unknown label's colour gracefully to common.
+  const bestTreatment = getTreatment(bestRarity);
 
   return (
     <div
@@ -22,13 +24,16 @@ export function MultiSummonResults({ results, onContinue }: MultiSummonResultsPr
       <div className="mb-4 flex items-center justify-between">
         <p className="text-lg font-bold">Summon results ({results.length})</p>
         <p className="text-sm text-white/70">
-          Best pull: <span className="font-semibold capitalize" style={{ color: bestTreatment.palette.via }}>{best}</span>
+          Best pull:{" "}
+          <span className="font-semibold capitalize" style={{ color: bestTreatment.palette.via }}>
+            {bestRarity}
+          </span>
         </p>
       </div>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
         {results.map((result, i) => (
-          <RewardCard key={i} result={result} compact />
+          <RewardCard key={i} result={result} compact entranceDelay={i * 0.08} />
         ))}
       </div>
 

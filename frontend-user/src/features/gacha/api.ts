@@ -1,5 +1,11 @@
-import { ApiError, apiFetch } from "@/lib/api";
+import { apiFetch } from "@/lib/api";
 import { GachaEvent, EventItem, PullResult, MultiPullResult } from "./types";
+
+interface BulkPullResponse {
+  items: PullResult["item"][];
+  bestRarity: string;
+  remainingCoins: number;
+}
 
 export function listEvents(): Promise<GachaEvent[]> {
   return apiFetch<GachaEvent[]>("/events");
@@ -16,22 +22,16 @@ export function pull(eventId: string): Promise<PullResult> {
   });
 }
 
-// The backend has no batch endpoint, so a multi-summon is N sequential pulls.
-// We stop early on an ApiError (e.g. running out of coins mid-batch) and
-// return whatever succeeded rather than throwing away the whole run. Any
-// non-ApiError (network/unexpected) propagates so the caller shows it.
+// One bulk request: the backend charges `count` pulls all-or-nothing and
+// returns every pulled item plus the best (rarest) rarity it computed.
 export async function pullMany(eventId: string, count: number): Promise<MultiPullResult> {
-  const results: PullResult[] = [];
-  for (let i = 0; i < count; i++) {
-    try {
-      results.push(await pull(eventId));
-    } catch (err) {
-      if (err instanceof ApiError && results.length > 0) break;
-      throw err;
-    }
-  }
+  const res = await apiFetch<BulkPullResponse>("/gacha/pull-bulk", {
+    method: "POST",
+    body: JSON.stringify({ eventId, count }),
+  });
   return {
-    results,
-    remainingCoins: results[results.length - 1]?.remainingCoins ?? 0,
+    results: res.items.map((item) => ({ item, remainingCoins: res.remainingCoins })),
+    bestRarity: res.bestRarity,
+    remainingCoins: res.remainingCoins,
   };
 }

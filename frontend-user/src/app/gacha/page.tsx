@@ -63,7 +63,7 @@ function GachaPageContent() {
     replay,
     result,
     multiResult,
-    revealResult,
+    pending,
     error,
     pull,
     pullTen,
@@ -140,15 +140,27 @@ function GachaPageContent() {
             )}
 
             {multiResult && !revealing && (
-              <MultiSummonResults results={multiResult.results} onContinue={clearResults} />
+              <MultiSummonResults data={multiResult} onContinue={clearResults} />
             )}
           </>
         )}
       </div>
 
-      {revealing && revealResult && (
+      {revealing && pending?.type === "single" && (
         <RarityReveal
-          result={revealResult}
+          result={pending.result}
+          speed={speed}
+          reducedMotion={reducedMotion}
+          onSound={onSound}
+          onVibrate={onVibrate}
+          onComplete={commitReveal}
+          onContinue={dismissReveal}
+        />
+      )}
+
+      {revealing && pending?.type === "multi" && (
+        <RarityReveal
+          multi={pending.data}
           speed={speed}
           reducedMotion={reducedMotion}
           onSound={onSound}

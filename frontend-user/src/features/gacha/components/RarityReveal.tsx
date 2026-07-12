@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { PullResult } from "../types";
+import { MultiPullResult, PullResult } from "../types";
 import { RevealPhase, getTreatment } from "../lib/rarity";
 import { SoundName } from "../hooks/useSoundManager";
 import { useRevealSequence } from "../hooks/useRevealSequence";
@@ -10,9 +10,9 @@ import { BackgroundEffects } from "./BackgroundEffects";
 import { SummonPortal } from "./SummonPortal";
 import { ParticleField } from "./ParticleField";
 import { RewardCard } from "./RewardCard";
+import { MultiSummonResults } from "./MultiSummonResults";
 
-interface RarityRevealProps {
-  result: PullResult;
+interface RarityRevealBaseProps {
   speed: number;
   reducedMotion: boolean;
   onSound: (name: SoundName) => void;
@@ -22,6 +22,15 @@ interface RarityRevealProps {
   /** Fired when the user dismisses the reward. */
   onContinue: () => void;
 }
+
+// One reveal component, two payloads: a single pull reveals one card; a bulk
+// pull plays one buildup (keyed on the backend's bestRarity) then reveals the
+// whole grid. Exactly one of `result` / `multi` is provided.
+type RarityRevealProps = RarityRevealBaseProps &
+  (
+    | { result: PullResult; multi?: undefined }
+    | { multi: MultiPullResult; result?: undefined }
+  );
 
 const INTENSITY: Record<RevealPhase, number> = {
   idle: 0,
@@ -39,6 +48,7 @@ const INTENSITY: Record<RevealPhase, number> = {
 
 export function RarityReveal({
   result,
+  multi,
   speed,
   reducedMotion,
   onSound,
@@ -46,7 +56,10 @@ export function RarityReveal({
   onComplete,
   onContinue,
 }: RarityRevealProps) {
-  const treatment = getTreatment(result.item.rarity);
+  // The buildup is driven by the rarest pull: the backend's bestRarity for a
+  // bulk pull, or the single item's rarity otherwise.
+  const buildupRarity = multi ? multi.bestRarity : result.item.rarity;
+  const treatment = getTreatment(buildupRarity);
   const { palette, effects } = treatment;
   const [skip, setSkip] = useState(false);
 
@@ -96,9 +109,15 @@ export function RarityReveal({
       )}
 
       {isRevealed ? (
-        <div className="relative z-10 flex flex-col items-center gap-4">
-          <RewardCard result={result} interactive={!reducedMotion} showContinue onContinue={onContinue} />
-        </div>
+        multi ? (
+          <div className="relative z-10 w-full max-w-3xl px-4">
+            <MultiSummonResults data={multi} onContinue={onContinue} />
+          </div>
+        ) : (
+          <div className="relative z-10 flex flex-col items-center gap-4">
+            <RewardCard result={result} interactive={!reducedMotion} showContinue onContinue={onContinue} />
+          </div>
+        )
       ) : (
         <div className="relative z-10 flex flex-col items-center gap-6">
           {/* Golden light pillars (legendary) */}

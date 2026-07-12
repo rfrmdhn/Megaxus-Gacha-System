@@ -8,7 +8,6 @@ import { Profile } from "@/features/profile/types";
 import { getProfile } from "@/features/profile/api";
 import { GachaEvent, EventItem, PullResult, MultiPullResult } from "../types";
 import { listEvents, getEvent, pull as pullApi, pullMany } from "../api";
-import { highestRarity, normalizeRarity } from "../lib/rarity";
 import { useSoundManager } from "./useSoundManager";
 import { usePresentation } from "./usePresentation";
 
@@ -23,13 +22,6 @@ const AUTO_SUMMON_DELAY_MS = 600;
 type PendingReveal =
   | { type: "single"; result: PullResult; replay?: boolean }
   | { type: "multi"; data: MultiPullResult; replay?: boolean };
-
-function headlineOf(data: MultiPullResult): PullResult {
-  const best = highestRarity(data.results.map((r) => r.item.rarity));
-  // `best` is derived from this set, so a match always exists (results is
-  // non-empty for any successful multi-pull).
-  return data.results.find((r) => normalizeRarity(r.item.rarity) === best)!;
-}
 
 export function useGacha(initialEventId?: string | null) {
   const router = useRouter();
@@ -188,9 +180,6 @@ export function useGacha(initialEventId?: string | null) {
     setAuto((a) => !a);
   }
 
-  const revealResult =
-    pending === null ? null : pending.type === "single" ? pending.result : headlineOf(pending.data);
-
   return {
     checking,
     profile,
@@ -210,7 +199,7 @@ export function useGacha(initialEventId?: string | null) {
     replay,
     result,
     multiResult,
-    revealResult,
+    pending,
     error,
     pull,
     pullTen,

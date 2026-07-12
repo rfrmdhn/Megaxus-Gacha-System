@@ -221,13 +221,3 @@ export function getTreatment(raw: string): RarityTreatment {
 export function getRevealTimeline(rarity: Rarity): RevealStep[] {
   return RARITY_TREATMENTS[rarity].timeline;
 }
-
-/** Pick the rarest of a set of rarity strings — used for 10x headline reveal. */
-export function highestRarity(rarities: string[]): Rarity {
-  return rarities
-    .map(normalizeRarity)
-    .reduce<Rarity>(
-      (best, r) => (RARITY_TREATMENTS[r].tier > RARITY_TREATMENTS[best].tier ? r : best),
-      "common",
-    );
-}

@@ -5,7 +5,6 @@ import {
   normalizeRarity,
   getTreatment,
   getRevealTimeline,
-  highestRarity,
 } from "../rarity";
 
 describe("normalizeRarity", () => {
@@ -60,20 +59,5 @@ describe("getRevealTimeline", () => {
   it("returns the rarity's timeline starting with charging", () => {
     expect(getRevealTimeline("common")[0].phase).toBe("charging");
     expect(getRevealTimeline("legendary").some((s) => s.phase === "pillars")).toBe(true);
-  });
-});
-
-describe("highestRarity", () => {
-  it("picks the rarest from a mixed set", () => {
-    expect(highestRarity(["common", "rare", "legendary", "common"])).toBe("legendary");
-    expect(highestRarity(["common", "rare"])).toBe("rare");
-  });
-
-  it("defaults to common for an empty set", () => {
-    expect(highestRarity([])).toBe("common");
-  });
-
-  it("normalizes entries before comparing", () => {
-    expect(highestRarity(["Epic", "rare"])).toBe("epic");
   });
 });

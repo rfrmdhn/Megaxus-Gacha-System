@@ -17,10 +17,11 @@ export interface PullResult {
   remainingCoins: number;
 }
 
-// Result of a client-side multi-summon (the backend only pulls one at a time).
-// `results` holds every pull that succeeded before an error (if any) stopped
-// the batch; `remainingCoins` is the balance after the last successful pull.
+// Result of a bulk summon (backend `POST /gacha/pull-bulk`). `results` holds
+// every pulled item; `bestRarity` is the rarity of the rarest pull, decided by
+// the backend (lowest drop rate) so the client never interprets rarity labels.
 export interface MultiPullResult {
   results: PullResult[];
+  bestRarity: string;
   remainingCoins: number;
 }

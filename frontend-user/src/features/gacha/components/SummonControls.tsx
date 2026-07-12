@@ -52,7 +52,7 @@ export function SummonControls({
           aria-label="Animation speed"
           value={speed}
           onChange={(e) => onSpeedChange(Number(e.target.value))}
-          className="rounded border border-white/20 bg-transparent px-2 py-1"
+          className="rounded border border-white/20 bg-white/5 px-2 py-1 text-white"
         >
           {SPEED_OPTIONS.map((value) => (
             <option key={value} value={value} className="text-black">

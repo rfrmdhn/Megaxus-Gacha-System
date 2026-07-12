@@ -12,6 +12,8 @@ interface RewardCardProps {
   interactive?: boolean;
   /** Smaller layout for the multi-summon grid. */
   compact?: boolean;
+  /** Delay (seconds) on the entrance spring, for staggering a grid of cards. */
+  entranceDelay?: number;
   showContinue?: boolean;
   onContinue?: () => void;
 }
@@ -22,6 +24,7 @@ export function RewardCard({
   result,
   interactive = false,
   compact = false,
+  entranceDelay = 0,
   showContinue = false,
   onContinue,
 }: RewardCardProps) {
@@ -51,7 +54,7 @@ export function RewardCard({
         onPointerLeave={handlePointerLeave}
         initial={{ opacity: 0, scale: 0.9, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        transition={{ type: "spring", stiffness: 220, damping: 20 }}
+        transition={{ type: "spring", stiffness: 220, damping: 20, delay: entranceDelay }}
         style={{
           rotateX: tilt.x,
           rotateY: tilt.y,
@@ -68,7 +71,7 @@ export function RewardCard({
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={getItemIcon(result.item.rarity)}
-            alt={result.item.rarity}
+            alt=""
             className={`${artworkSize} drop-shadow-[0_0_18px_var(--glow)]`}
             style={{ ["--glow" as string]: palette.glow }}
           />
@@ -76,7 +79,7 @@ export function RewardCard({
           <p className={compact ? "text-base font-semibold" : "text-2xl font-bold"}>{result.item.name}</p>
           <span
             className="rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-widest"
-            style={{ backgroundColor: palette.glow, color: "#fff" }}
+            style={{ backgroundColor: palette.text, color: "#fff", boxShadow: `0 0 14px ${palette.glow}` }}
           >
             <span className="capitalize">{result.item.rarity}</span>
           </span>
