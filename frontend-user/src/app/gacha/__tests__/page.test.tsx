@@ -531,24 +531,4 @@ describe("GachaPage", () => {
     await user.click(screen.getByText("⛶ Fullscreen"));
     expect(HTMLElement.prototype.requestFullscreen).toHaveBeenCalled();
   });
-
-  it("replays the last reveal without spending coins", async () => {
-    mockedApiFetch.mockImplementation(async (path: string, opts?: RequestInit) => {
-      if (path === "/user/profile") return mockProfile;
-      if (path === "/events") return mockEvents;
-      if (path === "/events/ev1") return mockEventDetail;
-      if (path === "/gacha/pull" && opts?.method === "POST") return mockPullResult;
-      return null;
-    });
-    render(<GachaPage />);
-    await waitFor(() => expect(screen.getByText("Pull (10 coins)")).toBeInTheDocument());
-
-    const user = userEvent.setup({ delay: null });
-    await user.click(screen.getByLabelText("Skip animation"));
-    await user.click(screen.getByText("Pull (10 coins)"));
-    await waitFor(() => expect(screen.getByText("You got:")).toBeInTheDocument());
-
-    await user.click(screen.getByText("↺ Replay"));
-    await waitFor(() => expect(screen.getByTestId("rarity-reveal")).toBeInTheDocument());
-  });
 });

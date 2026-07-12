@@ -114,10 +114,12 @@ export class AdminItemsService {
     await this.storage.upload(key, file.buffer, file.mimetype);
     if (item.imageKey) await this.storage.remove(item.imageKey);
 
-    return this.prisma.gachaItem.update({
+    const updated = await this.prisma.gachaItem.update({
       where: { id: itemId },
       data: { imageKey: key },
     });
+    await this.gachaCache.invalidate(item.eventId);
+    return updated;
   }
 
   async removeImage(itemId: string) {
@@ -129,6 +131,7 @@ export class AdminItemsService {
       where: { id: itemId },
       data: { imageKey: null },
     });
+    await this.gachaCache.invalidate(item.eventId);
   }
 
   async getImage(itemId: string): Promise<StoredObject> {

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { mockPush } from "../../../../__tests__/setup";
 import * as api from "@/lib/api";
@@ -198,33 +198,10 @@ describe("useGacha", () => {
     expect(gachaApi.pullMany).not.toHaveBeenCalled();
   });
 
-  it("replays the last reveal without committing again", async () => {
-    const { result } = await renderReady();
-    await act(async () => {
-      await result.current.pull();
-    });
-    act(() => result.current.commitReveal());
-    act(() => result.current.dismissReveal());
-    const coinsBefore = result.current.profile?.coins;
-
-    expect(result.current.canReplay).toBe(true);
-    act(() => result.current.replay());
-    expect(result.current.revealing).toBe(true);
-    act(() => result.current.commitReveal()); // replay commits nothing
-    expect(result.current.profile?.coins).toBe(coinsBefore);
-  });
-
   it("commitReveal is a no-op when nothing is pending", async () => {
     const { result } = await renderReady();
     act(() => result.current.commitReveal());
     expect(result.current.result).toBeNull();
-  });
-
-  it("cannot replay before any pull", async () => {
-    const { result } = await renderReady();
-    expect(result.current.canReplay).toBe(false);
-    act(() => result.current.replay());
-    expect(result.current.revealing).toBe(false);
   });
 
   it("clears persisted results", async () => {
@@ -238,21 +215,6 @@ describe("useGacha", () => {
     expect(result.current.result).toBeNull();
   });
 
-  it("toggles auto summon", async () => {
-    const { result } = await renderReady();
-    act(() => result.current.toggleAuto());
-    expect(result.current.auto).toBe(true);
-    act(() => result.current.toggleAuto());
-    expect(result.current.auto).toBe(false);
-  });
-
-  it("stops auto summon when coins run out", async () => {
-    primeHappyPath(5);
-    const { result } = await renderReady();
-    act(() => result.current.toggleAuto());
-    await waitFor(() => expect(result.current.auto).toBe(false));
-  });
-
   it("keeps handling coin updates when the profile is absent", async () => {
     // Profile never resolves, so it stays null while events still load.
     vi.mocked(profileApi.getProfile).mockReturnValue(new Promise(() => {}));
@@ -264,42 +226,6 @@ describe("useGacha", () => {
     act(() => result.current.commitReveal());
     expect(result.current.profile).toBeNull();
     expect(result.current.result).toEqual(single);
-  });
-
-  it("does not auto-pull without a selected event", async () => {
-    vi.mocked(gachaApi.listEvents).mockResolvedValue([]);
-    const { result } = renderHook(() => useGacha());
-    await waitFor(() => expect(result.current.profile).not.toBeNull());
-    act(() => result.current.toggleAuto());
-    await act(async () => {
-      await Promise.resolve();
-    });
-    expect(gachaApi.pull).not.toHaveBeenCalled();
-  });
-
-  it("does not auto-pull without a profile", async () => {
-    vi.mocked(profileApi.getProfile).mockReturnValue(new Promise(() => {}));
-    const { result } = renderHook(() => useGacha());
-    await waitFor(() => expect(result.current.selectedEventId).toBe("ev1"));
-    act(() => result.current.toggleAuto());
-    await act(async () => {
-      await Promise.resolve();
-    });
-    expect(gachaApi.pull).not.toHaveBeenCalled();
-  });
-
-  it("does not auto-pull while a reveal is pending", async () => {
-    const { result } = await renderReady();
-    await act(async () => {
-      await result.current.pull();
-    });
-    expect(result.current.revealing).toBe(true);
-    act(() => result.current.toggleAuto());
-    await act(async () => {
-      await Promise.resolve();
-    });
-    // Only the manual pull happened; auto did not schedule another.
-    expect(gachaApi.pull).toHaveBeenCalledTimes(1);
   });
 
   it("applies pulls immediately under reduced motion", async () => {
@@ -325,28 +251,5 @@ describe("useGacha", () => {
     } finally {
       window.matchMedia = original;
     }
-  });
-});
-
-describe("useGacha auto-summon loop", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    vi.mocked(requireAuth.useRequireAuth).mockReturnValue({ user: null, checking: false });
-    primeHappyPath(100);
-    vi.useFakeTimers();
-  });
-  afterEach(() => vi.useRealTimers());
-
-  it("performs an immediate pull while auto is on", async () => {
-    const { result } = renderHook(() => useGacha());
-    await act(async () => {
-      await vi.runAllTimersAsync();
-    });
-    expect(result.current.selectedEventId).toBe("ev1");
-    act(() => result.current.toggleAuto());
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(700);
-    });
-    expect(gachaApi.pull).toHaveBeenCalled();
   });
 });

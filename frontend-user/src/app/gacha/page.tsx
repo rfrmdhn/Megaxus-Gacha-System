@@ -57,10 +57,6 @@ function GachaPageContent() {
     setSkipAnimation,
     speed,
     setSpeed,
-    auto,
-    toggleAuto,
-    canReplay,
-    replay,
     result,
     multiResult,
     pending,
@@ -123,12 +119,7 @@ function GachaPageContent() {
               onSpeedChange={setSpeed}
               muted={muted}
               onToggleMute={toggleMute}
-              auto={auto}
-              onToggleAuto={toggleAuto}
-              canReplay={canReplay}
-              onReplay={replay}
               onToggleFullscreen={() => toggleFullscreen(stageRef.current!)}
-              disabled={busy}
             />
 
             {error && <p className="text-sm text-red-400">{error}</p>}

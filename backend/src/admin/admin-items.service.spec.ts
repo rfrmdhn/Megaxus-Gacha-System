@@ -322,6 +322,7 @@ describe('AdminItemsService', () => {
         data: { imageKey: expect.stringMatching(/^items\/item-1-\d+\.png$/) },
       });
       expect(result.imageKey).toBe('items/item-1-1.png');
+      expect(gachaCache.invalidate).toHaveBeenCalledWith('evt-1');
     });
 
     it('removes the old image when replacing an existing one', async () => {
@@ -359,6 +360,7 @@ describe('AdminItemsService', () => {
 
       expect(storage.remove).not.toHaveBeenCalled();
       expect(prisma.gachaItem.update).not.toHaveBeenCalled();
+      expect(gachaCache.invalidate).not.toHaveBeenCalled();
     });
 
     it('removes the object and clears imageKey when present', async () => {
@@ -374,6 +376,7 @@ describe('AdminItemsService', () => {
         where: { id: 'item-1' },
         data: { imageKey: null },
       });
+      expect(gachaCache.invalidate).toHaveBeenCalledWith('evt-1');
     });
   });
 

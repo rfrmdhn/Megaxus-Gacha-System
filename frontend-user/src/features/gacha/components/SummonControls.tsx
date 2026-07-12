@@ -9,12 +9,7 @@ interface SummonControlsProps {
   onSpeedChange: (value: number) => void;
   muted: boolean;
   onToggleMute: () => void;
-  auto: boolean;
-  onToggleAuto: () => void;
-  canReplay: boolean;
-  onReplay: () => void;
   onToggleFullscreen: () => void;
-  disabled?: boolean;
 }
 
 const SPEED_OPTIONS = [0.5, 1, 1.5, 2];
@@ -29,12 +24,7 @@ export function SummonControls({
   onSpeedChange,
   muted,
   onToggleMute,
-  auto,
-  onToggleAuto,
-  canReplay,
-  onReplay,
   onToggleFullscreen,
-  disabled = false,
 }: SummonControlsProps) {
   return (
     <div className="flex flex-wrap items-center gap-3">
@@ -64,20 +54,6 @@ export function SummonControls({
 
       <button type="button" onClick={onToggleMute} className={controlButton} aria-label={muted ? "Unmute" : "Mute"}>
         {muted ? "🔇 Sound off" : "🔊 Sound on"}
-      </button>
-
-      <button
-        type="button"
-        onClick={onToggleAuto}
-        className={controlButton}
-        disabled={disabled}
-        aria-pressed={auto}
-      >
-        {auto ? "⏹ Stop auto" : "♻ Auto summon"}
-      </button>
-
-      <button type="button" onClick={onReplay} className={controlButton} disabled={!canReplay}>
-        ↺ Replay
       </button>
 
       <button type="button" onClick={onToggleFullscreen} className={controlButton}>
