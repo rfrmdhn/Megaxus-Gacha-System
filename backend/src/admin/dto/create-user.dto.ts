@@ -1,4 +1,4 @@
-import { IsEmail, IsEnum, IsInt, IsOptional, Min, MinLength } from 'class-validator';
+import { IsEmail, IsEnum, IsInt, IsOptional, Max, Min, MinLength } from 'class-validator';
 import { Role } from '../../../generated/prisma';
 
 export class CreateUserDto {
@@ -15,5 +15,6 @@ export class CreateUserDto {
   @IsOptional()
   @IsInt()
   @Min(0)
+  @Max(2147483647)
   coins?: number;
 }

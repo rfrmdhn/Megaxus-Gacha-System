@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, act } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import GachaPage from "../page";
-import { mockPush } from "../../../__tests__/setup";
+import { mockPush, setSearchParams } from "../../../__tests__/setup";
 import * as api from "@/lib/api";
 import * as auth from "@/lib/auth";
 
@@ -138,7 +138,10 @@ describe("GachaPage", () => {
     });
 
     const user = userEvent.setup({ delay: null });
-    await user.click(screen.getByText("Pull (10 coins)"));
+    await act(async () => {
+      await user.click(screen.getByText("Pull (10 coins)"));
+      await new Promise((r) => setTimeout(r, 100));
+    });
 
     await waitFor(() => {
       expect(screen.getByText("You got:")).toBeInTheDocument();
@@ -146,6 +149,58 @@ describe("GachaPage", () => {
       expect(screen.getByText("rare")).toBeInTheDocument();
       expect(screen.getByText("90 coins")).toBeInTheDocument();
     });
+  });
+
+  it("shows the reveal animation before the result by default", async () => {
+    mockedApiFetch.mockImplementation(async (path: string, opts?: RequestInit) => {
+      if (path === "/user/profile") return mockProfile;
+      if (path === "/events") return mockEvents;
+      if (path === "/events/ev1") return mockEventDetail;
+      if (path === "/gacha/pull" && opts?.method === "POST") return mockPullResult;
+      return null;
+    });
+    render(<GachaPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Pull (10 coins)")).toBeInTheDocument();
+    });
+
+    const user = userEvent.setup({ delay: null });
+    await user.click(screen.getByText("Pull (10 coins)"));
+
+    await waitFor(() => {
+      expect(screen.getByText("Opening...")).toBeInTheDocument();
+    });
+    expect(screen.queryByText("You got:")).not.toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(screen.getByText("You got:")).toBeInTheDocument();
+    });
+    expect(screen.queryByText("Opening...")).not.toBeInTheDocument();
+  });
+
+  it("skips the reveal animation when the skip checkbox is checked", async () => {
+    mockedApiFetch.mockImplementation(async (path: string, opts?: RequestInit) => {
+      if (path === "/user/profile") return mockProfile;
+      if (path === "/events") return mockEvents;
+      if (path === "/events/ev1") return mockEventDetail;
+      if (path === "/gacha/pull" && opts?.method === "POST") return mockPullResult;
+      return null;
+    });
+    render(<GachaPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Pull (10 coins)")).toBeInTheDocument();
+    });
+
+    const user = userEvent.setup({ delay: null });
+    await user.click(screen.getByLabelText("Skip animation"));
+    await user.click(screen.getByText("Pull (10 coins)"));
+
+    await waitFor(() => {
+      expect(screen.getByText("You got:")).toBeInTheDocument();
+    });
+    expect(screen.queryByText("Opening...")).not.toBeInTheDocument();
   });
 
   it("displays error on pull failure (ApiError)", async () => {
@@ -344,6 +399,45 @@ describe("GachaPage", () => {
     await waitFor(() => {
       expect(screen.getByText("Shield")).toBeInTheDocument();
       expect(screen.queryByText("Sword")).not.toBeInTheDocument();
+    });
+  });
+
+  it("pre-selects the event from a valid ?eventId= query param", async () => {
+    const mockEvents2 = [
+      { id: "ev1", name: "Summer Event", startsAt: "2025-01-01", endsAt: "2025-12-31" },
+      { id: "ev2", name: "Winter Event", startsAt: "2025-06-01", endsAt: "2025-12-31" },
+    ];
+    const mockEventDetail2 = {
+      items: [{ id: "i4", name: "Shield", rarity: "epic", dropRate: "100" }],
+    };
+    setSearchParams({ eventId: "ev2" });
+    mockedApiFetch.mockImplementation(async (path: string) => {
+      if (path === "/user/profile") return mockProfile;
+      if (path === "/events") return mockEvents2;
+      if (path === "/events/ev1") return mockEventDetail;
+      if (path === "/events/ev2") return mockEventDetail2;
+      return null;
+    });
+    render(<GachaPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Shield")).toBeInTheDocument();
+      expect(screen.queryByText("Sword")).not.toBeInTheDocument();
+    });
+  });
+
+  it("falls back to the first event when ?eventId= doesn't match any event", async () => {
+    setSearchParams({ eventId: "bogus" });
+    mockedApiFetch.mockImplementation(async (path: string) => {
+      if (path === "/user/profile") return mockProfile;
+      if (path === "/events") return mockEvents;
+      if (path === "/events/ev1") return mockEventDetail;
+      return null;
+    });
+    render(<GachaPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Sword")).toBeInTheDocument();
     });
   });
 });

@@ -45,6 +45,7 @@ export default function NavBar() {
             </>
           ) : user ? (
             <>
+              <Link href="/events">Events</Link>
               <Link href="/gacha">Gacha</Link>
               <Link href="/profile">Profile</Link>
               <span className="text-black/50">{user.email}</span>

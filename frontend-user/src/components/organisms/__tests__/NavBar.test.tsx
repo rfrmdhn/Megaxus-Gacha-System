@@ -53,6 +53,7 @@ describe("NavBar", () => {
     });
     render(<NavBar />);
     expect(screen.getByText("test@example.com")).toBeInTheDocument();
+    expect(screen.getByText("Events")).toBeInTheDocument();
     expect(screen.getByText("Gacha")).toBeInTheDocument();
     expect(screen.getByText("Profile")).toBeInTheDocument();
     expect(screen.getByText("Logout")).toBeInTheDocument();

@@ -4,14 +4,20 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import {
+  DashboardOutlined,
+  GiftOutlined,
+  TeamOutlined,
+  ClockCircleOutlined,
+} from "@ant-design/icons";
 import { clearToken, getCurrentUser, JwtPayload } from "@/lib/auth";
 import { Skeleton } from "@/components/atoms/Skeleton";
 
 const LINKS = [
-  { href: "/", label: "Dashboard" },
-  { href: "/events", label: "Events" },
-  { href: "/users", label: "Users" },
-  { href: "/history", label: "Live history" },
+  { href: "/", label: "Dashboard", icon: DashboardOutlined },
+  { href: "/events", label: "Events", icon: GiftOutlined },
+  { href: "/users", label: "Users", icon: TeamOutlined },
+  { href: "/history", label: "Live history", icon: ClockCircleOutlined },
 ];
 
 export default function NavBar() {
@@ -65,12 +71,13 @@ export default function NavBar() {
               <Link
                 key={link.href}
                 href={link.href}
-                className={`rounded-lg px-3 py-2 transition-colors ${
+                className={`flex items-center gap-2 rounded-lg px-3 py-2 transition-colors ${
                   isActive(link.href)
                     ? "bg-brand-purple/10 font-medium text-brand-purple"
                     : "hover:bg-black/5"
                 }`}
               >
+                <link.icon />
                 {link.label}
               </Link>
             ))}

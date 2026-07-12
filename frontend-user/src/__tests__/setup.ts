@@ -5,6 +5,9 @@ import React, { useSyncExternalStore } from "react";
 let _currentPathname = "/";
 const _pathnameListeners = new Set<() => void>();
 
+let _currentSearchParams = new URLSearchParams();
+const _searchParamsListeners = new Set<() => void>();
+
 export const mockPush = vi.fn();
 export const mockReplace = vi.fn();
 
@@ -28,12 +31,19 @@ export function getPathname() {
   return _currentPathname;
 }
 
+export function setSearchParams(params: string | Record<string, string>) {
+  _currentSearchParams = new URLSearchParams(params);
+  _searchParamsListeners.forEach((listener) => listener());
+}
+
 // Module-level mock state persists across tests within the same file unless
-// reset — a leftover setPathname() from one test otherwise leaks into the
-// next test's initial render, causing order-dependent flakiness.
+// reset — a leftover setPathname()/setSearchParams() from one test otherwise
+// leaks into the next test's initial render, causing order-dependent flakiness.
 afterEach(() => {
   _currentPathname = "/";
   _pathnameListeners.clear();
+  _currentSearchParams = new URLSearchParams();
+  _searchParamsListeners.clear();
 });
 
 vi.mock("next/navigation", () => ({
@@ -49,6 +59,15 @@ vi.mock("next/navigation", () => ({
       },
       () => _currentPathname,
       () => _currentPathname,
+    ),
+  useSearchParams: () =>
+    useSyncExternalStore(
+      (listener) => {
+        _searchParamsListeners.add(listener);
+        return () => _searchParamsListeners.delete(listener);
+      },
+      () => _currentSearchParams,
+      () => _currentSearchParams,
     ),
 }));
 

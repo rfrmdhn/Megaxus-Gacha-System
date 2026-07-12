@@ -1,12 +1,16 @@
 "use client";
 
+import { Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { CoinBadge } from "@/components/molecules/CoinBadge";
 import { Button } from "@/components/atoms/Button";
+import { Checkbox } from "@/components/atoms/Checkbox";
 import { Skeleton } from "@/components/Skeleton";
 import { useGacha } from "@/features/gacha/hooks/useGacha";
 import { EventSelector } from "@/features/gacha/components/EventSelector";
 import { DropRateList } from "@/features/gacha/components/DropRateList";
 import { PullResultCard } from "@/features/gacha/components/PullResultCard";
+import { PullRevealAnimation } from "@/features/gacha/components/PullRevealAnimation";
 
 function GachaSkeleton() {
   return (
@@ -35,7 +39,8 @@ function GachaSkeleton() {
   );
 }
 
-export default function GachaPage() {
+function GachaPageContent() {
+  const eventId = useSearchParams().get("eventId");
   const {
     checking,
     profile,
@@ -44,10 +49,13 @@ export default function GachaPage() {
     setSelectedEventId,
     items,
     pulling,
+    revealing,
+    skipAnimation,
+    setSkipAnimation,
     result,
     error,
     pull,
-  } = useGacha();
+  } = useGacha(eventId);
 
   if (checking || !profile) return <GachaSkeleton />;
 
@@ -68,15 +76,38 @@ export default function GachaPage() {
 
           {items.length > 0 && <DropRateList items={items} />}
 
-          <Button onClick={pull} disabled={pulling} className="rounded px-6 py-3 text-lg font-semibold">
-            {pulling ? "Pulling..." : "Pull (10 coins)"}
-          </Button>
+          <div className="flex flex-wrap items-center gap-4">
+            <Button
+              onClick={pull}
+              disabled={pulling || revealing}
+              className="rounded px-6 py-3 text-lg font-semibold"
+            >
+              {pulling ? "Pulling..." : revealing ? "Revealing..." : "Pull (10 coins)"}
+            </Button>
+
+            <Checkbox
+              id="skip-animation"
+              label="Skip animation"
+              checked={skipAnimation}
+              onChange={(e) => setSkipAnimation(e.target.checked)}
+            />
+          </div>
 
           {error && <p className="text-sm text-red-600">{error}</p>}
+
+          {revealing && <PullRevealAnimation />}
 
           {result && <PullResultCard result={result} />}
         </>
       )}
     </div>
+  );
+}
+
+export default function GachaPage() {
+  return (
+    <Suspense fallback={<GachaSkeleton />}>
+      <GachaPageContent />
+    </Suspense>
   );
 }

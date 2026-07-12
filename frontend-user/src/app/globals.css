@@ -31,3 +31,15 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+@keyframes gacha-capsule-shake {
+  0%, 100% { transform: rotate(0deg) scale(1); }
+  20% { transform: rotate(-8deg) scale(1.03); }
+  40% { transform: rotate(8deg) scale(1.03); }
+  60% { transform: rotate(-6deg) scale(1.05); }
+  80% { transform: rotate(6deg) scale(1.05); }
+}
+
+.animate-gacha-capsule {
+  animation: gacha-capsule-shake 0.5s ease-in-out infinite;
+}
