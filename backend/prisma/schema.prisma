@@ -51,6 +51,7 @@ model GachaItem {
   name      String
   rarity    String
   dropRate  Decimal  @map("drop_rate") @db.Decimal(5, 2)
+  imageKey  String?  @map("image_key")
   createdAt DateTime @default(now()) @map("created_at")
 
   event     GachaEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)

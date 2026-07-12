@@ -139,13 +139,14 @@ vi.mock("motion/react", async () => {
   };
 });
 
-// howler: no-op Howl so no audio is touched in jsdom.
+// howler: no-op Howl so no audio is touched in jsdom. A vi.fn constructor so
+// tests can inspect .mock.instances and each instance's spies.
 vi.mock("howler", () => ({
-  Howl: class {
-    play = vi.fn();
-    mute = vi.fn();
-    unload = vi.fn();
-  },
+  Howl: vi.fn(function (this: { play: unknown; mute: unknown; unload: unknown }) {
+    this.play = vi.fn();
+    this.mute = vi.fn();
+    this.unload = vi.fn();
+  }),
 }));
 
 // matchMedia default (reduced-motion off). Tests that need change events
