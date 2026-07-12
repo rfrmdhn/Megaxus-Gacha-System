@@ -8,9 +8,9 @@
 
 import { SoundName } from "../hooks/useSoundManager";
 
-export type Rarity = "common" | "rare" | "epic" | "legendary";
+export type Rarity = "common" | "rare" | "legendary";
 
-export const RARITIES: readonly Rarity[] = ["common", "rare", "epic", "legendary"];
+export const RARITIES: readonly Rarity[] = ["common", "rare", "legendary"];
 
 /** Phases a reveal moves through. Not every rarity uses every phase. */
 export type RevealPhase =
@@ -98,14 +98,6 @@ const TIMELINES: Record<Rarity, RevealStep[]> = {
     { phase: "burst", ms: 500 },
     { phase: "cardEmerge", ms: 700 },
   ],
-  epic: [
-    { phase: "charging", ms: 500 },
-    { phase: "portal", ms: 800 },
-    { phase: "buildup", ms: 1200 },
-    { phase: "flash", ms: 300 },
-    { phase: "burst", ms: 700 },
-    { phase: "cardEmerge", ms: 1000 },
-  ],
   legendary: [
     { phase: "charging", ms: 600 },
     { phase: "portal", ms: 800 },
@@ -159,27 +151,9 @@ export const RARITY_TREATMENTS: Record<Rarity, RarityTreatment> = {
     sound: "rare-reveal",
     timeline: TIMELINES.rare,
   },
-  epic: {
-    rarity: "epic",
-    tier: 2,
-    label: "Epic",
-    palette: {
-      from: "#c026d3",
-      via: "#a855f7",
-      to: "#fbbf24",
-      glow: "rgba(192, 38, 211, 0.65)",
-      text: "#a21caf",
-    },
-    particleCount: 34,
-    revealMs: sum(TIMELINES.epic),
-    effects: { ...NO_EFFECTS, lightning: true, shockwave: true, cameraShake: true, bloom: true },
-    vibration: [50, 30, 80],
-    sound: "rare-reveal",
-    timeline: TIMELINES.epic,
-  },
   legendary: {
     rarity: "legendary",
-    tier: 3,
+    tier: 2,
     label: "Legendary",
     palette: {
       from: "#fbbf24",

@@ -14,18 +14,19 @@ describe("normalizeRarity", () => {
   });
 
   it("lowercases mixed-case input", () => {
-    expect(normalizeRarity("Epic")).toBe("epic");
+    expect(normalizeRarity("Rare")).toBe("rare");
     expect(normalizeRarity("COMMON")).toBe("common");
   });
 
   it("falls back to common for unknown strings", () => {
     expect(normalizeRarity("mythic")).toBe("common");
+    expect(normalizeRarity("epic")).toBe("common");
     expect(normalizeRarity("")).toBe("common");
   });
 
   it("detects a known tier keyword inside a free-form label", () => {
     expect(normalizeRarity("Rare Rarity")).toBe("rare");
-    expect(normalizeRarity("Epic loot")).toBe("epic");
+    expect(normalizeRarity("Legendary loot")).toBe("legendary");
   });
 
   it("resolves the highest tier when several keywords appear", () => {
@@ -59,8 +60,7 @@ describe("RARITY_TREATMENTS", () => {
 
   it("orders tiers strictly by rarity", () => {
     expect(RARITY_TREATMENTS.common.tier).toBeLessThan(RARITY_TREATMENTS.rare.tier);
-    expect(RARITY_TREATMENTS.rare.tier).toBeLessThan(RARITY_TREATMENTS.epic.tier);
-    expect(RARITY_TREATMENTS.epic.tier).toBeLessThan(RARITY_TREATMENTS.legendary.tier);
+    expect(RARITY_TREATMENTS.rare.tier).toBeLessThan(RARITY_TREATMENTS.legendary.tier);
   });
 });
 

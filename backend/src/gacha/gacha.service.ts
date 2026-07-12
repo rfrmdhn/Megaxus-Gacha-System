@@ -58,6 +58,7 @@ export class GachaService {
         id: result.log.item.id,
         name: result.log.item.name,
         rarity: result.log.item.rarity,
+        imageKey: result.log.item.imageKey,
       },
       remainingCoins: result.user.coins,
     };
@@ -122,6 +123,7 @@ export class GachaService {
         id: item.id,
         name: item.name,
         rarity: item.rarity,
+        imageKey: item.imageKey,
       })),
       bestRarity: best.rarity,
       remainingCoins: result.user.coins,

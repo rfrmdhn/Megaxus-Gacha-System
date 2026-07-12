@@ -147,7 +147,7 @@ export function RarityReveal({
             />
           )}
 
-          {/* Lightning bolts (rare / epic) */}
+          {/* Lightning bolts (rare) */}
           {effects.lightning && (
             <div className="pointer-events-none absolute inset-0 flex items-center justify-center" aria-hidden="true">
               {Array.from({ length: 3 }, (_, i) => (
@@ -162,7 +162,7 @@ export function RarityReveal({
             </div>
           )}
 
-          {/* Central bloom glow (epic / legendary) */}
+          {/* Central bloom glow (legendary) */}
           {effects.bloom && (
             <motion.div
               className="pointer-events-none absolute rounded-full"

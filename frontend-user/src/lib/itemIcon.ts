@@ -3,7 +3,6 @@ import { matchRarity, Rarity } from "@/features/gacha/lib/rarity";
 const ICONS: Record<Rarity, string> = {
   common: "/assets/items/common.svg",
   rare: "/assets/items/rare.svg",
-  epic: "/assets/items/epic.svg",
   legendary: "/assets/items/legendary.svg",
 };
 

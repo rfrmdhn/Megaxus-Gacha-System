@@ -1,12 +1,14 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { GachaCacheService } from '../gacha/gacha-cache.service';
+import { StorageService, StoredObject } from '../storage/storage.service';
 
 @Injectable()
 export class EventsService {
   constructor(
     private prisma: PrismaService,
     private gachaCache: GachaCacheService,
+    private storage: StorageService,
   ) {}
 
   async listActive() {
