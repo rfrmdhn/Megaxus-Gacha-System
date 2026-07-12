@@ -25,6 +25,8 @@ function ItemThumbnail({ itemId, imageKey }: { itemId: string; imageKey: string 
 
   useEffect(() => {
     if (!imageKey) {
+      // Resets the previously-fetched blob URL when the item's image is removed.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setUrl(null);
       return;
     }

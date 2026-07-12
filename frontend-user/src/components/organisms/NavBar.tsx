@@ -29,16 +29,22 @@ export default function NavBar() {
     router.push("/login");
   }
 
+  function isActive(href: string) {
+    return pathname.startsWith(href);
+  }
+
   if (pathname === "/login" || pathname === "/register") return null;
 
   return (
-    <header className="border-b border-black/10 bg-gradient-to-r from-brand-cyan/10 via-brand-purple/10 to-brand-pink/10">
+    <header className="sticky top-0 z-10 border-b border-black/10 bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60">
       <nav className="mx-auto flex max-w-4xl items-center justify-between px-4 py-3">
         <Link href="/gacha" className="flex items-center gap-2 font-semibold">
           <Image src="/ayodance-logo.jpg" alt="AyoDance Audition" width={112} height={60} className="h-7 w-auto" />
-          Gacha Event System
+          <span className="bg-gradient-to-r from-brand-cyan via-brand-purple to-brand-pink bg-clip-text text-transparent">
+            Gacha Event System
+          </span>
         </Link>
-        <div className="flex items-center gap-4 text-sm">
+        <div className="flex items-center gap-1 text-sm">
           {checking ? (
             <>
               <Skeleton className="h-4 w-14" />
@@ -46,18 +52,43 @@ export default function NavBar() {
             </>
           ) : user ? (
             <>
-              <Link href="/events">Events</Link>
-              <Link href="/gacha">Gacha</Link>
-              <Link href="/profile">Profile</Link>
-              <span className="text-black/50">{user.email}</span>
-              <Button variant="secondary" onClick={logout} className="rounded-lg px-3 py-1.5 text-sm">
+              {[
+                { href: "/events", label: "Events" },
+                { href: "/gacha", label: "Gacha" },
+                { href: "/profile", label: "Profile" },
+              ].map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={`rounded-lg px-3 py-1.5 transition-colors ${
+                    isActive(link.href)
+                      ? "bg-brand-purple/10 font-medium text-brand-purple"
+                      : "hover:bg-black/5"
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              ))}
+              <span className="ml-2 hidden truncate text-black/50 sm:inline">{user.email}</span>
+              <Button
+                variant="secondary"
+                onClick={logout}
+                className="ml-2 rounded-lg px-3 py-1.5 text-sm"
+              >
                 Logout
               </Button>
             </>
           ) : (
             <>
-              <Link href="/login">Login</Link>
-              <Link href="/register">Register</Link>
+              <Link href="/login" className="rounded-lg px-3 py-1.5 transition-colors hover:bg-black/5">
+                Login
+              </Link>
+              <Link
+                href="/register"
+                className="rounded-lg px-3 py-1.5 font-medium text-brand-purple transition-colors hover:bg-brand-purple/10"
+              >
+                Register
+              </Link>
             </>
           )}
         </div>
