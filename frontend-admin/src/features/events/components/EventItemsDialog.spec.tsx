@@ -85,6 +85,18 @@ it("fetches and renders the thumbnail when the item has an image", async () => {
   expect(await screen.findByAltText("")).toHaveAttribute("src", "blob:mock-url");
 });
 
+it("ignores the fetched image if unmounted before it resolves", async () => {
+  let resolveBlob: (blob: Blob) => void;
+  mockApiFetchBlob.mockReturnValue(new Promise<Blob>((resolve) => (resolveBlob = resolve)));
+
+  const { unmount } = render(<EventItemsDialog event={baseEvent} onClose={jest.fn()} onChanged={jest.fn()} />);
+  await waitFor(() => expect(mockApiFetchBlob).toHaveBeenCalledWith("/admin/items/item-2/image"));
+  unmount();
+  resolveBlob!(new Blob(["x"], { type: "image/png" }));
+
+  expect(URL.createObjectURL).not.toHaveBeenCalled();
+});
+
 it("adds an item", async () => {
   const user = userEvent.setup();
   const onChanged = jest.fn();
@@ -167,6 +179,18 @@ it("does not delete when confirm is cancelled", async () => {
   expect(mockApiFetch).not.toHaveBeenCalled();
 });
 
+it("shows error when delete item fails", async () => {
+  const user = userEvent.setup();
+  window.confirm = jest.fn(() => true);
+  mockApiFetch.mockRejectedValue(new (require("@/lib/api").ApiError)("Cannot delete item", 400));
+
+  render(<EventItemsDialog event={baseEvent} onClose={jest.fn()} onChanged={jest.fn()} />);
+
+  await user.click(screen.getAllByRole("button", { name: "Remove item" })[0]);
+
+  expect(await screen.findByText("Cannot delete item")).toBeInTheDocument();
+});
+
 describe("editing an item", () => {
   it("opens and cancels the edit form", async () => {
     const user = userEvent.setup();
@@ -190,6 +214,12 @@ describe("editing an item", () => {
     const nameInput = screen.getByDisplayValue("Sword");
     await user.clear(nameInput);
     await user.type(nameInput, "Great Sword");
+    const rarityInput = screen.getByDisplayValue("rare");
+    await user.clear(rarityInput);
+    await user.type(rarityInput, "epic");
+    const dropRateInput = screen.getByDisplayValue("30");
+    await user.clear(dropRateInput);
+    await user.type(dropRateInput, "40");
     await user.click(screen.getByText("Save"));
 
     await waitFor(() =>

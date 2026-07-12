@@ -12,6 +12,7 @@ import {
 } from "@ant-design/icons";
 import { clearToken, getCurrentUser, JwtPayload } from "@/lib/auth";
 import { Skeleton } from "@/components/atoms/Skeleton";
+import { Button } from "@/components/atoms/Button";
 
 const LINKS = [
   { href: "/", label: "Dashboard", icon: DashboardOutlined },
@@ -84,9 +85,9 @@ export default function NavBar() {
           </nav>
           <div className="border-t border-black/10 p-3 text-sm">
             <p className="truncate text-black/50">{user.email}</p>
-            <button onClick={logout} className="mt-1 underline">
+            <Button variant="outline" onClick={logout} className="mt-1 w-full">
               Logout
-            </button>
+            </Button>
           </div>
         </>
       ) : (

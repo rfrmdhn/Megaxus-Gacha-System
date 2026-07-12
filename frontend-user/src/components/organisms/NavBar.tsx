@@ -6,6 +6,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { clearToken, getCurrentUser, JwtPayload } from "@/lib/auth";
 import { Skeleton } from "@/components/Skeleton";
+import { Button } from "@/components/atoms/Button";
 
 export default function NavBar() {
   const [user, setUser] = useState<JwtPayload | null>(null);
@@ -49,9 +50,9 @@ export default function NavBar() {
               <Link href="/gacha">Gacha</Link>
               <Link href="/profile">Profile</Link>
               <span className="text-black/50">{user.email}</span>
-              <button onClick={logout} className="underline">
+              <Button variant="secondary" onClick={logout} className="rounded-lg px-3 py-1.5 text-sm">
                 Logout
-              </button>
+              </Button>
             </>
           ) : (
             <>
