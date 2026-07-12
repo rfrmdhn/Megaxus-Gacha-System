@@ -1,16 +1,18 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { CoinBadge } from "@/components/molecules/CoinBadge";
-import { Button } from "@/components/atoms/Button";
-import { Checkbox } from "@/components/atoms/Checkbox";
 import { Skeleton } from "@/components/Skeleton";
 import { useGacha } from "@/features/gacha/hooks/useGacha";
 import { EventSelector } from "@/features/gacha/components/EventSelector";
 import { DropRateList } from "@/features/gacha/components/DropRateList";
-import { PullResultCard } from "@/features/gacha/components/PullResultCard";
-import { PullRevealAnimation } from "@/features/gacha/components/PullRevealAnimation";
+import { BackgroundEffects } from "@/features/gacha/components/BackgroundEffects";
+import { SummonButton } from "@/features/gacha/components/SummonButton";
+import { SummonControls } from "@/features/gacha/components/SummonControls";
+import { RarityReveal } from "@/features/gacha/components/RarityReveal";
+import { RewardCard } from "@/features/gacha/components/RewardCard";
+import { MultiSummonResults } from "@/features/gacha/components/MultiSummonResults";
 
 function GachaSkeleton() {
   return (
@@ -41,6 +43,7 @@ function GachaSkeleton() {
 
 function GachaPageContent() {
   const eventId = useSearchParams().get("eventId");
+  const stageRef = useRef<HTMLDivElement>(null);
   const {
     checking,
     profile,
@@ -52,53 +55,107 @@ function GachaPageContent() {
     revealing,
     skipAnimation,
     setSkipAnimation,
+    speed,
+    setSpeed,
+    auto,
+    toggleAuto,
+    canReplay,
+    replay,
     result,
+    multiResult,
+    revealResult,
     error,
     pull,
+    pullTen,
+    commitReveal,
+    dismissReveal,
+    clearResults,
+    pullCost,
+    muted,
+    toggleMute,
+    onSound,
+    reducedMotion,
+    toggleFullscreen,
+    onVibrate,
   } = useGacha(eventId);
 
   if (checking || !profile) return <GachaSkeleton />;
 
+  const busy = pulling || revealing;
+
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between rounded border border-black/10 p-4">
-        <span>
-          Signed in as <strong>{profile.email}</strong>
-        </span>
-        <CoinBadge coins={profile.coins} />
+    <div
+      ref={stageRef}
+      className="relative min-h-[75vh] overflow-hidden rounded-3xl bg-brand-ink text-white shadow-2xl"
+    >
+      <BackgroundEffects dimmed={revealing} reducedMotion={reducedMotion} />
+
+      <div className="relative z-10 flex flex-col gap-6 p-6">
+        <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 p-4">
+          <span>
+            Signed in as <strong>{profile.email}</strong>
+          </span>
+          <CoinBadge coins={profile.coins} />
+        </div>
+
+        {events.length === 0 ? (
+          <p className="text-white/60">No active gacha events right now.</p>
+        ) : (
+          <>
+            <EventSelector events={events} selectedEventId={selectedEventId} onChange={setSelectedEventId} />
+
+            {items.length > 0 && <DropRateList items={items} />}
+
+            <div className="flex flex-wrap items-center gap-4">
+              <SummonButton onClick={pull} disabled={busy}>
+                {pulling ? "Pulling..." : revealing ? "Revealing..." : `Pull (${pullCost} coins)`}
+              </SummonButton>
+
+              <SummonButton variant="multi" onClick={pullTen} disabled={busy}>
+                {`Summon 10x (${pullCost * 10} coins)`}
+              </SummonButton>
+            </div>
+
+            <SummonControls
+              skip={skipAnimation}
+              onSkipChange={setSkipAnimation}
+              speed={speed}
+              onSpeedChange={setSpeed}
+              muted={muted}
+              onToggleMute={toggleMute}
+              auto={auto}
+              onToggleAuto={toggleAuto}
+              canReplay={canReplay}
+              onReplay={replay}
+              onToggleFullscreen={() => toggleFullscreen(stageRef.current!)}
+              disabled={busy}
+            />
+
+            {error && <p className="text-sm text-red-400">{error}</p>}
+
+            {result && !revealing && (
+              <div className="flex justify-center">
+                <RewardCard result={result} interactive={!reducedMotion} />
+              </div>
+            )}
+
+            {multiResult && !revealing && (
+              <MultiSummonResults results={multiResult.results} onContinue={clearResults} />
+            )}
+          </>
+        )}
       </div>
 
-      {events.length === 0 ? (
-        <p className="text-black/60">No active gacha events right now.</p>
-      ) : (
-        <>
-          <EventSelector events={events} selectedEventId={selectedEventId} onChange={setSelectedEventId} />
-
-          {items.length > 0 && <DropRateList items={items} />}
-
-          <div className="flex flex-wrap items-center gap-4">
-            <Button
-              onClick={pull}
-              disabled={pulling || revealing}
-              className="rounded px-6 py-3 text-lg font-semibold"
-            >
-              {pulling ? "Pulling..." : revealing ? "Revealing..." : "Pull (10 coins)"}
-            </Button>
-
-            <Checkbox
-              id="skip-animation"
-              label="Skip animation"
-              checked={skipAnimation}
-              onChange={(e) => setSkipAnimation(e.target.checked)}
-            />
-          </div>
-
-          {error && <p className="text-sm text-red-600">{error}</p>}
-
-          {revealing && <PullRevealAnimation />}
-
-          {result && <PullResultCard result={result} />}
-        </>
+      {revealing && revealResult && (
+        <RarityReveal
+          result={revealResult}
+          speed={speed}
+          reducedMotion={reducedMotion}
+          onSound={onSound}
+          onVibrate={onVibrate}
+          onComplete={commitReveal}
+          onContinue={dismissReveal}
+        />
       )}
     </div>
   );
