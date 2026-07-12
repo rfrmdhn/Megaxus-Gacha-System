@@ -4,9 +4,9 @@ import { MultiSummonResults } from "../MultiSummonResults";
 
 const data = {
   results: [
-    { item: { id: "a", name: "A", rarity: "Biasa" }, remainingCoins: 90 },
-    { item: { id: "b", name: "B", rarity: "Langka" }, remainingCoins: 0 },
-    { item: { id: "c", name: "C", rarity: "Biasa" }, remainingCoins: 0 },
+    { item: { id: "a", name: "A", rarity: "Biasa", imageKey: null }, remainingCoins: 90 },
+    { item: { id: "b", name: "B", rarity: "Langka", imageKey: null }, remainingCoins: 0 },
+    { item: { id: "c", name: "C", rarity: "Biasa", imageKey: null }, remainingCoins: 0 },
   ],
   // Free-form backend label — displayed verbatim, not re-derived on the client.
   bestRarity: "Langka",

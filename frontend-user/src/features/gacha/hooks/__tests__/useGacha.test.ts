@@ -29,11 +29,11 @@ const events = [
   { id: "ev1", name: "One", startsAt: "", endsAt: "" },
   { id: "ev2", name: "Two", startsAt: "", endsAt: "" },
 ];
-const single = { item: { id: "i1", name: "Sword", rarity: "rare" }, remainingCoins: 90 };
+const single = { item: { id: "i1", name: "Sword", rarity: "rare", imageKey: null }, remainingCoins: 90 };
 const multi = {
   results: [
-    { item: { id: "a", name: "A", rarity: "common" }, remainingCoins: 90 },
-    { item: { id: "b", name: "B", rarity: "legendary" }, remainingCoins: 0 },
+    { item: { id: "a", name: "A", rarity: "common", imageKey: null }, remainingCoins: 90 },
+    { item: { id: "b", name: "B", rarity: "legendary", imageKey: null }, remainingCoins: 0 },
   ],
   bestRarity: "legendary",
   remainingCoins: 0,

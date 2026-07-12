@@ -1,3 +1,4 @@
+import { StreamableFile } from '@nestjs/common';
 import { EventsController } from './events.controller';
 
 describe('EventsController', () => {
@@ -8,6 +9,7 @@ describe('EventsController', () => {
     eventsService = {
       listActive: jest.fn(),
       getById: jest.fn(),
+      getItemImage: jest.fn(),
     };
     controller = new EventsController(eventsService);
   });
@@ -30,5 +32,18 @@ describe('EventsController', () => {
 
     expect(result).toEqual(event);
     expect(eventsService.getById).toHaveBeenCalledWith('evt-1');
+  });
+
+  it('streams item image bytes from eventsService.getItemImage', async () => {
+    const stream = { pipe: jest.fn() };
+    eventsService.getItemImage.mockResolvedValue({
+      stream,
+      mimeType: 'image/png',
+    });
+
+    const result = await controller.getItemImage('item-1');
+
+    expect(eventsService.getItemImage).toHaveBeenCalledWith('item-1');
+    expect(result).toBeInstanceOf(StreamableFile);
   });
 });

@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { RewardCard } from "../RewardCard";
 
-const result = { item: { id: "i1", name: "Excalibur", rarity: "legendary" }, remainingCoins: 90 };
+const result = { item: { id: "i1", name: "Excalibur", rarity: "legendary", imageKey: null }, remainingCoins: 90 };
 
 describe("RewardCard", () => {
   it("renders the reward with rarity badge and continue button", () => {

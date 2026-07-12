@@ -10,10 +10,11 @@ export interface EventItem {
   name: string;
   rarity: string;
   dropRate: string;
+  imageKey: string | null;
 }
 
 export interface PullResult {
-  item: { id: string; name: string; rarity: string };
+  item: { id: string; name: string; rarity: string; imageKey: string | null };
   remainingCoins: number;
 }
 

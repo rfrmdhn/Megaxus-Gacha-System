@@ -14,6 +14,7 @@ function makeItem(overrides: Partial<any> = {}) {
     name: 'Sword',
     rarity: 'rare',
     dropRate: 100,
+    imageKey: null,
     ...overrides,
   };
 }
@@ -131,7 +132,7 @@ describe('GachaService', () => {
       }),
     );
     expect(result).toEqual({
-      item: { id: 'item-1', name: 'Sword', rarity: 'rare' },
+      item: { id: 'item-1', name: 'Sword', rarity: 'rare', imageKey: null },
       remainingCoins: 490,
     });
   });
@@ -196,8 +197,8 @@ describe('GachaService', () => {
       expect(adminFeed.emitPull).toHaveBeenCalledTimes(2);
       expect(result).toEqual({
         items: [
-          { id: 'c', name: 'Biasa', rarity: 'common' },
-          { id: 'r', name: 'Langka', rarity: 'rare' },
+          { id: 'c', name: 'Biasa', rarity: 'common', imageKey: null },
+          { id: 'r', name: 'Langka', rarity: 'rare', imageKey: null },
         ],
         bestRarity: 'rare',
         remainingCoins: 480,

@@ -1,5 +1,5 @@
-import { getItemIcon } from "@/lib/itemIcon";
 import { EventItem } from "../types";
+import { ItemImage } from "./ItemImage";
 
 interface DropRateListProps {
   items: EventItem[];
@@ -13,8 +13,7 @@ export function DropRateList({ items }: DropRateListProps) {
         {items.map((item) => (
           <li key={item.id} className="flex items-center justify-between">
             <span className="flex items-center gap-2">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={getItemIcon(item.rarity)} alt="" className="h-6 w-6" />
+              <ItemImage item={item} className="h-6 w-6 rounded object-cover" />
               {item.name} <span className="capitalize text-white/60">({item.rarity})</span>
             </span>
             <span>{item.dropRate}%</span>

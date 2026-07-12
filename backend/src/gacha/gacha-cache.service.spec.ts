@@ -34,20 +34,38 @@ describe('GachaCacheService', () => {
     it('fetches from DB and caches on cache miss', async () => {
       redis.get.mockResolvedValue(null);
       const dbItems = [
-        { id: 'item-1', name: 'Sword', rarity: 'rare', dropRate: 50 },
-        { id: 'item-2', name: 'Shield', rarity: 'common', dropRate: 50 },
+        { id: 'item-1', name: 'Sword', rarity: 'rare', dropRate: 50, imageKey: null },
+        {
+          id: 'item-2',
+          name: 'Shield',
+          rarity: 'common',
+          dropRate: 50,
+          imageKey: 'items/item-2.png',
+        },
       ];
       prisma.gachaItem.findMany.mockResolvedValue(dbItems);
 
       const result = await service.getEventItems('evt-1');
 
       expect(result).toEqual([
-        { id: 'item-1', name: 'Sword', rarity: 'rare', dropRate: 50 },
-        { id: 'item-2', name: 'Shield', rarity: 'common', dropRate: 50 },
+        { id: 'item-1', name: 'Sword', rarity: 'rare', dropRate: 50, imageKey: null },
+        {
+          id: 'item-2',
+          name: 'Shield',
+          rarity: 'common',
+          dropRate: 50,
+          imageKey: 'items/item-2.png',
+        },
       ]);
       expect(prisma.gachaItem.findMany).toHaveBeenCalledWith({
         where: { eventId: 'evt-1' },
-        select: { id: true, name: true, rarity: true, dropRate: true },
+        select: {
+          id: true,
+          name: true,
+          rarity: true,
+          dropRate: true,
+          imageKey: true,
+        },
       });
       expect(redis.set).toHaveBeenCalledWith(
         'event:evt-1:items',

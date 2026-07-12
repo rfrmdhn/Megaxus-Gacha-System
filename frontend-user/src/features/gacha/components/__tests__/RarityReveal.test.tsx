@@ -79,8 +79,8 @@ describe("RarityReveal", () => {
 
   const multi = {
     results: [
-      { item: { id: "a", name: "A", rarity: "common" }, remainingCoins: 0 },
-      { item: { id: "b", name: "B", rarity: "rare" }, remainingCoins: 0 },
+      { item: { id: "a", name: "A", rarity: "common", imageKey: null }, remainingCoins: 0 },
+      { item: { id: "b", name: "B", rarity: "rare", imageKey: null }, remainingCoins: 0 },
     ],
     bestRarity: "rare",
     remainingCoins: 0,

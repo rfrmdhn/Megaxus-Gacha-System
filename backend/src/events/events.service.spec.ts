@@ -15,6 +15,7 @@ function makeEvent(overrides: Partial<any> = {}) {
 describe('EventsService', () => {
   let prisma: any;
   let gachaCache: any;
+  let storage: any;
   let service: EventsService;
 
   beforeEach(() => {
@@ -23,9 +24,13 @@ describe('EventsService', () => {
         findMany: jest.fn(),
         findUnique: jest.fn(),
       },
+      gachaItem: {
+        findUnique: jest.fn(),
+      },
     };
     gachaCache = { getEventItems: jest.fn() };
-    service = new EventsService(prisma, gachaCache);
+    storage = { getObject: jest.fn() };
+    service = new EventsService(prisma, gachaCache, storage);
   });
 
   describe('listActive', () => {
@@ -79,8 +84,14 @@ describe('EventsService', () => {
     it('returns event with items for an active event', async () => {
       prisma.gachaEvent.findUnique.mockResolvedValue(makeEvent());
       gachaCache.getEventItems.mockResolvedValue([
-        { id: 'item-1', name: 'Sword', rarity: 'rare', dropRate: 50 },
-        { id: 'item-2', name: 'Shield', rarity: 'common', dropRate: 50 },
+        { id: 'item-1', name: 'Sword', rarity: 'rare', dropRate: 50, imageKey: null },
+        {
+          id: 'item-2',
+          name: 'Shield',
+          rarity: 'common',
+          dropRate: 50,
+          imageKey: 'items/item-2.png',
+        },
       ]);
 
       const result = await service.getById('evt-1');
@@ -91,11 +102,48 @@ describe('EventsService', () => {
         startsAt: expect.any(Date),
         endsAt: expect.any(Date),
         items: [
-          { id: 'item-1', name: 'Sword', rarity: 'rare', dropRate: '50.00' },
-          { id: 'item-2', name: 'Shield', rarity: 'common', dropRate: '50.00' },
+          { id: 'item-1', name: 'Sword', rarity: 'rare', dropRate: '50.00', imageKey: null },
+          {
+            id: 'item-2',
+            name: 'Shield',
+            rarity: 'common',
+            dropRate: '50.00',
+            imageKey: 'items/item-2.png',
+          },
         ],
       });
       expect(gachaCache.getEventItems).toHaveBeenCalledWith('evt-1');
+    });
+  });
+
+  describe('getItemImage', () => {
+    it('throws NotFoundException when the item has no image', async () => {
+      prisma.gachaItem.findUnique.mockResolvedValue({ imageKey: null });
+
+      await expect(service.getItemImage('item-1')).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it('throws NotFoundException when the item does not exist', async () => {
+      prisma.gachaItem.findUnique.mockResolvedValue(null);
+
+      await expect(service.getItemImage('missing')).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it('returns the stored object for an item that has an image', async () => {
+      prisma.gachaItem.findUnique.mockResolvedValue({
+        imageKey: 'items/item-1.png',
+      });
+      const stored = { stream: {}, mimeType: 'image/png' };
+      storage.getObject.mockResolvedValue(stored);
+
+      const result = await service.getItemImage('item-1');
+
+      expect(result).toBe(stored);
+      expect(storage.getObject).toHaveBeenCalledWith('items/item-1.png');
     });
   });
 });

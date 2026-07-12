@@ -116,12 +116,15 @@ function EditItemRow({
             value={dropRate}
             onChange={(e) => setDropRate(e.target.value)}
           />
-          <input
-            type="file"
-            accept="image/png,image/jpeg,image/webp"
-            onChange={(e: ChangeEvent<HTMLInputElement>) => setFile(e.target.files?.[0] ?? null)}
-            className="text-xs"
-          />
+          <label className="flex flex-col gap-0.5 text-[10px] text-black/50">
+            {item.imageKey ? "Replace image" : "Add image"}
+            <input
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              onChange={(e: ChangeEvent<HTMLInputElement>) => setFile(e.target.files?.[0] ?? null)}
+              className="text-xs"
+            />
+          </label>
           {item.imageKey && (
             <button type="button" onClick={clearImage} className="text-xs text-red-600 hover:underline">
               Remove image
@@ -294,12 +297,15 @@ export function EventItemsDialog({
             onChange={(e) => setDropRate(e.target.value)}
             className="w-28"
           />
-          <input
-            type="file"
-            accept="image/png,image/jpeg,image/webp"
-            onChange={(e: ChangeEvent<HTMLInputElement>) => setNewItemFile(e.target.files?.[0] ?? null)}
-            className="text-xs"
-          />
+          <label className="flex flex-col gap-0.5 text-[10px] text-black/50">
+            Image (optional)
+            <input
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              onChange={(e: ChangeEvent<HTMLInputElement>) => setNewItemFile(e.target.files?.[0] ?? null)}
+              className="text-xs"
+            />
+          </label>
           <button
             type="submit"
             disabled={saving}

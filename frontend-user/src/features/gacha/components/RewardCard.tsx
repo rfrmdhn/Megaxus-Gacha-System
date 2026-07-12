@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { motion } from "motion/react";
-import { getItemIcon } from "@/lib/itemIcon";
 import { PullResult } from "../types";
 import { getTreatment } from "../lib/rarity";
+import { ItemImage } from "./ItemImage";
 
 interface RewardCardProps {
   result: PullResult;
@@ -68,11 +68,9 @@ export function RewardCard({
             compact ? "px-4 py-4" : "px-8 py-8"
           }`}
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={getItemIcon(result.item.rarity)}
-            alt=""
-            className={`${artworkSize} drop-shadow-[0_0_18px_var(--glow)]`}
+          <ItemImage
+            item={result.item}
+            className={`${artworkSize} rounded-2xl object-cover drop-shadow-[0_0_18px_var(--glow)]`}
             style={{ ["--glow" as string]: palette.glow }}
           />
           <p className="text-sm text-white/60">You got:</p>
