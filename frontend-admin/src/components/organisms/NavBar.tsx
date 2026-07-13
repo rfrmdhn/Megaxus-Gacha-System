@@ -55,7 +55,7 @@ export default function NavBar() {
     <aside className="border-b border-black/10 bg-gradient-to-b from-brand-red-400/10 via-brand-red-600/10 to-brand-red-900/10 md:sticky md:top-0 md:flex md:h-screen md:w-60 md:shrink-0 md:flex-col md:border-b-0 md:border-r">
       <div className="flex items-center justify-between px-4 py-4 md:border-b md:border-black/10">
         <Link href="/" className="flex items-center gap-2 font-semibold" onClick={() => setMenuOpen(false)}>
-          <Image src="/megaxuslogo.png" alt="Megaxus" width={112} height={29} className="h-7 w-auto" />
+          <Image src="/megaxuslogo.png" alt="Megaxus" width={112} height={29} className="h-7 w-auto" priority />
           Gacha Admin
         </Link>
         <button
