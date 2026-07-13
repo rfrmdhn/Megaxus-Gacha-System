@@ -19,6 +19,7 @@ vi.mock("@/lib/api", () => ({
 
 vi.mock("@/lib/auth", () => ({
   saveToken: vi.fn(),
+  saveSession: vi.fn(),
   clearToken: vi.fn(),
   getToken: vi.fn(),
   getCurrentUser: vi.fn(),
@@ -26,7 +27,7 @@ vi.mock("@/lib/auth", () => ({
 }));
 
 const mockedApiFetch = vi.mocked(api.apiFetch);
-const mockedSaveToken = vi.mocked(auth.saveToken);
+const mockedSaveSession = vi.mocked(auth.saveSession);
 
 function makeApiError(message: string, status: number) {
   return new api.ApiError(message, status);
@@ -46,7 +47,7 @@ describe("LoginPage", () => {
 
   it("submits login and redirects on success", async () => {
     const user = userEvent.setup({ delay: null });
-    mockedApiFetch.mockResolvedValue({ token: "jwt-token" });
+    mockedApiFetch.mockResolvedValue({ token: "jwt-token", refreshToken: "u1.secret" });
     render(<LoginPage />);
 
     await user.type(screen.getByPlaceholderText("Email"), "test@example.com");
@@ -58,7 +59,7 @@ describe("LoginPage", () => {
         method: "POST",
         body: JSON.stringify({ email: "test@example.com", password: "password123" }),
       });
-      expect(mockedSaveToken).toHaveBeenCalledWith("jwt-token");
+      expect(mockedSaveSession).toHaveBeenCalledWith({ token: "jwt-token", refreshToken: "u1.secret" });
       expect(mockPush).toHaveBeenCalledWith("/gacha");
     });
   });

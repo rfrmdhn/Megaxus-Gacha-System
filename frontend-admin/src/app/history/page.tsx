@@ -52,14 +52,14 @@ export default function AdminHistoryPage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
-        <h1 className="flex items-center gap-2 border-l-4 border-brand-purple pl-3 text-2xl font-semibold">
-          <ClockCircleOutlined className="text-brand-purple" />
+        <h1 className="flex items-center gap-2 border-l-4 border-brand-red-600 pl-3 text-2xl font-semibold">
+          <ClockCircleOutlined className="text-brand-red-600" />
           Live gacha history
         </h1>
         <Button
           variant="outline"
           onClick={() => void loadPage(null, true)}
-          className="flex items-center gap-2 hover:border-brand-purple/50"
+          className="flex items-center gap-2 hover:border-brand-red-600/50"
         >
           <ReloadOutlined /> Reload
         </Button>
@@ -94,7 +94,7 @@ export default function AdminHistoryPage() {
             variant="outline"
             onClick={() => loadPage(cursor, false)}
             disabled={loadingMore}
-            className="self-start hover:border-brand-purple/50"
+            className="self-start hover:border-brand-red-600/50"
           >
             {loadingMore ? "Loading…" : "Load more"}
           </Button>

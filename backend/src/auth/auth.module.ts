@@ -12,9 +12,10 @@ const jwtModule = JwtModule.registerAsync({
     secret: config.getOrThrow<string>('JWT_SECRET'),
     // Seconds, not a duration string — sidesteps @nestjs/jwt's branded StringValue type.
     // parseInt is required because ConfigService reads raw env strings verbatim.
+    // Short-lived: refresh tokens (see AuthService) do the long-lived work now.
     signOptions: {
       expiresIn: parseInt(
-        config.get<string>('JWT_EXPIRES_IN_SECONDS', '86400'),
+        config.get<string>('JWT_ACCESS_EXPIRES_IN_SECONDS', '900'),
         10,
       ),
     },

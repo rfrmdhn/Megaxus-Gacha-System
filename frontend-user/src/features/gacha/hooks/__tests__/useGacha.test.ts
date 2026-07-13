@@ -26,8 +26,8 @@ vi.mock("@/features/profile/api", () => ({ getProfile: vi.fn() }));
 vi.mock("@/lib/useRequireAuth", () => ({ useRequireAuth: vi.fn(() => ({ user: null, checking: false })) }));
 
 const events = [
-  { id: "ev1", name: "One", startsAt: "", endsAt: "" },
-  { id: "ev2", name: "Two", startsAt: "", endsAt: "" },
+  { id: "ev1", name: "One", startsAt: "", endsAt: "", imageKey: null },
+  { id: "ev2", name: "Two", startsAt: "", endsAt: "", imageKey: null },
 ];
 const single = { item: { id: "i1", name: "Sword", rarity: "rare", imageKey: null }, remainingCoins: 90 };
 const multi = {

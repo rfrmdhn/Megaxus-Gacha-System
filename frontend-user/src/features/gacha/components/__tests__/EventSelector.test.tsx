@@ -3,8 +3,8 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { EventSelector } from "../EventSelector";
 
 const events = [
-  { id: "ev1", name: "One", startsAt: "", endsAt: "" },
-  { id: "ev2", name: "Two", startsAt: "", endsAt: "" },
+  { id: "ev1", name: "One", startsAt: "", endsAt: "", imageKey: null },
+  { id: "ev2", name: "Two", startsAt: "", endsAt: "", imageKey: null },
 ];
 
 describe("EventSelector", () => {

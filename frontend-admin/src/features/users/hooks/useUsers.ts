@@ -3,10 +3,12 @@
 import { useEffect, useState } from "react";
 import { ApiError } from "@/lib/api";
 import { JwtPayload } from "@/lib/auth";
+import { useConfirm } from "@/components/molecules/ConfirmDialog";
 import { AdminUser } from "../types";
-import { listUsers, updateUser } from "../api";
+import { listUsers, updateUser, deleteUser as deleteUserRequest } from "../api";
 
 export function useUsers(user: JwtPayload | null) {
+  const confirm = useConfirm();
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [cursor, setCursor] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(false);
@@ -51,12 +53,35 @@ export function useUsers(user: JwtPayload | null) {
 
   async function toggleBan(target: AdminUser) {
     const next = !target.isBanned;
-    if (!window.confirm(`${next ? "Ban" : "Unban"} ${target.email}?`)) return;
+    const ok = await confirm({
+      title: next ? "Ban user" : "Unban user",
+      message: `${next ? "Ban" : "Unban"} ${target.email}?`,
+      confirmLabel: next ? "Ban" : "Unban",
+      danger: next,
+    });
+    if (!ok) return;
     setError(null);
     try {
       await patchUser(target.id, { isBanned: next });
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Failed to update user");
+    }
+  }
+
+  async function deleteUser(target: AdminUser) {
+    const ok = await confirm({
+      title: "Delete user",
+      message: `Permanently delete ${target.email}? Users with pull history can't be deleted — ban them instead.`,
+      confirmLabel: "Delete",
+      danger: true,
+    });
+    if (!ok) return;
+    setError(null);
+    try {
+      await deleteUserRequest(target.id);
+      setUsers((prev) => prev.filter((u) => u.id !== target.id));
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Failed to delete user");
     }
   }
 
@@ -72,5 +97,6 @@ export function useUsers(user: JwtPayload | null) {
     loadPage,
     patchUser,
     toggleBan,
+    deleteUser,
   };
 }

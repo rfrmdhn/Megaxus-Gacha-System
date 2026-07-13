@@ -23,7 +23,7 @@ export function IconButton({
       className={`inline-flex h-7 w-7 items-center justify-center rounded-lg border text-sm transition-colors disabled:opacity-50 ${
         danger
           ? "border-red-200 text-red-600 hover:bg-red-50"
-          : "border-black/15 text-black/70 hover:border-brand-purple/50 hover:text-brand-purple"
+          : "border-black/15 text-black/70 hover:border-brand-red-600/50 hover:text-brand-red-600"
       }`}
     >
       {icon}

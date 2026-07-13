@@ -28,3 +28,7 @@ export function createUser(body: {
 }): Promise<void> {
   return apiFetch<void>("/admin/users", { method: "POST", body: JSON.stringify(body) });
 }
+
+export function deleteUser(id: string): Promise<void> {
+  return apiFetch<void>(`/admin/users/${id}`, { method: "DELETE" });
+}

@@ -33,7 +33,7 @@ export default function LoginPage() {
       </form>
       <p className="mt-4 text-sm">
         No account yet?{" "}
-        <Link href="/register" className="font-medium text-brand-purple underline">
+        <Link href="/register" className="font-medium text-brand-red-600 underline">
           Register
         </Link>
       </p>

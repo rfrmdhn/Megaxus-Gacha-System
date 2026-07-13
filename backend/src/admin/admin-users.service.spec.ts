@@ -25,8 +25,9 @@ describe('AdminUsersService', () => {
         findUnique: jest.fn(),
         update: jest.fn(),
         create: jest.fn(),
+        delete: jest.fn(),
       },
-      gachaLog: { findMany: jest.fn() },
+      gachaLog: { findMany: jest.fn(), count: jest.fn() },
     };
     service = new AdminUsersService(prisma);
   });
@@ -250,6 +251,36 @@ describe('AdminUsersService', () => {
         where: { id: 'u1' },
         data: { coins: 200 },
       });
+    });
+  });
+
+  describe('remove', () => {
+    it('throws NotFoundException when the user does not exist', async () => {
+      prisma.user.findUnique.mockResolvedValue(null);
+
+      await expect(service.remove('missing')).rejects.toThrow(
+        NotFoundException,
+      );
+      expect(prisma.user.delete).not.toHaveBeenCalled();
+    });
+
+    it('throws ConflictException when the user has pull history', async () => {
+      prisma.user.findUnique.mockResolvedValue(makeUserRow());
+      prisma.gachaLog.count.mockResolvedValue(5);
+
+      await expect(service.remove('u1')).rejects.toThrow(ConflictException);
+      expect(prisma.user.delete).not.toHaveBeenCalled();
+    });
+
+    it('deletes a user with no pull history', async () => {
+      prisma.user.findUnique.mockResolvedValue(makeUserRow());
+      prisma.gachaLog.count.mockResolvedValue(0);
+      prisma.user.delete.mockResolvedValue(undefined);
+
+      const result = await service.remove('u1');
+
+      expect(prisma.user.delete).toHaveBeenCalledWith({ where: { id: 'u1' } });
+      expect(result).toEqual({ success: true });
     });
   });
 });

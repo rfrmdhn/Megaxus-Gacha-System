@@ -4,9 +4,15 @@ import * as auth from "../auth";
 
 vi.mock("../auth", () => ({
   getToken: vi.fn(),
+  getRefreshToken: vi.fn(),
+  saveSession: vi.fn(),
+  clearSession: vi.fn(),
 }));
 
 const mockedGetToken = vi.mocked(auth.getToken);
+const mockedGetRefreshToken = vi.mocked(auth.getRefreshToken);
+const mockedSaveSession = vi.mocked(auth.saveSession);
+const mockedClearSession = vi.mocked(auth.clearSession);
 
 function jsonResponse(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {
@@ -37,6 +43,9 @@ describe("apiFetch", () => {
 
   beforeEach(() => {
     mockedGetToken.mockReturnValue(null);
+    mockedGetRefreshToken.mockReturnValue(null);
+    mockedSaveSession.mockReset();
+    mockedClearSession.mockReset();
     vi.restoreAllMocks();
   });
 
@@ -136,6 +145,58 @@ describe("apiFetch", () => {
       expect.objectContaining({ method: "POST", body: expect.any(String) }),
     );
   });
+
+  it("refreshes the access token on 401 and replays the request", async () => {
+    mockedGetRefreshToken.mockReturnValue("u1.secret");
+    const fetchMock = vi
+      .fn()
+      // First call: original request rejected with 401.
+      .mockResolvedValueOnce(jsonResponse({ message: "expired" }, 401))
+      // Second call: the /auth/refresh request succeeds.
+      .mockResolvedValueOnce(jsonResponse({ token: "new", refreshToken: "u1.new" }))
+      // Third call: the replayed original request succeeds.
+      .mockResolvedValueOnce(jsonResponse({ ok: true }));
+    globalThis.fetch = fetchMock;
+
+    const result = await apiFetch<{ ok: boolean }>("/protected");
+
+    expect(result).toEqual({ ok: true });
+    expect(mockedSaveSession).toHaveBeenCalledWith({ token: "new", refreshToken: "u1.new" });
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
+  it("clears the session when the refresh attempt also fails", async () => {
+    mockedGetRefreshToken.mockReturnValue("u1.secret");
+    globalThis.fetch = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse({ message: "expired" }, 401))
+      // /auth/refresh itself returns 401 → refresh fails.
+      .mockResolvedValueOnce(jsonResponse({ message: "nope" }, 401));
+
+    await expect(apiFetch("/protected")).rejects.toMatchObject({ status: 401 });
+    expect(mockedClearSession).toHaveBeenCalled();
+  });
+
+  it("aborts the refresh when the token vanishes between checks", async () => {
+    // Truthy for apiFetch's guard, then null when refreshAccessToken re-reads it.
+    mockedGetRefreshToken.mockReturnValueOnce("u1.secret").mockReturnValueOnce(null);
+    globalThis.fetch = vi.fn().mockResolvedValueOnce(jsonResponse({ message: "expired" }, 401));
+
+    await expect(apiFetch("/protected")).rejects.toMatchObject({ status: 401 });
+    expect(mockedClearSession).toHaveBeenCalled();
+  });
+
+  it("clears the session when the refresh request throws", async () => {
+    mockedGetRefreshToken.mockReturnValue("u1.secret");
+    globalThis.fetch = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse({ message: "expired" }, 401))
+      // Network error on the refresh request itself.
+      .mockRejectedValueOnce(new Error("network down"));
+
+    await expect(apiFetch("/protected")).rejects.toMatchObject({ status: 401 });
+    expect(mockedClearSession).toHaveBeenCalled();
+  });
 });
 
 describe("sseUrl", () => {
@@ -145,7 +206,7 @@ describe("sseUrl", () => {
 
   it("builds URL without token", () => {
     const url = sseUrl("/events/stream");
-    expect(url).toBe("http://localhost:3001/api/events/stream?token=");
+    expect(url).toBe("http://localhost:3001/api/v1/events/stream?token=");
   });
 
   it("builds URL with token", () => {

@@ -8,6 +8,7 @@ function makeEvent(overrides: Partial<any> = {}) {
     isActive: false,
     startsAt: new Date('2026-01-01'),
     endsAt: new Date('2026-02-01'),
+    imageKey: null,
     createdAt: new Date('2026-01-01'),
     items: [],
     ...overrides,
@@ -17,6 +18,7 @@ function makeEvent(overrides: Partial<any> = {}) {
 describe('AdminEventsService', () => {
   let prisma: any;
   let gachaCache: any;
+  let storage: any;
   let service: AdminEventsService;
 
   beforeEach(() => {
@@ -32,7 +34,12 @@ describe('AdminEventsService', () => {
       gachaLog: { count: jest.fn().mockResolvedValue(0) },
     };
     gachaCache = { invalidate: jest.fn().mockResolvedValue(undefined) };
-    service = new AdminEventsService(prisma, gachaCache);
+    storage = {
+      upload: jest.fn().mockResolvedValue(undefined),
+      remove: jest.fn().mockResolvedValue(undefined),
+      getObject: jest.fn(),
+    };
+    service = new AdminEventsService(prisma, gachaCache, storage);
   });
 
   describe('list', () => {
@@ -249,6 +256,115 @@ describe('AdminEventsService', () => {
         BadRequestException,
       );
       expect(prisma.gachaEvent.delete).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('uploadImage', () => {
+    const file = { buffer: Buffer.from('x'), mimetype: 'image/png' };
+
+    it('throws NotFoundException when event does not exist', async () => {
+      prisma.gachaEvent.findUnique.mockResolvedValue(null);
+
+      await expect(service.uploadImage('missing', file)).rejects.toThrow(
+        NotFoundException,
+      );
+      expect(storage.upload).not.toHaveBeenCalled();
+    });
+
+    it('throws BadRequestException for an unsupported mime type', async () => {
+      prisma.gachaEvent.findUnique.mockResolvedValue(makeEvent());
+
+      await expect(
+        service.uploadImage('evt-1', {
+          buffer: Buffer.from('x'),
+          mimetype: 'image/gif',
+        }),
+      ).rejects.toThrow(BadRequestException);
+      expect(storage.upload).not.toHaveBeenCalled();
+    });
+
+    it('uploads and stores the key when the event has no prior image', async () => {
+      prisma.gachaEvent.findUnique.mockResolvedValue(
+        makeEvent({ imageKey: null }),
+      );
+      prisma.gachaEvent.update.mockResolvedValue(makeEvent());
+
+      await service.uploadImage('evt-1', file);
+
+      expect(storage.upload).toHaveBeenCalledWith(
+        expect.stringContaining('events/evt-1-'),
+        file.buffer,
+        'image/png',
+      );
+      expect(storage.remove).not.toHaveBeenCalled();
+      expect(prisma.gachaEvent.update).toHaveBeenCalledWith({
+        where: { id: 'evt-1' },
+        data: { imageKey: expect.stringContaining('events/evt-1-') },
+      });
+    });
+
+    it('removes the previous image when replacing an existing one', async () => {
+      prisma.gachaEvent.findUnique.mockResolvedValue(
+        makeEvent({ imageKey: 'events/evt-1-old.png' }),
+      );
+      prisma.gachaEvent.update.mockResolvedValue(makeEvent());
+
+      await service.uploadImage('evt-1', file);
+
+      expect(storage.remove).toHaveBeenCalledWith('events/evt-1-old.png');
+    });
+  });
+
+  describe('removeImage', () => {
+    it('does nothing when the event has no image', async () => {
+      prisma.gachaEvent.findUnique.mockResolvedValue(
+        makeEvent({ imageKey: null }),
+      );
+
+      await service.removeImage('evt-1');
+
+      expect(storage.remove).not.toHaveBeenCalled();
+      expect(prisma.gachaEvent.update).not.toHaveBeenCalled();
+    });
+
+    it('removes the object and clears the key when an image exists', async () => {
+      prisma.gachaEvent.findUnique.mockResolvedValue(
+        makeEvent({ imageKey: 'events/evt-1.png' }),
+      );
+      prisma.gachaEvent.update.mockResolvedValue(makeEvent());
+
+      await service.removeImage('evt-1');
+
+      expect(storage.remove).toHaveBeenCalledWith('events/evt-1.png');
+      expect(prisma.gachaEvent.update).toHaveBeenCalledWith({
+        where: { id: 'evt-1' },
+        data: { imageKey: null },
+      });
+    });
+  });
+
+  describe('getImage', () => {
+    it('throws NotFoundException when the event has no image', async () => {
+      prisma.gachaEvent.findUnique.mockResolvedValue(
+        makeEvent({ imageKey: null }),
+      );
+
+      await expect(service.getImage('evt-1')).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it('returns the stored object when an image exists', async () => {
+      const stored = { stream: {}, mimeType: 'image/png' };
+      prisma.gachaEvent.findUnique.mockResolvedValue(
+        makeEvent({ imageKey: 'events/evt-1.png' }),
+      );
+      storage.getObject.mockResolvedValue(stored);
+
+      const result = await service.getImage('evt-1');
+
+      expect(storage.getObject).toHaveBeenCalledWith('events/evt-1.png');
+      expect(result).toBe(stored);
     });
   });
 });

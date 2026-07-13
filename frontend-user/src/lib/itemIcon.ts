@@ -35,3 +35,15 @@ export function getItemImageSrc(item: ImageResolvable): string {
     ? `${API_URL}/events/items/${item.id}/image`
     : getItemIcon(item.rarity);
 }
+
+/**
+ * URL of an event's banner image, or `null` when the event has none — callers
+ * decide the fallback (e.g. a gradient placeholder). Served publicly by the API
+ * for direct use as an `<img src>`.
+ */
+export function getEventImageSrc(event: {
+  id: string;
+  imageKey: string | null;
+}): string | null {
+  return event.imageKey ? `${API_URL}/events/${event.id}/image` : null;
+}

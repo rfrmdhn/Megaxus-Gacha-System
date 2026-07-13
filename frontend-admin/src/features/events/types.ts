@@ -12,5 +12,6 @@ export interface AdminEvent {
   isActive: boolean;
   startsAt: string;
   endsAt: string;
+  imageKey: string | null;
   items: AdminItem[];
 }

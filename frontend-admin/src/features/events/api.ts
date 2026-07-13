@@ -57,3 +57,17 @@ export function removeItemImage(itemId: string): Promise<void> {
 export function fetchItemImage(itemId: string): Promise<Blob> {
   return apiFetchBlob(`/admin/items/${itemId}/image`);
 }
+
+export function uploadEventImage(eventId: string, file: File): Promise<AdminEvent> {
+  const formData = new FormData();
+  formData.append("file", file);
+  return apiFetch<AdminEvent>(`/admin/events/${eventId}/image`, { method: "POST", body: formData });
+}
+
+export function removeEventImage(eventId: string): Promise<void> {
+  return apiFetch<void>(`/admin/events/${eventId}/image`, { method: "DELETE" });
+}
+
+export function fetchEventImage(eventId: string): Promise<Blob> {
+  return apiFetchBlob(`/admin/events/${eventId}/image`);
+}

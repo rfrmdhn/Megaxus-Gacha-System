@@ -117,7 +117,7 @@ describe("apiFetchBlob", () => {
     const result = await apiFetchBlob("/admin/items/item-1/image");
 
     const callArgs = fetchMock.mock.calls[0] as [string, any];
-    expect(callArgs[0]).toBe(`${ORIGIN}/api/admin/items/item-1/image`);
+    expect(callArgs[0]).toBe(`${ORIGIN}/api/v1/admin/items/item-1/image`);
     expect(callArgs[1].headers.Authorization).toBe("Bearer my-token");
     expect(result).toBeInstanceOf(Blob);
   });
@@ -134,10 +134,10 @@ describe("apiFetchBlob", () => {
 describe("sseUrl", () => {
   it("returns url with token param", () => {
     localStorage.setItem("gacha_token", "abc123");
-    expect(sseUrl("/stream")).toBe(`${ORIGIN}/api/stream?token=abc123`);
+    expect(sseUrl("/stream")).toBe(`${ORIGIN}/api/v1/stream?token=abc123`);
   });
 
   it("handles null token", () => {
-    expect(sseUrl("/stream")).toBe(`${ORIGIN}/api/stream?token=`);
+    expect(sseUrl("/stream")).toBe(`${ORIGIN}/api/v1/stream?token=`);
   });
 });

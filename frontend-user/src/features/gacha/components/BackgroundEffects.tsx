@@ -27,14 +27,14 @@ export function BackgroundEffects({ dimmed = false, reducedMotion = false }: Bac
 
       {/* Drifting nebula blobs */}
       <div
-        className={`absolute -left-1/4 top-0 h-[70%] w-[70%] rounded-full bg-brand-purple/30 blur-3xl ${drift}`}
+        className={`absolute -left-1/4 top-0 h-[70%] w-[70%] rounded-full bg-brand-red-600/30 blur-3xl ${drift}`}
       />
       <div
-        className={`absolute right-0 top-1/4 h-[60%] w-[60%] rounded-full bg-brand-cyan/20 blur-3xl ${drift}`}
+        className={`absolute right-0 top-1/4 h-[60%] w-[60%] rounded-full bg-brand-red-400/20 blur-3xl ${drift}`}
         style={{ animationDelay: "4s" }}
       />
       <div
-        className={`absolute bottom-0 left-1/3 h-[55%] w-[55%] rounded-full bg-brand-pink/20 blur-3xl ${drift}`}
+        className={`absolute bottom-0 left-1/3 h-[55%] w-[55%] rounded-full bg-brand-red-900/20 blur-3xl ${drift}`}
         style={{ animationDelay: "8s" }}
       />
 

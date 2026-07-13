@@ -36,8 +36,20 @@ function UsersSkeleton() {
 
 export default function UsersPage() {
   const { user, checking } = useRequireAdmin();
-  const { users, cursor, hasMore, loading, loadingMore, error, search, setSearch, loadPage, patchUser, toggleBan } =
-    useUsers(user);
+  const {
+    users,
+    cursor,
+    hasMore,
+    loading,
+    loadingMore,
+    error,
+    search,
+    setSearch,
+    loadPage,
+    patchUser,
+    toggleBan,
+    deleteUser,
+  } = useUsers(user);
   const [roleFilter, setRoleFilter] = useState<"all" | "user" | "admin">("all");
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
@@ -51,15 +63,15 @@ export default function UsersPage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
-        <h1 className="flex items-center gap-2 border-l-4 border-brand-purple pl-3 text-2xl font-semibold">
-          <TeamOutlined className="text-brand-purple" />
+        <h1 className="flex items-center gap-2 border-l-4 border-brand-red-600 pl-3 text-2xl font-semibold">
+          <TeamOutlined className="text-brand-red-600" />
           Users
         </h1>
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
             onClick={() => void loadPage(null, true)}
-            className="flex items-center gap-2 hover:border-brand-purple/50"
+            className="flex items-center gap-2 hover:border-brand-red-600/50"
           >
             <ReloadOutlined /> Reload
           </Button>
@@ -91,7 +103,12 @@ export default function UsersPage() {
         ) : filteredUsers.length === 0 ? (
           <p className="text-sm text-black/50">No users found.</p>
         ) : (
-          <UsersTable users={filteredUsers} onEdit={(userId) => setEditingUserId(userId)} onToggleBan={toggleBan} />
+          <UsersTable
+            users={filteredUsers}
+            onEdit={(userId) => setEditingUserId(userId)}
+            onToggleBan={toggleBan}
+            onDelete={deleteUser}
+          />
         )}
 
         {hasMore && (
@@ -99,7 +116,7 @@ export default function UsersPage() {
             variant="outline"
             onClick={() => loadPage(cursor, false)}
             disabled={loadingMore}
-            className="self-start hover:border-brand-purple/50"
+            className="self-start hover:border-brand-red-600/50"
           >
             {loadingMore ? "Loading…" : "Load more"}
           </Button>

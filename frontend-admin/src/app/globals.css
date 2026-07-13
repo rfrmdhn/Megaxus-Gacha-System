@@ -4,24 +4,61 @@
   --background: #ffffff;
   --foreground: #171717;
 
-  /* AyoDance Audition brand palette, sampled from the logo */
-  --brand-cyan: #22d3ee;
-  --brand-blue: #2563eb;
-  --brand-pink: #ee22c4;
-  --brand-yellow: #ffcc00;
-  --brand-purple: #9333ea;
-  --brand-ink: #14101f;
+  /* Megaxus brand palette — sampled from the logo (mark red #ec2123, wordmark
+     gray #636466). Each step is a fixed hue/saturation with only lightness
+     varied, so every tint/shade stays WCAG-checked against white/black:
+     red-600..950 and gray-500..950 all clear 4.5:1 for normal text, and
+     red-500/gray-400 clear the 3:1 large-text/UI-component floor. */
+  --brand-red-50: #fef1f1;
+  --brand-red-100: #fcdede;
+  --brand-red-200: #f9b9b9;
+  --brand-red-300: #f58586;
+  --brand-red-400: #f04c4e;
+  --brand-red-500: #ec2123;
+  --brand-red-600: #cf1214;
+  --brand-red-700: #b30f11;
+  --brand-red-800: #8d0c0d;
+  --brand-red-900: #67090a;
+  --brand-red-950: #460607;
+
+  --brand-gray-50: #f7f7f7;
+  --brand-gray-100: #ededed;
+  --brand-gray-200: #d8d9d9;
+  --brand-gray-300: #bcbcbe;
+  --brand-gray-400: #9d9ea0;
+  --brand-gray-500: #636466;
+  --brand-gray-600: #525254;
+  --brand-gray-700: #404142;
+  --brand-gray-800: #2d2e2f;
+  --brand-gray-900: #1d1d1e;
+  --brand-gray-950: #121212;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --color-brand-cyan: var(--brand-cyan);
-  --color-brand-blue: var(--brand-blue);
-  --color-brand-pink: var(--brand-pink);
-  --color-brand-yellow: var(--brand-yellow);
-  --color-brand-purple: var(--brand-purple);
-  --color-brand-ink: var(--brand-ink);
+  --color-brand-red-50: var(--brand-red-50);
+  --color-brand-red-100: var(--brand-red-100);
+  --color-brand-red-200: var(--brand-red-200);
+  --color-brand-red-300: var(--brand-red-300);
+  --color-brand-red-400: var(--brand-red-400);
+  --color-brand-red-500: var(--brand-red-500);
+  --color-brand-red-600: var(--brand-red-600);
+  --color-brand-red-700: var(--brand-red-700);
+  --color-brand-red-800: var(--brand-red-800);
+  --color-brand-red-900: var(--brand-red-900);
+  --color-brand-red-950: var(--brand-red-950);
+  --color-brand-gray-50: var(--brand-gray-50);
+  --color-brand-gray-100: var(--brand-gray-100);
+  --color-brand-gray-200: var(--brand-gray-200);
+  --color-brand-gray-300: var(--brand-gray-300);
+  --color-brand-gray-400: var(--brand-gray-400);
+  --color-brand-gray-500: var(--brand-gray-500);
+  --color-brand-gray-600: var(--brand-gray-600);
+  --color-brand-gray-700: var(--brand-gray-700);
+  --color-brand-gray-800: var(--brand-gray-800);
+  --color-brand-gray-900: var(--brand-gray-900);
+  --color-brand-gray-950: var(--brand-gray-950);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }

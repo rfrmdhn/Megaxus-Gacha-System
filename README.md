@@ -60,29 +60,44 @@ Runs on http://localhost:3002 (`package.json` pins the dev/start scripts to that
 
 ## API documentation
 
-Base URL: `/api`. Full reference with every endpoint and edge case: [backend/docs/api.md](backend/docs/api.md).
+Base URL: `/api/v1` (URI-versioned). The only exception is the health check, which is version-neutral at `/api/health` so probes survive version bumps. Full reference with every endpoint and edge case: [backend/docs/api.md](backend/docs/api.md).
+
+Auth uses a short-lived **access token** plus a rotating **refresh token**: `register`/`login` return both, clients call `POST /auth/refresh` to mint a new pair when the access token expires, and `POST /auth/logout` revokes the refresh token.
 
 | Endpoint | Auth | Request | Response |
 |---|---|---|---|
-| `POST /api/auth/register` | – | `{ "email", "password" }` | `201 { "user": { "id", "email", "coins": 500 }, "token" }` |
-| `POST /api/auth/login` | – | `{ "email", "password" }` | `200 { "token" }` |
-| `GET /api/user/profile` | user | – | `200 { "id", "email", "coins" }` |
-| `GET /api/user/history?cursor=&limit=` | user | – | `200 { "items": [{ "eventName", "itemName", "rarity", "coinsSpent", "createdAt" }], "nextCursor" }` |
-| `GET /api/events` | – | – | `200 [{ "id", "name", "startsAt", "endsAt" }]` |
-| `GET /api/events/:id` | – | – | `200 { "id", "name", "items": [{ "name", "rarity", "dropRate" }] }` |
-| `POST /api/gacha/pull` | user | `{ "eventId" }` | `200 { "item": { "name", "rarity" }, "remainingCoins" }` or `400 { "message": "Insufficient coins" }` |
-| `GET /api/admin/events` | admin | – | `200 [{ "id", "name", "isActive", "items": [...] }]` |
-| `POST /api/admin/events` | admin | `{ "name", "startsAt", "endsAt" }` | `201`, created as a **draft** (`isActive: false`) |
-| `PUT /api/admin/events/:id` | admin | `{ "isActive": true, ... }` | `200`, activating requires items to sum to exactly 100% |
-| `DELETE /api/admin/events/:id` | admin | – | `200` |
-| `POST /api/admin/events/:id/items` | admin | `{ "name", "rarity", "dropRate" }` | `201` |
-| `PUT` / `DELETE /api/admin/items/:id` | admin | `{ "dropRate", ... }` | `200` |
-| `GET /api/admin/history?cursor=&limit=&userId=` | admin | – | `200 { "items": [{ "userEmail", "eventName", "itemName", ... }], "nextCursor" }` |
-| `GET /api/admin/history/stream` | admin (via `?token=`) | – | Server-Sent Events, `event: pull` pushed live on every commit |
-| `GET /api/admin/users?cursor=&limit=&email=` | admin | – | `200 { "items": [{ "email", "role", "coins", "isBanned", "pullCount", ... }], "nextCursor" }` |
-| `GET /api/admin/users/:id` | admin | – | `200 { ...user, "recentHistory": [...] }` or `404` |
-| `PUT /api/admin/users/:id` | admin | `{ "coins"?, "role"?, "isBanned"? }` | `200`, updates only the provided fields |
-| `GET /api/admin/stats` | admin | – | `200 { "totalUsers", "activeEvents", "totalEvents", "pullsToday", "totalPulls", "totalCoinsSpent" }` |
+| `GET /api/health` | – | – | `200 { "status": "ok", "db": "up", "redis": "up" }` or `503` when a dependency is down |
+| `POST /api/v1/auth/register` | – | `{ "email", "password" }` | `201 { "user": { "id", "email", "coins": 500 }, "token", "refreshToken" }` |
+| `POST /api/v1/auth/login` | – | `{ "email", "password" }` | `200 { "token", "refreshToken" }` |
+| `POST /api/v1/auth/refresh` | – | `{ "refreshToken" }` | `200 { "token", "refreshToken" }` (rotates; the old token is invalidated) |
+| `POST /api/v1/auth/logout` | user | – | `200 { "success": true }`, clears the stored refresh token |
+| `GET /api/v1/user/profile` | user | – | `200 { "id", "email", "coins" }` |
+| `GET /api/v1/user/history?cursor=&limit=` | user | – | `200 { "items": [{ "eventName", "itemName", "rarity", "coinsSpent", "createdAt" }], "nextCursor" }` |
+| `GET /api/v1/events` | – | – | `200 [{ "id", "name", "startsAt", "endsAt", "imageKey" }]` (unpaginated — small, admin-curated list) |
+| `GET /api/v1/events/:id` | – | – | `200 { "id", "name", "imageKey", "items": [{ "id", "name", "rarity", "dropRate", "imageKey" }] }` |
+| `GET /api/v1/events/:id/image` | – | – | Raw image bytes for the event banner, or `404` |
+| `GET /api/v1/events/items/:id/image` | – | – | Raw image bytes for an item, or `404` |
+| `POST /api/v1/gacha/pull` | user | `{ "eventId" }` | `200 { "item": { "name", "rarity" }, "remainingCoins" }` or `400 { "message": "Insufficient coins" }` |
+| `POST /api/v1/gacha/pull-bulk` | user | `{ "eventId", "count" }` (max 10) | `200 { "items": [...], "remainingCoins" }` — one atomic transaction |
+| `GET /api/v1/admin/events` | admin | – | `200 [{ "id", "name", "isActive", "imageKey", "items": [...] }]` |
+| `POST /api/v1/admin/events` | admin | `{ "name", "startsAt", "endsAt" }` | `201`, created as a **draft** (`isActive: false`) |
+| `PUT /api/v1/admin/events/:id` | admin | `{ "isActive": true, ... }` | `200`, activating requires items to sum to exactly 100% |
+| `DELETE /api/v1/admin/events/:id` | admin | – | `200` |
+| `POST` / `DELETE /api/v1/admin/events/:id/image` | admin | multipart `file` (PNG/JPEG/WebP, ≤5MB) | `200`/`201` |
+| `GET /api/v1/admin/events/:id/image` | admin | – | Raw image bytes |
+| `POST /api/v1/admin/events/:id/items` | admin | `{ "name", "rarity", "dropRate" }` | `201` |
+| `PUT` / `DELETE /api/v1/admin/items/:id` | admin | `{ "dropRate", ... }` | `200` |
+| `POST` / `GET` / `DELETE /api/v1/admin/items/:id/image` | admin | multipart `file` (PNG/JPEG/WebP, ≤5MB) | `200`/`201` |
+| `GET /api/v1/admin/history?cursor=&limit=&userId=` | admin | – | `200 { "items": [{ "userEmail", "eventName", "itemName", ... }], "nextCursor" }` |
+| `GET /api/v1/admin/history/stream` | admin (via `?token=`) | – | Server-Sent Events, `event: pull` pushed live on every commit |
+| `GET /api/v1/admin/users?cursor=&limit=&email=` | admin | – | `200 { "items": [{ "email", "role", "coins", "isBanned", "pullCount", ... }], "nextCursor" }` |
+| `GET /api/v1/admin/users/:id` | admin | – | `200 { ...user, "recentHistory": [...] }` or `404` |
+| `PUT /api/v1/admin/users/:id` | admin | `{ "coins"?, "role"?, "isBanned"? }` | `200`, updates only the provided fields |
+| `DELETE /api/v1/admin/users/:id` | admin | – | `200 { "success": true }`, or `409` if the user has pull history (ban instead) |
+| `GET /api/v1/admin/stats` | admin | – | `200 { "totalUsers", "activeEvents", "totalEvents", "pullsToday", "totalPulls", "totalCoinsSpent" }` |
+| `GET /api/v1/admin/stats/leaderboard` | admin | – | `200 [{ "userId", "email", "pullCount", "coinsSpent" }]` — top players by lifetime pulls |
+
+Rate limits: a global default of 40 requests/60s, tightened to 10/60s on `auth/*` and relaxed to 120/60s on `gacha/*`. Exceeding a limit returns `429`.
 
 ## Database design
 
@@ -92,9 +107,12 @@ users                        gacha_events
 ├─ email (unique)            ├─ name
 ├─ password_hash             ├─ is_active (default false — draft until admin activates)
 ├─ role (user/admin)         ├─ starts_at / ends_at
-├─ coins (default 500,       └─ created_at
-│    CHECK coins >= 0)              │
-└─ created_at                       │ 1:N
+├─ coins (default 500,       ├─ image_key (nullable — banner in object storage)
+│    CHECK coins >= 0)        └─ created_at
+├─ is_banned                        │
+├─ refresh_token_hash               │ 1:N
+├─ refresh_token_expires_at         │
+└─ created_at                       │
       │                     gacha_items
       │ 1:N                 ├─ id (PK)
       ▼                     ├─ event_id (FK → gacha_events)

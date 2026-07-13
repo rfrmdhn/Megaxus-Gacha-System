@@ -5,6 +5,8 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { GachaCacheService } from '../gacha/gacha-cache.service';
+import { StorageService, StoredObject } from '../storage/storage.service';
+import type { UploadedImageFile } from './admin-items.service';
 import { assertDropRatesEqual100 } from './drop-rate.util';
 import { CreateEventDto, UpdateEventDto } from './dto/event.dto';
 
@@ -14,11 +16,20 @@ function assertDateRangeValid(startsAt: Date, endsAt: Date): void {
   }
 }
 
+// A cosmetic banner for the event — unlike item drop-rate edits it never
+// affects pull outcomes, so no gacha cache invalidation is needed here.
+const ALLOWED_IMAGE_MIME_TYPES: Record<string, string> = {
+  'image/png': 'png',
+  'image/jpeg': 'jpg',
+  'image/webp': 'webp',
+};
+
 @Injectable()
 export class AdminEventsService {
   constructor(
     private prisma: PrismaService,
     private gachaCache: GachaCacheService,
+    private storage: StorageService,
   ) {}
 
   list() {
@@ -80,6 +91,41 @@ export class AdminEventsService {
       );
     }
     await this.prisma.gachaEvent.delete({ where: { id } });
+  }
+
+  async uploadImage(id: string, file: UploadedImageFile) {
+    const event = await this.assertExists(id);
+
+    const extension = ALLOWED_IMAGE_MIME_TYPES[file.mimetype];
+    if (!extension) {
+      throw new BadRequestException('Image must be PNG, JPEG, or WebP');
+    }
+
+    const key = `events/${id}-${Date.now()}.${extension}`;
+    await this.storage.upload(key, file.buffer, file.mimetype);
+    if (event.imageKey) await this.storage.remove(event.imageKey);
+
+    return this.prisma.gachaEvent.update({
+      where: { id },
+      data: { imageKey: key },
+    });
+  }
+
+  async removeImage(id: string) {
+    const event = await this.assertExists(id);
+    if (!event.imageKey) return;
+
+    await this.storage.remove(event.imageKey);
+    await this.prisma.gachaEvent.update({
+      where: { id },
+      data: { imageKey: null },
+    });
+  }
+
+  async getImage(id: string): Promise<StoredObject> {
+    const event = await this.assertExists(id);
+    if (!event.imageKey) throw new NotFoundException('Event has no image');
+    return this.storage.getObject(event.imageKey);
   }
 
   private async assertExists(id: string) {

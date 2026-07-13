@@ -1,4 +1,5 @@
 const TOKEN_KEY = "gacha_token";
+const REFRESH_TOKEN_KEY = "gacha_refresh_token";
 
 export interface JwtPayload {
   sub: string;
@@ -19,6 +20,31 @@ export function clearToken() {
 export function getToken(): string | null {
   if (typeof window === "undefined") return null;
   return localStorage.getItem(TOKEN_KEY);
+}
+
+export function saveRefreshToken(token: string) {
+  localStorage.setItem(REFRESH_TOKEN_KEY, token);
+}
+
+export function getRefreshToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem(REFRESH_TOKEN_KEY);
+}
+
+export function clearRefreshToken() {
+  localStorage.removeItem(REFRESH_TOKEN_KEY);
+}
+
+/** Store both tokens returned by login/register/refresh. */
+export function saveSession(tokens: { token: string; refreshToken: string }) {
+  saveToken(tokens.token);
+  saveRefreshToken(tokens.refreshToken);
+}
+
+/** Clear the whole client session (access + refresh). */
+export function clearSession() {
+  clearToken();
+  clearRefreshToken();
 }
 
 // Decodes the JWT payload for display purposes only (role-gating UI). The

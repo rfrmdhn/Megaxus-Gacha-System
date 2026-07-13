@@ -7,6 +7,7 @@ export interface AuthCredentials {
 
 export interface AuthResponse {
   token: string;
+  refreshToken: string;
 }
 
 export function login(credentials: AuthCredentials): Promise<AuthResponse> {

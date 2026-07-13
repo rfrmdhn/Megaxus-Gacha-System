@@ -13,7 +13,7 @@ export function EventSelector({ events, selectedEventId, onChange }: EventSelect
       <select
         value={selectedEventId ?? ""}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded border border-white/20 bg-white/5 px-3 py-2 text-white outline-none focus:border-brand-purple focus:ring-2 focus:ring-brand-purple/30"
+        className="w-full rounded border border-white/20 bg-white/5 px-3 py-2 text-white outline-none focus:border-brand-red-500 focus:ring-2 focus:ring-brand-red-500/30"
       >
         {events.map((e) => (
           <option key={e.id} value={e.id} className="text-black">

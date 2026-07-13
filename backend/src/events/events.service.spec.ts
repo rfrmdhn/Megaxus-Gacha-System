@@ -8,6 +8,7 @@ function makeEvent(overrides: Partial<any> = {}) {
     isActive: true,
     startsAt: new Date('2026-01-01'),
     endsAt: new Date('2026-02-01'),
+    imageKey: null,
     ...overrides,
   };
 }
@@ -49,12 +50,14 @@ describe('EventsService', () => {
           name: 'Spring Event',
           startsAt: expect.any(Date),
           endsAt: expect.any(Date),
+          imageKey: null,
         },
         {
           id: 'evt-2',
           name: 'Summer Event',
           startsAt: expect.any(Date),
           endsAt: expect.any(Date),
+          imageKey: null,
         },
       ]);
       expect(prisma.gachaEvent.findMany).toHaveBeenCalledWith({
@@ -101,6 +104,7 @@ describe('EventsService', () => {
         name: 'Spring Event',
         startsAt: expect.any(Date),
         endsAt: expect.any(Date),
+        imageKey: null,
         items: [
           { id: 'item-1', name: 'Sword', rarity: 'rare', dropRate: '50.00', imageKey: null },
           {
@@ -144,6 +148,37 @@ describe('EventsService', () => {
 
       expect(result).toBe(stored);
       expect(storage.getObject).toHaveBeenCalledWith('items/item-1.png');
+    });
+  });
+
+  describe('getEventImage', () => {
+    it('throws NotFoundException when the event has no image', async () => {
+      prisma.gachaEvent.findUnique.mockResolvedValue({ imageKey: null });
+
+      await expect(service.getEventImage('evt-1')).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it('throws NotFoundException when the event does not exist', async () => {
+      prisma.gachaEvent.findUnique.mockResolvedValue(null);
+
+      await expect(service.getEventImage('missing')).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it('returns the stored object for an event that has an image', async () => {
+      prisma.gachaEvent.findUnique.mockResolvedValue({
+        imageKey: 'events/evt-1.png',
+      });
+      const stored = { stream: {}, mimeType: 'image/png' };
+      storage.getObject.mockResolvedValue(stored);
+
+      const result = await service.getEventImage('evt-1');
+
+      expect(result).toBe(stored);
+      expect(storage.getObject).toHaveBeenCalledWith('events/evt-1.png');
     });
   });
 });

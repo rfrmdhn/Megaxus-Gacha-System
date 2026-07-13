@@ -23,6 +23,13 @@ export class EventsController {
     return new StreamableFile(stream, { type: mimeType });
   }
 
+  // Public event banner. Declared before ':id' for the same disambiguation reason.
+  @Get(':id/image')
+  async getEventImage(@Param('id') id: string): Promise<StreamableFile> {
+    const { stream, mimeType } = await this.eventsService.getEventImage(id);
+    return new StreamableFile(stream, { type: mimeType });
+  }
+
   @Get(':id')
   getById(@Param('id') id: string) {
     return this.eventsService.getById(id);

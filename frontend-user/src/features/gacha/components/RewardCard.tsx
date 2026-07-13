@@ -64,7 +64,7 @@ export function RewardCard({
         className="animate-border-shimmer rounded-3xl p-[3px]"
       >
         <div
-          className={`animate-float-slow flex flex-col items-center gap-3 rounded-[calc(1.5rem-3px)] bg-brand-ink/95 text-center text-white ${
+          className={`animate-float-slow flex flex-col items-center gap-3 rounded-[calc(1.5rem-3px)] bg-brand-gray-950/95 text-center text-white ${
             compact ? "px-4 py-4" : "px-8 py-8"
           }`}
         >

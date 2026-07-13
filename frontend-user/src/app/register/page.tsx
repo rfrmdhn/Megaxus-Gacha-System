@@ -34,7 +34,7 @@ export default function RegisterPage() {
       </form>
       <p className="mt-4 text-sm">
         Already have an account?{" "}
-        <Link href="/login" className="font-medium text-brand-purple underline">
+        <Link href="/login" className="font-medium text-brand-red-600 underline">
           Log in
         </Link>
       </p>

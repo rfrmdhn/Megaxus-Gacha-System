@@ -3,6 +3,7 @@
 import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
 import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
 import { Dialog } from "@/components/molecules/Dialog";
+import { useConfirm } from "@/components/molecules/ConfirmDialog";
 import { IconButton } from "@/components/atoms/IconButton";
 import { Input } from "@/components/atoms/Input";
 import { ApiError } from "@/lib/api";
@@ -80,7 +81,7 @@ function ImageFilePicker({
       <button
         type="button"
         onClick={() => inputRef.current?.click()}
-        className="rounded-lg border border-black/15 px-3 py-1.5 text-sm transition-colors hover:border-brand-purple/50"
+        className="rounded-lg border border-black/15 px-3 py-1.5 text-sm transition-colors hover:border-brand-red-600/50"
       >
         {file ? file.name : label}
       </button>
@@ -160,7 +161,7 @@ function EditItemRow({
           <button
             type="submit"
             disabled={saving}
-            className="rounded-lg border border-black/15 px-3 py-1.5 text-sm transition-colors hover:border-brand-purple/50 disabled:opacity-50"
+            className="rounded-lg border border-black/15 px-3 py-1.5 text-sm transition-colors hover:border-brand-red-600/50 disabled:opacity-50"
           >
             {saving ? "Saving…" : "Save"}
           </button>
@@ -189,6 +190,7 @@ export function EventItemsDialog({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
+  const confirm = useConfirm();
   const total = itemsTotal(event.items);
 
   async function addItem(e: FormEvent) {
@@ -215,7 +217,13 @@ export function EventItemsDialog({
   }
 
   async function removeItem(itemId: string) {
-    if (!window.confirm("Remove this item?")) return;
+    const ok = await confirm({
+      title: "Remove item",
+      message: "Remove this item?",
+      confirmLabel: "Remove",
+      danger: true,
+    });
+    if (!ok) return;
     setError(null);
     try {
       await deleteItem(itemId);
@@ -328,7 +336,7 @@ export function EventItemsDialog({
           <button
             type="submit"
             disabled={saving}
-            className="rounded-lg border border-black/15 px-3 py-1.5 text-sm transition-colors hover:border-brand-purple/50 disabled:opacity-50"
+            className="rounded-lg border border-black/15 px-3 py-1.5 text-sm transition-colors hover:border-brand-red-600/50 disabled:opacity-50"
           >
             {saving ? "Adding…" : "Add item"}
           </button>

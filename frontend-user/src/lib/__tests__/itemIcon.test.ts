@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { getItemIcon } from "../itemIcon";
+import { getItemIcon, getItemImageSrc, getEventImageSrc } from "../itemIcon";
 
 describe("getItemIcon", () => {
   it("returns common icon for 'common'", () => {
@@ -33,5 +33,31 @@ describe("getItemIcon", () => {
 
   it("returns the default icon for empty string", () => {
     expect(getItemIcon("")).toBe("/assets/items/default.svg");
+  });
+});
+
+describe("getItemImageSrc", () => {
+  it("uses the public item-image URL when the item has an uploaded image", () => {
+    expect(
+      getItemImageSrc({ id: "item-1", rarity: "rare", imageKey: "items/item-1.png" }),
+    ).toBe("http://localhost:3001/api/v1/events/items/item-1/image");
+  });
+
+  it("falls back to the rarity icon when the item has no image", () => {
+    expect(getItemImageSrc({ id: "item-1", rarity: "legendary", imageKey: null })).toBe(
+      "/assets/items/legendary.svg",
+    );
+  });
+});
+
+describe("getEventImageSrc", () => {
+  it("builds the public event-image URL when the event has an image", () => {
+    expect(getEventImageSrc({ id: "evt-1", imageKey: "events/evt-1.png" })).toBe(
+      "http://localhost:3001/api/v1/events/evt-1/image",
+    );
+  });
+
+  it("returns null when the event has no image", () => {
+    expect(getEventImageSrc({ id: "evt-1", imageKey: null })).toBeNull();
   });
 });

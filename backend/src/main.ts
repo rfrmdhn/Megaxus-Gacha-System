@@ -1,5 +1,5 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
+import { ValidationPipe, VersioningType } from '@nestjs/common';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
 
@@ -14,6 +14,9 @@ async function bootstrap() {
     credentials: true,
   });
   app.setGlobalPrefix('api');
+  // URI versioning: all routes live under /api/v1. Controllers opt out with
+  // @Version(VERSION_NEUTRAL) (e.g. the health check at /api/health).
+  app.enableVersioning({ type: VersioningType.URI, defaultVersion: '1' });
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,

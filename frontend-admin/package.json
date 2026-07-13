@@ -15,7 +15,8 @@
     "@ant-design/icons": "^6.3.2",
     "next": "16.2.10",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "recharts": "^3.9.2"
   },
   "devDependencies": {
     "@swc/jest": "^0.2.39",
@@ -85,7 +86,9 @@
       }
     },
     "testEnvironment": "jsdom",
-    "setupFilesAfterEnv": ["<rootDir>/jest.setup.ts"],
+    "setupFilesAfterEnv": [
+      "<rootDir>/jest.setup.ts"
+    ],
     "transformIgnorePatterns": [
       "/node_modules/(?!@ant-design|@ant-design/icons-svg|@ant-design/colors|@ant-design/fast-color|rc-util|classnames)"
     ]

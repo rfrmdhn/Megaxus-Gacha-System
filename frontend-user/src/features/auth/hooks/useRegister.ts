@@ -3,7 +3,7 @@
 import { useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { ApiError } from "@/lib/api";
-import { saveToken } from "@/lib/auth";
+import { saveSession } from "@/lib/auth";
 import { register } from "../api";
 
 export function useRegister() {
@@ -19,7 +19,7 @@ export function useRegister() {
     setLoading(true);
     try {
       const res = await register({ email, password });
-      saveToken(res.token);
+      saveSession(res);
       router.push("/gacha");
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Something went wrong");

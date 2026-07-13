@@ -17,7 +17,7 @@ export function MultiSummonResults({ data, onContinue }: MultiSummonResultsProps
 
   return (
     <div
-      className="rounded-3xl bg-brand-ink/95 p-6 text-white shadow-2xl"
+      className="rounded-3xl bg-brand-gray-950/95 p-6 text-white shadow-2xl"
       style={{ boxShadow: `0 0 60px ${bestTreatment.palette.glow}` }}
       data-testid="multi-summon-results"
     >

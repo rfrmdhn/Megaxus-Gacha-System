@@ -3,10 +3,12 @@
 import { useEffect, useState } from "react";
 import { ApiError } from "@/lib/api";
 import { JwtPayload } from "@/lib/auth";
+import { useConfirm } from "@/components/molecules/ConfirmDialog";
 import { AdminEvent } from "../types";
 import { listEvents, updateEvent, deleteEvent as deleteEventRequest } from "../api";
 
 export function useEvents(user: JwtPayload | null) {
+  const confirm = useConfirm();
   const [events, setEvents] = useState<AdminEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -38,7 +40,13 @@ export function useEvents(user: JwtPayload | null) {
   }
 
   async function deleteEvent(eventId: string) {
-    if (!window.confirm("Delete this event? This cannot be undone.")) return;
+    const ok = await confirm({
+      title: "Delete event",
+      message: "Delete this event? This cannot be undone.",
+      confirmLabel: "Delete",
+      danger: true,
+    });
+    if (!ok) return;
     setError(null);
     try {
       await deleteEventRequest(eventId);

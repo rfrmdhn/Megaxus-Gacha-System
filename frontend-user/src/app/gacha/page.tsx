@@ -82,7 +82,7 @@ function GachaPageContent() {
   return (
     <div
       ref={stageRef}
-      className="relative min-h-[75vh] overflow-hidden rounded-3xl bg-brand-ink text-white shadow-2xl"
+      className="relative min-h-[75vh] overflow-hidden rounded-3xl bg-brand-gray-950 text-white shadow-2xl"
     >
       <BackgroundEffects dimmed={revealing} reducedMotion={reducedMotion} />
 

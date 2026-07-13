@@ -10,6 +10,7 @@ describe('AdminUsersController', () => {
       getDetail: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
+      remove: jest.fn(),
     };
     controller = new AdminUsersController(usersService);
   });
@@ -53,5 +54,14 @@ describe('AdminUsersController', () => {
 
     expect(res).toEqual(updated);
     expect(usersService.update).toHaveBeenCalledWith('u1', { coins: 999 });
+  });
+
+  it('delegates remove to usersService', async () => {
+    usersService.remove.mockResolvedValue({ success: true });
+
+    const res = await controller.remove('u1');
+
+    expect(res).toEqual({ success: true });
+    expect(usersService.remove).toHaveBeenCalledWith('u1');
   });
 });

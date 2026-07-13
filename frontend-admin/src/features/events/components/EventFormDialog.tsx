@@ -7,7 +7,13 @@ import { Button } from "@/components/atoms/Button";
 import { Input } from "@/components/atoms/Input";
 import { ApiError } from "@/lib/api";
 import { AdminEvent } from "../types";
-import { createEvent, updateEvent } from "../api";
+import {
+  createEvent,
+  removeEventImage,
+  updateEvent,
+  uploadEventImage,
+} from "../api";
+import { EventImageField } from "./EventImageField";
 
 function toLocalInput(iso: string): string {
   const d = new Date(iso);
@@ -27,6 +33,8 @@ export function EventFormDialog({
   const [name, setName] = useState(event?.name ?? "");
   const [startsAt, setStartsAt] = useState(event ? toLocalInput(event.startsAt) : "");
   const [endsAt, setEndsAt] = useState(event ? toLocalInput(event.endsAt) : "");
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imageRemoved, setImageRemoved] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -40,10 +48,13 @@ export function EventFormDialog({
         startsAt: new Date(startsAt).toISOString(),
         endsAt: new Date(endsAt).toISOString(),
       };
-      if (event) {
-        await updateEvent(event.id, body);
-      } else {
-        await createEvent(body);
+      // The banner is stored via separate endpoints, so the event record must
+      // exist first — create/update, then apply the image change to that id.
+      const saved = event ? await updateEvent(event.id, body) : await createEvent(body);
+      if (imageFile) {
+        await uploadEventImage(saved.id, imageFile);
+      } else if (imageRemoved) {
+        await removeEventImage(saved.id);
       }
       onSaved();
       onClose();
@@ -84,6 +95,16 @@ export function EventFormDialog({
         </FormField>
         <FormField label="Ends">
           <Input type="datetime-local" required value={endsAt} onChange={(e) => setEndsAt(e.target.value)} />
+        </FormField>
+        <FormField label="Banner image">
+          <EventImageField
+            eventId={event?.id ?? null}
+            imageKey={event?.imageKey ?? null}
+            file={imageFile}
+            onFileChange={setImageFile}
+            removed={imageRemoved}
+            onRemovedChange={setImageRemoved}
+          />
         </FormField>
       </form>
     </Dialog>

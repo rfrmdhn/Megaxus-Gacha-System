@@ -119,6 +119,22 @@ export class AdminUsersService {
     });
   }
 
+  async remove(id: string) {
+    await this.assertExists(id);
+    // gacha_logs are the system's append-only permanent record — refuse to
+    // destroy a user's history. Banning is the reversible way to disable an account.
+    const pullCount = await this.prisma.gachaLog.count({
+      where: { userId: id },
+    });
+    if (pullCount > 0) {
+      throw new ConflictException(
+        'User has pull history and cannot be deleted; ban the account instead',
+      );
+    }
+    await this.prisma.user.delete({ where: { id } });
+    return { success: true };
+  }
+
   private async assertExists(id: string) {
     const user = await this.prisma.user.findUnique({ where: { id } });
     if (!user) throw new NotFoundException('User not found');

@@ -56,8 +56,8 @@ export default function EventsPage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
-        <h1 className="flex items-center gap-2 border-l-4 border-brand-purple pl-3 text-2xl font-semibold">
-          <GiftOutlined className="text-brand-purple" />
+        <h1 className="flex items-center gap-2 border-l-4 border-brand-red-600 pl-3 text-2xl font-semibold">
+          <GiftOutlined className="text-brand-red-600" />
           Events
         </h1>
         <Button onClick={() => setFormDialog({ mode: "create" })} className="flex items-center gap-2">

@@ -3,6 +3,7 @@ export interface GachaEvent {
   name: string;
   startsAt: string;
   endsAt: string;
+  imageKey: string | null;
 }
 
 export interface EventItem {

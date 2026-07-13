@@ -1,6 +1,11 @@
 "use client";
 
-import { CheckCircleOutlined, EditOutlined, StopOutlined } from "@ant-design/icons";
+import {
+  CheckCircleOutlined,
+  DeleteOutlined,
+  EditOutlined,
+  StopOutlined,
+} from "@ant-design/icons";
 import { IconButton } from "@/components/atoms/IconButton";
 import { AdminUser } from "../types";
 
@@ -8,10 +13,12 @@ export function UsersTable({
   users,
   onEdit,
   onToggleBan,
+  onDelete,
 }: {
   users: AdminUser[];
   onEdit: (userId: string) => void;
   onToggleBan: (user: AdminUser) => void;
+  onDelete: (user: AdminUser) => void;
 }) {
   return (
     <div className="overflow-x-auto">
@@ -44,6 +51,12 @@ export function UsersTable({
                     label={u.isBanned ? "Unban" : "Ban"}
                     danger={!u.isBanned}
                     onClick={() => onToggleBan(u)}
+                  />
+                  <IconButton
+                    icon={<DeleteOutlined />}
+                    label="Delete user"
+                    danger
+                    onClick={() => onDelete(u)}
                   />
                 </div>
               </td>

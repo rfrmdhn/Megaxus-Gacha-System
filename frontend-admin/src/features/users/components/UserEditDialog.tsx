@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Dialog } from "@/components/molecules/Dialog";
+import { useConfirm } from "@/components/molecules/ConfirmDialog";
 import { FormField } from "@/components/molecules/FormField";
 import { Input } from "@/components/atoms/Input";
 import { Select } from "@/components/atoms/Select";
@@ -25,6 +26,7 @@ export function UserEditDialog({
   const [savingCoins, setSavingCoins] = useState(false);
   const [savingRole, setSavingRole] = useState(false);
   const [banning, setBanning] = useState(false);
+  const confirm = useConfirm();
 
   useEffect(() => {
     let cancelled = false;
@@ -56,7 +58,13 @@ export function UserEditDialog({
 
   async function changeRole(next: "user" | "admin") {
     if (next === user.role) return;
-    if (!window.confirm(`Change ${user.email}'s role to ${next}?`)) return;
+    const ok = await confirm({
+      title: "Change role",
+      message: `Change ${user.email}'s role to ${next}?`,
+      confirmLabel: "Change",
+      danger: next === "admin",
+    });
+    if (!ok) return;
     setSavingRole(true);
     try {
       await onPatch(user.id, { role: next });
@@ -67,7 +75,13 @@ export function UserEditDialog({
 
   async function toggleBan() {
     const next = !user.isBanned;
-    if (!window.confirm(`${next ? "Ban" : "Unban"} ${user.email}?`)) return;
+    const ok = await confirm({
+      title: next ? "Ban user" : "Unban user",
+      message: `${next ? "Ban" : "Unban"} ${user.email}?`,
+      confirmLabel: next ? "Ban" : "Unban",
+      danger: next,
+    });
+    if (!ok) return;
     setBanning(true);
     try {
       await onPatch(user.id, { isBanned: next });
@@ -95,7 +109,7 @@ export function UserEditDialog({
               <button
                 onClick={saveCoins}
                 disabled={savingCoins || parseInt(coinsInput, 10) === user.coins}
-                className="rounded-lg border border-black/15 px-3 py-1.5 text-sm transition-colors hover:border-brand-purple/50 disabled:opacity-50"
+                className="rounded-lg border border-black/15 px-3 py-1.5 text-sm transition-colors hover:border-brand-red-600/50 disabled:opacity-50"
               >
                 {savingCoins ? "Saving…" : "Save"}
               </button>

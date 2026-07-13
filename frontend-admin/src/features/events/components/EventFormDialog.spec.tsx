@@ -22,6 +22,7 @@ function makeEvent(overrides: Partial<AdminEvent> = {}): AdminEvent {
     isActive: false,
     startsAt: "2026-01-01T00:00:00.000Z",
     endsAt: "2026-01-10T00:00:00.000Z",
+    imageKey: null,
     items: [],
     ...overrides,
   };
@@ -29,6 +30,11 @@ function makeEvent(overrides: Partial<AdminEvent> = {}): AdminEvent {
 
 beforeEach(() => {
   mockApiFetch.mockReset();
+});
+
+beforeEach(() => {
+  (URL as unknown as { createObjectURL: jest.Mock }).createObjectURL = jest.fn(() => "blob:mock");
+  (URL as unknown as { revokeObjectURL: jest.Mock }).revokeObjectURL = jest.fn();
 });
 
 describe("EventFormDialog - create", () => {
@@ -62,6 +68,32 @@ describe("EventFormDialog - create", () => {
     );
     expect(onSaved).toHaveBeenCalled();
     expect(onClose).toHaveBeenCalled();
+  });
+
+  it("uploads a picked banner image after creating the event", async () => {
+    const user = userEvent.setup();
+    mockApiFetch.mockResolvedValue({ id: "evt-new" });
+
+    const { container } = render(
+      <EventFormDialog event={null} onClose={jest.fn()} onSaved={jest.fn()} />,
+    );
+
+    const inputs = screen.getAllByDisplayValue("");
+    await user.type(inputs[0], "Banner Event");
+    await user.type(inputs[1], "2026-01-01T10:00");
+    await user.type(inputs[2], "2026-01-02T10:00");
+
+    const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement;
+    const file = new File(["img"], "banner.png", { type: "image/png" });
+    await user.upload(fileInput, file);
+
+    await user.click(screen.getByText("Save"));
+
+    expect(mockApiFetch).toHaveBeenCalledWith("/admin/events", expect.objectContaining({ method: "POST" }));
+    expect(mockApiFetch).toHaveBeenCalledWith(
+      "/admin/events/evt-new/image",
+      expect.objectContaining({ method: "POST", body: expect.any(FormData) }),
+    );
   });
 
   it("shows error on failure", async () => {

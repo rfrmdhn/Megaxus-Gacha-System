@@ -16,12 +16,19 @@ jest.mock("@/lib/api", () => ({
   },
 }));
 
+const mockConfirm = jest.fn().mockResolvedValue(true);
+jest.mock("@/components/molecules/ConfirmDialog", () => ({
+  useConfirm: () => mockConfirm,
+  ConfirmProvider: ({ children }: { children: React.ReactNode }) => children,
+}));
+
 const baseEvent = {
   id: "evt-1",
   name: "Summer Event",
   isActive: true,
   startsAt: "2026-01-01T00:00:00.000Z",
   endsAt: "2026-01-10T00:00:00.000Z",
+  imageKey: null,
   items: [
     { id: "item-1", name: "Sword", rarity: "rare", dropRate: "30", imageKey: null },
     { id: "item-2", name: "Shield", rarity: "common", dropRate: "70", imageKey: "items/item-2-1.png" },
@@ -171,7 +178,7 @@ it("deletes an item after confirmation", async () => {
 
 it("does not delete when confirm is cancelled", async () => {
   const user = userEvent.setup();
-  window.confirm = jest.fn(() => false);
+  mockConfirm.mockResolvedValueOnce(false);
 
   render(<EventItemsDialog event={baseEvent} onClose={jest.fn()} onChanged={jest.fn()} />);
 

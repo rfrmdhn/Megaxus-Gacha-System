@@ -8,8 +8,8 @@ type ButtonVariant = "primary" | "secondary";
 // callers pass those via `className`.
 const VARIANT_CLASSES: Record<ButtonVariant, string> = {
   primary:
-    "bg-gradient-to-r from-brand-cyan via-brand-purple to-brand-pink text-white shadow-md shadow-brand-purple/30 transition-opacity hover:opacity-90 disabled:opacity-50",
-  secondary: "border border-black/20 transition-colors hover:border-brand-purple/50",
+    "bg-gradient-to-r from-brand-red-600 via-brand-red-700 to-brand-red-900 text-white shadow-md shadow-brand-red-700/30 transition-opacity hover:opacity-90 disabled:opacity-50",
+  secondary: "border border-black/20 transition-colors hover:border-brand-red-600/50",
 };
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {

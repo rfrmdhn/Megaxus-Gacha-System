@@ -10,6 +10,7 @@ describe('EventsController', () => {
       listActive: jest.fn(),
       getById: jest.fn(),
       getItemImage: jest.fn(),
+      getEventImage: jest.fn(),
     };
     controller = new EventsController(eventsService);
   });
@@ -44,6 +45,19 @@ describe('EventsController', () => {
     const result = await controller.getItemImage('item-1');
 
     expect(eventsService.getItemImage).toHaveBeenCalledWith('item-1');
+    expect(result).toBeInstanceOf(StreamableFile);
+  });
+
+  it('streams event image bytes from eventsService.getEventImage', async () => {
+    const stream = { pipe: jest.fn() };
+    eventsService.getEventImage.mockResolvedValue({
+      stream,
+      mimeType: 'image/png',
+    });
+
+    const result = await controller.getEventImage('evt-1');
+
+    expect(eventsService.getEventImage).toHaveBeenCalledWith('evt-1');
     expect(result).toBeInstanceOf(StreamableFile);
   });
 });

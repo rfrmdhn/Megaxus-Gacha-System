@@ -1,6 +1,11 @@
-import { getToken } from "./auth";
+import {
+  clearSession,
+  getRefreshToken,
+  getToken,
+  saveSession,
+} from "./auth";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api";
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api/v1";
 
 export class ApiError extends Error {
   constructor(
@@ -11,7 +16,34 @@ export class ApiError extends Error {
   }
 }
 
-export async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
+// Dedupe concurrent refreshes: many in-flight requests hitting 401 at once must
+// share a single rotation, otherwise each rotates the token and invalidates the
+// others. Resolves true when a fresh access token has been stored.
+let refreshInFlight: Promise<boolean> | null = null;
+
+async function refreshAccessToken(): Promise<boolean> {
+  const refreshToken = getRefreshToken();
+  if (!refreshToken) return false;
+  try {
+    const res = await fetch(`${API_URL}/auth/refresh`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refreshToken }),
+    });
+    if (!res.ok) return false;
+    const data = (await res.json()) as { token: string; refreshToken: string };
+    saveSession(data);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export async function apiFetch<T>(
+  path: string,
+  options: RequestInit = {},
+  retrying = false,
+): Promise<T> {
   const token = getToken();
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
@@ -20,6 +52,17 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}): Prom
   if (token) headers.Authorization = `Bearer ${token}`;
 
   const res = await fetch(`${API_URL}${path}`, { ...options, headers });
+
+  // Access token likely expired — try a one-shot refresh, then replay once.
+  if (res.status === 401 && !retrying && getRefreshToken()) {
+    refreshInFlight ??= refreshAccessToken().finally(() => {
+      refreshInFlight = null;
+    });
+    const refreshed = await refreshInFlight;
+    if (refreshed) return apiFetch<T>(path, options, true);
+    clearSession();
+  }
+
   const isJson = res.headers.get("content-type")?.includes("application/json");
   const body = isJson ? await res.json() : null;
 

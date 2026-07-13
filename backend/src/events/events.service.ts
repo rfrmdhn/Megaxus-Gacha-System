@@ -21,6 +21,7 @@ export class EventsService {
       name: event.name,
       startsAt: event.startsAt,
       endsAt: event.endsAt,
+      imageKey: event.imageKey,
     }));
   }
 
@@ -37,6 +38,7 @@ export class EventsService {
       name: event.name,
       startsAt: event.startsAt,
       endsAt: event.endsAt,
+      imageKey: event.imageKey,
       items: items.map((item) => ({
         id: item.id,
         name: item.name,
@@ -56,5 +58,15 @@ export class EventsService {
     });
     if (!item?.imageKey) throw new NotFoundException('Item has no image');
     return this.storage.getObject(item.imageKey);
+  }
+
+  // Public event banner, same rationale as getItemImage.
+  async getEventImage(eventId: string): Promise<StoredObject> {
+    const event = await this.prisma.gachaEvent.findUnique({
+      where: { id: eventId },
+      select: { imageKey: true },
+    });
+    if (!event?.imageKey) throw new NotFoundException('Event has no image');
+    return this.storage.getObject(event.imageKey);
   }
 }

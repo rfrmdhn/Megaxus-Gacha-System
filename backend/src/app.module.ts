@@ -11,11 +11,12 @@ import { UsersModule } from './users/users.module';
 import { EventsModule } from './events/events.module';
 import { GachaModule } from './gacha/gacha.module';
 import { AdminModule } from './admin/admin.module';
+import { HealthModule } from './health/health.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
-    ThrottlerModule.forRoot([{ ttl: 60_000, limit: 20 }]),
+    ThrottlerModule.forRoot([{ ttl: 60_000, limit: 40 }]),
     PrismaModule,
     RedisModule,
     AuthModule,
@@ -23,6 +24,7 @@ import { AdminModule } from './admin/admin.module';
     EventsModule,
     GachaModule,
     AdminModule,
+    HealthModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],

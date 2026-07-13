@@ -36,7 +36,7 @@ export default function ProfilePage() {
       )}
 
       <div>
-        <h1 className="mb-3 border-l-4 border-brand-purple pl-3 text-xl font-semibold">Gacha history</h1>
+        <h1 className="mb-3 border-l-4 border-brand-red-600 pl-3 text-xl font-semibold">Gacha history</h1>
         {history.length === 0 && !loading ? (
           <p className="text-black/60">No pulls yet.</p>
         ) : (

@@ -1,9 +1,11 @@
 import { ConflictException, UnauthorizedException } from '@nestjs/common';
+import * as bcrypt from 'bcrypt';
 import { AuthService } from './auth.service';
 
 describe('AuthService', () => {
   let prisma: any;
   let jwt: any;
+  let config: any;
   let service: AuthService;
 
   beforeEach(() => {
@@ -11,10 +13,12 @@ describe('AuthService', () => {
       user: {
         findUnique: jest.fn(),
         create: jest.fn(),
+        update: jest.fn().mockResolvedValue({}),
       },
     };
     jwt = { sign: jest.fn().mockReturnValue('jwt-token') };
-    service = new AuthService(prisma, jwt);
+    config = { get: jest.fn().mockReturnValue('604800') };
+    service = new AuthService(prisma, jwt, config);
   });
 
   describe('register', () => {
@@ -30,7 +34,7 @@ describe('AuthService', () => {
       expect(prisma.user.create).not.toHaveBeenCalled();
     });
 
-    it('creates a user and returns user + token on success', async () => {
+    it('creates a user and returns user + token pair on success', async () => {
       prisma.user.findUnique.mockResolvedValue(null);
       prisma.user.create.mockResolvedValue({
         id: 'new-user',
@@ -45,10 +49,7 @@ describe('AuthService', () => {
       });
 
       expect(prisma.user.create).toHaveBeenCalledWith({
-        data: {
-          email: 'new@test.com',
-          passwordHash: expect.any(String),
-        },
+        data: { email: 'new@test.com', passwordHash: expect.any(String) },
       });
       expect(result.user).toEqual({
         id: 'new-user',
@@ -56,10 +57,19 @@ describe('AuthService', () => {
         coins: 500,
       });
       expect(result.token).toBe('jwt-token');
+      expect(result.refreshToken.startsWith('new-user.')).toBe(true);
       expect(jwt.sign).toHaveBeenCalledWith({
         sub: 'new-user',
         email: 'new@test.com',
         role: 'user',
+      });
+      // Refresh secret persisted as a hash, never in the clear.
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        where: { id: 'new-user' },
+        data: {
+          refreshTokenHash: expect.any(String),
+          refreshTokenExpiresAt: expect.any(Date),
+        },
       });
     });
   });
@@ -88,8 +98,6 @@ describe('AuthService', () => {
     });
 
     it('throws UnauthorizedException when user is banned', async () => {
-      // Use a real bcrypt hash of 'password123'
-      const bcrypt = require('bcrypt');
       const hash = bcrypt.hashSync('password123', 2);
       prisma.user.findUnique.mockResolvedValue({
         id: 'u1',
@@ -104,8 +112,7 @@ describe('AuthService', () => {
       ).rejects.toThrow(UnauthorizedException);
     });
 
-    it('returns token on successful login', async () => {
-      const bcrypt = require('bcrypt');
+    it('returns a token pair on successful login', async () => {
       const hash = bcrypt.hashSync('password123', 2);
       prisma.user.findUnique.mockResolvedValue({
         id: 'u1',
@@ -121,11 +128,124 @@ describe('AuthService', () => {
       });
 
       expect(result.token).toBe('jwt-token');
+      expect(result.refreshToken.startsWith('u1.')).toBe(true);
       expect(jwt.sign).toHaveBeenCalledWith({
         sub: 'u1',
         email: 'test@test.com',
         role: 'user',
       });
+    });
+
+    it('falls back to the default refresh lifetime when unset', async () => {
+      // ConfigService returns the provided default verbatim here.
+      config.get.mockImplementation((_key: string, def: string) => def);
+      const hash = bcrypt.hashSync('password123', 2);
+      prisma.user.findUnique.mockResolvedValue({
+        id: 'u1',
+        email: 'test@test.com',
+        passwordHash: hash,
+        isBanned: false,
+        role: 'user',
+      });
+
+      await service.login({ email: 'test@test.com', password: 'password123' });
+
+      expect(prisma.user.update).toHaveBeenCalled();
+    });
+  });
+
+  describe('refresh', () => {
+    const futureExpiry = () => new Date(Date.now() + 60_000);
+
+    it('rejects a token without the id.secret separator', async () => {
+      await expect(
+        service.refresh({ refreshToken: 'no-separator' }),
+      ).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('rejects when the user no longer exists', async () => {
+      prisma.user.findUnique.mockResolvedValue(null);
+      await expect(
+        service.refresh({ refreshToken: 'u1.secret' }),
+      ).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('rejects when the user is banned', async () => {
+      prisma.user.findUnique.mockResolvedValue({
+        id: 'u1',
+        isBanned: true,
+        refreshTokenHash: 'x',
+        refreshTokenExpiresAt: futureExpiry(),
+      });
+      await expect(
+        service.refresh({ refreshToken: 'u1.secret' }),
+      ).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('rejects when no refresh token is stored', async () => {
+      prisma.user.findUnique.mockResolvedValue({
+        id: 'u1',
+        isBanned: false,
+        refreshTokenHash: null,
+        refreshTokenExpiresAt: null,
+      });
+      await expect(
+        service.refresh({ refreshToken: 'u1.secret' }),
+      ).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('rejects an expired refresh token', async () => {
+      prisma.user.findUnique.mockResolvedValue({
+        id: 'u1',
+        isBanned: false,
+        refreshTokenHash: bcrypt.hashSync('secret', 2),
+        refreshTokenExpiresAt: new Date(Date.now() - 1000),
+      });
+      await expect(
+        service.refresh({ refreshToken: 'u1.secret' }),
+      ).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('rejects a secret that does not match the stored hash', async () => {
+      prisma.user.findUnique.mockResolvedValue({
+        id: 'u1',
+        isBanned: false,
+        refreshTokenHash: bcrypt.hashSync('the-real-secret', 2),
+        refreshTokenExpiresAt: futureExpiry(),
+      });
+      await expect(
+        service.refresh({ refreshToken: 'u1.wrong-secret' }),
+      ).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('rotates and returns a fresh token pair on a valid refresh', async () => {
+      prisma.user.findUnique.mockResolvedValue({
+        id: 'u1',
+        email: 'test@test.com',
+        role: 'user',
+        isBanned: false,
+        refreshTokenHash: bcrypt.hashSync('secret', 2),
+        refreshTokenExpiresAt: futureExpiry(),
+      });
+
+      const result = await service.refresh({ refreshToken: 'u1.secret' });
+
+      expect(result.token).toBe('jwt-token');
+      expect(result.refreshToken.startsWith('u1.')).toBe(true);
+      expect(result.refreshToken).not.toBe('u1.secret');
+      expect(prisma.user.update).toHaveBeenCalled();
+    });
+  });
+
+  describe('logout', () => {
+    it('clears the stored refresh token', async () => {
+      const result = await service.logout('u1');
+
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        where: { id: 'u1' },
+        data: { refreshTokenHash: null, refreshTokenExpiresAt: null },
+      });
+      expect(result).toEqual({ success: true });
     });
   });
 });

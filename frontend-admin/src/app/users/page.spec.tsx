@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import UsersPage from "./page";
 
@@ -17,6 +17,12 @@ jest.mock("@/lib/api", () => ({
 const mockAdminUser = { sub: "admin1", email: "admin@test.com", role: "admin", iat: 0, exp: 9999999999 };
 jest.mock("@/lib/useRequireAdmin", () => ({
   useRequireAdmin: jest.fn(() => ({ user: mockAdminUser, checking: false })),
+}));
+
+const mockConfirm = jest.fn().mockResolvedValue(true);
+jest.mock("@/components/molecules/ConfirmDialog", () => ({
+  useConfirm: () => mockConfirm,
+  ConfirmProvider: ({ children }: { children: React.ReactNode }) => children,
 }));
 
 const mockUsers = [
@@ -116,5 +122,37 @@ it("bans a user after confirmation", async () => {
   expect(mockApiFetch).toHaveBeenCalledWith(
     "/admin/users/u1",
     expect.objectContaining({ method: "PUT", body: JSON.stringify({ isBanned: true }) }),
+  );
+});
+
+it("deletes a user after confirmation and removes the row", async () => {
+  const user = userEvent.setup();
+  render(<UsersPage />);
+
+  await screen.findByText("player@test.com");
+  mockApiFetch.mockResolvedValueOnce({ success: true });
+
+  await user.click(screen.getAllByRole("button", { name: "Delete user" })[0]);
+
+  expect(mockApiFetch).toHaveBeenCalledWith(
+    "/admin/users/u1",
+    expect.objectContaining({ method: "DELETE" }),
+  );
+  await waitFor(() => expect(screen.queryByText("player@test.com")).not.toBeInTheDocument());
+});
+
+it("does not delete when the confirmation is cancelled", async () => {
+  const user = userEvent.setup();
+  mockConfirm.mockResolvedValueOnce(false);
+  render(<UsersPage />);
+
+  await screen.findByText("player@test.com");
+  mockApiFetch.mockClear();
+
+  await user.click(screen.getAllByRole("button", { name: "Delete user" })[0]);
+
+  expect(mockApiFetch).not.toHaveBeenCalledWith(
+    "/admin/users/u1",
+    expect.objectContaining({ method: "DELETE" }),
   );
 });

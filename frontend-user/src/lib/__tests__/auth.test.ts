@@ -1,5 +1,16 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { saveToken, clearToken, getToken, decodeToken, getCurrentUser } from "../auth";
+import {
+  saveToken,
+  clearToken,
+  getToken,
+  decodeToken,
+  getCurrentUser,
+  saveRefreshToken,
+  getRefreshToken,
+  clearRefreshToken,
+  saveSession,
+  clearSession,
+} from "../auth";
 
 function makeToken(payload: Record<string, unknown>): string {
   const header = btoa(JSON.stringify({ alg: "HS256", typ: "JWT" }));
@@ -100,5 +111,32 @@ describe("getCurrentUser", () => {
   it("returns null for invalid token in localStorage", () => {
     localStorage.setItem("gacha_token", "not-a-valid-jwt");
     expect(getCurrentUser()).toBeNull();
+  });
+});
+
+describe("refresh token storage", () => {
+  beforeEach(() => localStorage.clear());
+
+  it("saves, reads, and clears the refresh token", () => {
+    saveRefreshToken("u1.secret");
+    expect(getRefreshToken()).toBe("u1.secret");
+    clearRefreshToken();
+    expect(getRefreshToken()).toBeNull();
+  });
+
+  it("saveSession stores both tokens; clearSession removes both", () => {
+    saveSession({ token: "access", refreshToken: "u1.refresh" });
+    expect(getToken()).toBe("access");
+    expect(getRefreshToken()).toBe("u1.refresh");
+
+    clearSession();
+    expect(getToken()).toBeNull();
+    expect(getRefreshToken()).toBeNull();
+  });
+
+  it("getRefreshToken returns null when window is undefined (SSR)", () => {
+    vi.stubGlobal("window", undefined);
+    expect(getRefreshToken()).toBeNull();
+    vi.unstubAllGlobals();
   });
 });

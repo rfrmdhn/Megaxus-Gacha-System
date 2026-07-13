@@ -19,6 +19,14 @@ jest.mock("@/lib/useRequireAdmin", () => ({
   useRequireAdmin: jest.fn(() => ({ user: mockAdminUser, checking: false })),
 }));
 
+// Confirmations resolve true by default (user confirms); tests that exercise
+// the cancel path override with mockConfirm.mockResolvedValueOnce(false).
+const mockConfirm = jest.fn().mockResolvedValue(true);
+jest.mock("@/components/molecules/ConfirmDialog", () => ({
+  useConfirm: () => mockConfirm,
+  ConfirmProvider: ({ children }: { children: React.ReactNode }) => children,
+}));
+
 const mockEvents = [
   {
     id: "evt-1",

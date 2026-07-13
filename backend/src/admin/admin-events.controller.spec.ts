@@ -1,3 +1,4 @@
+import { StreamableFile } from '@nestjs/common';
 import { AdminEventsController } from './admin-events.controller';
 
 describe('AdminEventsController', () => {
@@ -11,6 +12,9 @@ describe('AdminEventsController', () => {
       create: jest.fn(),
       update: jest.fn(),
       remove: jest.fn(),
+      uploadImage: jest.fn(),
+      removeImage: jest.fn(),
+      getImage: jest.fn(),
     };
     itemsService = { create: jest.fn() };
     controller = new AdminEventsController(eventsService, itemsService);
@@ -63,5 +67,35 @@ describe('AdminEventsController', () => {
 
     expect(itemsService.create).toHaveBeenCalledWith('evt-1', dto);
     expect(result.id).toBe('item-1');
+  });
+
+  it('delegates uploadImage to eventsService', async () => {
+    const file = { buffer: Buffer.from('x'), mimetype: 'image/png' };
+    eventsService.uploadImage.mockResolvedValue({ id: 'evt-1' });
+
+    const result = await controller.uploadImage('evt-1', file);
+
+    expect(eventsService.uploadImage).toHaveBeenCalledWith('evt-1', file);
+    expect(result.id).toBe('evt-1');
+  });
+
+  it('delegates removeImage to eventsService', async () => {
+    eventsService.removeImage.mockResolvedValue(undefined);
+
+    await controller.removeImage('evt-1');
+
+    expect(eventsService.removeImage).toHaveBeenCalledWith('evt-1');
+  });
+
+  it('streams the event image as a StreamableFile', async () => {
+    eventsService.getImage.mockResolvedValue({
+      stream: Buffer.from('img'),
+      mimeType: 'image/png',
+    });
+
+    const result = await controller.getImage('evt-1');
+
+    expect(eventsService.getImage).toHaveBeenCalledWith('evt-1');
+    expect(result).toBeInstanceOf(StreamableFile);
   });
 });
