@@ -43,6 +43,7 @@ describe('GachaService', () => {
   let prisma: any;
   let gachaCache: any;
   let adminFeed: any;
+  let systemConfig: any;
   let service: GachaService;
 
   beforeEach(() => {
@@ -52,7 +53,16 @@ describe('GachaService', () => {
     };
     gachaCache = { getEventItems: jest.fn() };
     adminFeed = { emitPull: jest.fn().mockResolvedValue(undefined) };
-    service = new GachaService(prisma, gachaCache, adminFeed);
+    systemConfig = {
+      get: jest.fn().mockImplementation((key: string) => {
+        const defaults: Record<string, unknown> = {
+          PULL_COST: 10,
+          MAX_BULK_PULL: 10,
+        };
+        return defaults[key] ?? 10;
+      }),
+    };
+    service = new GachaService(prisma, gachaCache, adminFeed, systemConfig);
   });
 
   it('throws NotFoundException when the event does not exist', async () => {
@@ -152,8 +162,18 @@ describe('GachaService', () => {
   describe('pullBulk', () => {
     // Two items summing to 100 so a controlled Math.random deterministically
     // selects which one each roll lands on (common < 90 <= rare).
-    const COMMON = makeItem({ id: 'c', name: 'Biasa', rarity: 'common', dropRate: 90 });
-    const RARE = makeItem({ id: 'r', name: 'Langka', rarity: 'rare', dropRate: 10 });
+    const COMMON = makeItem({
+      id: 'c',
+      name: 'Biasa',
+      rarity: 'common',
+      dropRate: 90,
+    });
+    const RARE = makeItem({
+      id: 'r',
+      name: 'Langka',
+      rarity: 'rare',
+      dropRate: 10,
+    });
 
     afterEach(() => jest.restoreAllMocks());
 
@@ -166,7 +186,7 @@ describe('GachaService', () => {
       expect(prisma.$transaction).not.toHaveBeenCalled();
     });
 
-    it('charges PULL_COST * count in one deduction, logs each pull, and returns the rarest as bestRarity', async () => {
+    it('charges PULL_COST * count in one deduction, logs each pull, and returns the rarest as bestRarity and the commonest as worstRarity', async () => {
       prisma.gachaEvent.findUnique.mockResolvedValue(makeEvent());
       gachaCache.getEventItems.mockResolvedValue([COMMON, RARE]);
       const tx = makeTx({
@@ -201,6 +221,7 @@ describe('GachaService', () => {
           { id: 'r', name: 'Langka', rarity: 'rare', imageKey: null },
         ],
         bestRarity: 'rare',
+        worstRarity: 'common',
         remainingCoins: 480,
       });
     });

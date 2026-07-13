@@ -4,6 +4,7 @@ import { GachaEvent, EventItem, PullResult, MultiPullResult } from "./types";
 interface BulkPullResponse {
   items: PullResult["item"][];
   bestRarity: string;
+  worstRarity: string;
   remainingCoins: number;
 }
 
@@ -23,7 +24,8 @@ export function pull(eventId: string): Promise<PullResult> {
 }
 
 // One bulk request: the backend charges `count` pulls all-or-nothing and
-// returns every pulled item plus the best (rarest) rarity it computed.
+// returns every pulled item plus the best (rarest) and worst (commonest)
+// rarity it computed.
 export async function pullMany(eventId: string, count: number): Promise<MultiPullResult> {
   const res = await apiFetch<BulkPullResponse>("/gacha/pull-bulk", {
     method: "POST",
@@ -32,6 +34,7 @@ export async function pullMany(eventId: string, count: number): Promise<MultiPul
   return {
     results: res.items.map((item) => ({ item, remainingCoins: res.remainingCoins })),
     bestRarity: res.bestRarity,
+    worstRarity: res.worstRarity,
     remainingCoins: res.remainingCoins,
   };
 }

@@ -2,6 +2,7 @@ import { BadRequestException } from '@nestjs/common';
 import {
   assertDropRatesEqual100,
   assertDropRatesDoNotExceed100,
+  sumDropRates,
 } from './drop-rate.util';
 
 describe('drop-rate.util', () => {
@@ -72,6 +73,18 @@ describe('drop-rate.util', () => {
       } catch (e) {
         expect(e.message).toContain('110');
       }
+    });
+  });
+
+  describe('sumDropRates', () => {
+    it('returns the exact Decimal-arithmetic sum', () => {
+      expect(sumDropRates([60]).toString()).toBe('60');
+      expect(sumDropRates([50, 30, 20]).toString()).toBe('100');
+      expect(sumDropRates([]).toString()).toBe('0');
+    });
+
+    it('matches 100 via Decimal equality, not float comparison', () => {
+      expect(sumDropRates([33.33, 33.33, 33.34]).equals(100)).toBe(true);
     });
   });
 });

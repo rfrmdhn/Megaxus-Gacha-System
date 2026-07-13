@@ -44,4 +44,20 @@ describe("RarityChart", () => {
     expect(cells[0]).toHaveAttribute("data-fill", "#f59e0b");
     expect(cells[1]).toHaveAttribute("data-fill", "#cbd5e1");
   });
+
+  it("sorts bars from highest count to lowest, left to right", () => {
+    render(
+      <RarityChart
+        data={[
+          { rarity: "common", count: 3 },
+          { rarity: "legendary", count: 10 },
+          { rarity: "rare", count: 6 },
+        ]}
+      />,
+    );
+
+    const cells = screen.getAllByTestId("cell");
+    // legendary (10) first, then rare (6), then common (3).
+    expect(cells.map((c) => c.getAttribute("data-fill"))).toEqual(["#f59e0b", "#38bdf8", "#94a3b8"]);
+  });
 });

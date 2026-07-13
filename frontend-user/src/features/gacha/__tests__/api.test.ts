@@ -38,6 +38,7 @@ describe("gacha api", () => {
         { id: "b", name: "B", rarity: "rare" },
       ],
       bestRarity: "rare",
+      worstRarity: "common",
       remainingCoins: 80,
     });
 
@@ -52,6 +53,7 @@ describe("gacha api", () => {
       { item: { id: "b", name: "B", rarity: "rare" }, remainingCoins: 80 },
     ]);
     expect(res.bestRarity).toBe("rare");
+    expect(res.worstRarity).toBe("common");
     expect(res.remainingCoins).toBe(80);
   });
 

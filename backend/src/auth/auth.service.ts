@@ -3,20 +3,15 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
+import { SystemConfigService } from '../system-config/system-config.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { RefreshDto } from './dto/refresh.dto';
 import { Role } from '../../generated/prisma';
-
-const BCRYPT_ROUNDS = 10;
-// 32 random bytes → 64 hex chars, safely under bcrypt's 72-byte input cap.
-const REFRESH_TOKEN_BYTES = 32;
-const DEFAULT_REFRESH_EXPIRES_SECONDS = 604_800; // 7 days
 
 interface TokenUser {
   id: string;
@@ -29,7 +24,7 @@ export class AuthService {
   constructor(
     private prisma: PrismaService,
     private jwt: JwtService,
-    private config: ConfigService,
+    private systemConfig: SystemConfigService,
   ) {}
 
   async register(dto: RegisterDto) {
@@ -40,8 +35,8 @@ export class AuthService {
       throw new ConflictException('Email is already registered');
     }
 
-    const passwordHash = await bcrypt.hash(dto.password, BCRYPT_ROUNDS);
-    // `coins` defaults to 500 at the schema level — the starting bonus is not duplicated here.
+    const bcryptRounds = this.systemConfig.get<number>('BCRYPT_ROUNDS');
+    const passwordHash = await bcrypt.hash(dto.password, bcryptRounds);
     const user = await this.prisma.user.create({
       data: { email: dto.email, passwordHash },
     });
@@ -66,8 +61,6 @@ export class AuthService {
     return this.issueTokens(user);
   }
 
-  // Rotating refresh: every successful refresh mints a new pair and overwrites
-  // the stored hash, so a previously-used (or leaked-then-rotated) token fails.
   async refresh(dto: RefreshDto) {
     const separator = dto.refreshToken.indexOf('.');
     if (separator === -1) {
@@ -108,20 +101,19 @@ export class AuthService {
       role: user.role,
     });
 
-    // Opaque secret prefixed with the user id so `refresh` can locate the row
-    // without a reversible lookup — only the bcrypt hash of the secret is stored.
-    const secret = randomBytes(REFRESH_TOKEN_BYTES).toString('hex');
-    const expiresInSeconds = parseInt(
-      this.config.get<string>(
-        'REFRESH_TOKEN_EXPIRES_IN_SECONDS',
-        String(DEFAULT_REFRESH_EXPIRES_SECONDS),
-      ),
-      10,
+    const refreshTokenBytes = this.systemConfig.get<number>(
+      'REFRESH_TOKEN_BYTES',
     );
+    const bcryptRounds = this.systemConfig.get<number>('BCRYPT_ROUNDS');
+    const expiresInSeconds = this.systemConfig.get<number>(
+      'DEFAULT_REFRESH_EXPIRES_SECONDS',
+    );
+
+    const secret = randomBytes(refreshTokenBytes).toString('hex');
     await this.prisma.user.update({
       where: { id: user.id },
       data: {
-        refreshTokenHash: await bcrypt.hash(secret, BCRYPT_ROUNDS),
+        refreshTokenHash: await bcrypt.hash(secret, bcryptRounds),
         refreshTokenExpiresAt: new Date(Date.now() + expiresInSeconds * 1000),
       },
     });

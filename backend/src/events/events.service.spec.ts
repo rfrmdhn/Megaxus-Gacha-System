@@ -87,7 +87,13 @@ describe('EventsService', () => {
     it('returns event with items for an active event', async () => {
       prisma.gachaEvent.findUnique.mockResolvedValue(makeEvent());
       gachaCache.getEventItems.mockResolvedValue([
-        { id: 'item-1', name: 'Sword', rarity: 'rare', dropRate: 50, imageKey: null },
+        {
+          id: 'item-1',
+          name: 'Sword',
+          rarity: 'rare',
+          dropRate: 50,
+          imageKey: null,
+        },
         {
           id: 'item-2',
           name: 'Shield',
@@ -106,7 +112,13 @@ describe('EventsService', () => {
         endsAt: expect.any(Date),
         imageKey: null,
         items: [
-          { id: 'item-1', name: 'Sword', rarity: 'rare', dropRate: '50.00', imageKey: null },
+          {
+            id: 'item-1',
+            name: 'Sword',
+            rarity: 'rare',
+            dropRate: '50.00',
+            imageKey: null,
+          },
           {
             id: 'item-2',
             name: 'Shield',

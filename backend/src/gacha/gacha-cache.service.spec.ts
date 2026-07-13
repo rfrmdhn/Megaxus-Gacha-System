@@ -3,6 +3,7 @@ import { GachaCacheService } from './gacha-cache.service';
 describe('GachaCacheService', () => {
   let redis: any;
   let prisma: any;
+  let systemConfig: any;
   let service: GachaCacheService;
 
   beforeEach(() => {
@@ -14,7 +15,8 @@ describe('GachaCacheService', () => {
     prisma = {
       gachaItem: { findMany: jest.fn() },
     };
-    service = new GachaCacheService(redis, prisma);
+    systemConfig = { get: jest.fn().mockReturnValue(86_400) };
+    service = new GachaCacheService(redis, prisma, systemConfig);
   });
 
   describe('getEventItems', () => {
@@ -34,7 +36,13 @@ describe('GachaCacheService', () => {
     it('fetches from DB and caches on cache miss', async () => {
       redis.get.mockResolvedValue(null);
       const dbItems = [
-        { id: 'item-1', name: 'Sword', rarity: 'rare', dropRate: 50, imageKey: null },
+        {
+          id: 'item-1',
+          name: 'Sword',
+          rarity: 'rare',
+          dropRate: 50,
+          imageKey: null,
+        },
         {
           id: 'item-2',
           name: 'Shield',
@@ -48,7 +56,13 @@ describe('GachaCacheService', () => {
       const result = await service.getEventItems('evt-1');
 
       expect(result).toEqual([
-        { id: 'item-1', name: 'Sword', rarity: 'rare', dropRate: 50, imageKey: null },
+        {
+          id: 'item-1',
+          name: 'Sword',
+          rarity: 'rare',
+          dropRate: 50,
+          imageKey: null,
+        },
         {
           id: 'item-2',
           name: 'Shield',
@@ -70,6 +84,8 @@ describe('GachaCacheService', () => {
       expect(redis.set).toHaveBeenCalledWith(
         'event:evt-1:items',
         expect.any(String),
+        'EX',
+        86_400,
       );
     });
 

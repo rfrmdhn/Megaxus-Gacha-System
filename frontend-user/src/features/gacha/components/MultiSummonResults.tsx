@@ -10,10 +10,11 @@ interface MultiSummonResultsProps {
 }
 
 export function MultiSummonResults({ data, onContinue }: MultiSummonResultsProps) {
-  const { results, bestRarity } = data;
-  // `bestRarity` is decided by the backend (rarest pull); we only display it.
+  const { results, bestRarity, worstRarity } = data;
+  // `bestRarity`/`worstRarity` are decided by the backend; we only display them.
   // getTreatment degrades an unknown label's colour gracefully to common.
   const bestTreatment = getTreatment(bestRarity);
+  const worstTreatment = getTreatment(worstRarity);
 
   return (
     <div
@@ -27,6 +28,11 @@ export function MultiSummonResults({ data, onContinue }: MultiSummonResultsProps
           Best pull:{" "}
           <span className="font-semibold capitalize" style={{ color: bestTreatment.palette.via }}>
             {bestRarity}
+          </span>
+          {" · "}
+          Worst pull:{" "}
+          <span className="font-semibold capitalize" style={{ color: worstTreatment.palette.via }}>
+            {worstRarity}
           </span>
         </p>
       </div>

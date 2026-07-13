@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ApiError } from "@/lib/api";
+import { getConfig, SystemConfig } from "@/lib/config";
 import { useRequireAuth } from "@/lib/useRequireAuth";
 import { Profile } from "@/features/profile/types";
 import { getProfile } from "@/features/profile/api";
@@ -11,12 +12,27 @@ import { listEvents, getEvent, pull as pullApi, pullMany } from "../api";
 import { useSoundManager } from "./useSoundManager";
 import { usePresentation } from "./usePresentation";
 
-/** Retained for the skip path and existing tests. */
-export const PULL_REVEAL_ANIMATION_MS = 700;
-export const PULL_COST = 10;
-export const MULTI_PULL_COUNT = 10;
+const DEFAULT_CONFIG: SystemConfig = {
+  PULL_COST: 10,
+  MAX_BULK_PULL: 10,
+  GACHA_PULL_THROTTLE_LIMIT: 120,
+  GACHA_PULL_THROTTLE_TTL_MS: 60_000,
+  ADMIN_FEED_RATE_LIMIT_MAX: 10,
+  ADMIN_FEED_RATE_LIMIT_DURATION_MS: 1000,
+  GLOBAL_THROTTLE_LIMIT: 40,
+  GLOBAL_THROTTLE_TTL_MS: 60_000,
+  BCRYPT_ROUNDS: 10,
+  REFRESH_TOKEN_BYTES: 32,
+  DEFAULT_REFRESH_EXPIRES_SECONDS: 604_800,
+  JWT_ACCESS_EXPIRES_IN_SECONDS: 900,
+  RECENT_HISTORY_LIMIT: 10,
+  BACKSTOP_TTL_SECONDS: 86_400,
+  PULL_COST_FRONTEND: 10,
+  MULTI_PULL_COUNT: 10,
+  PULL_REVEAL_ANIMATION_MS: 700,
+  REFRESH_DEBOUNCE_MS: 500,
+};
 
-// What is currently being revealed.
 type PendingReveal = { type: "single"; result: PullResult } | { type: "multi"; data: MultiPullResult };
 
 export function useGacha(initialEventId?: string | null) {
@@ -25,6 +41,7 @@ export function useGacha(initialEventId?: string | null) {
   const sound = useSoundManager();
   const presentation = usePresentation();
 
+  const [config, setConfig] = useState<SystemConfig>(DEFAULT_CONFIG);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [events, setEvents] = useState<GachaEvent[]>([]);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
@@ -40,6 +57,7 @@ export function useGacha(initialEventId?: string | null) {
 
   useEffect(() => {
     if (checking) return;
+    void loadConfig();
     void refreshProfile();
     void loadEvents();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -51,6 +69,14 @@ export function useGacha(initialEventId?: string | null) {
       .then((event) => setItems(event.items))
       .catch(() => setItems([]));
   }, [selectedEventId]);
+
+  async function loadConfig() {
+    try {
+      setConfig(await getConfig());
+    } catch {
+      // Keep defaults on failure
+    }
+  }
 
   async function refreshProfile() {
     try {
@@ -84,7 +110,6 @@ export function useGacha(initialEventId?: string | null) {
     sound.play("summon-start");
   }
 
-  /** True when reveals should be skipped and results applied instantly. */
   function isImmediate() {
     return skipAnimation || presentation.reducedMotion;
   }
@@ -108,7 +133,7 @@ export function useGacha(initialEventId?: string | null) {
     if (!selectedEventId) return;
     beginPull();
     try {
-      const data = await pullMany(selectedEventId, MULTI_PULL_COUNT);
+      const data = await pullMany(selectedEventId, config.MULTI_PULL_COUNT);
       const reveal: PendingReveal = { type: "multi", data };
       if (isImmediate()) applyMulti(data);
       else setPending(reveal);
@@ -129,19 +154,16 @@ export function useGacha(initialEventId?: string | null) {
     setCoins(data.remainingCoins);
   }
 
-  // Called when a cinematic reveal reaches its reward — commit the outcome.
   function commitReveal() {
     if (!pending) return;
     if (pending.type === "single") applySingle(pending.result);
     else applyMulti(pending.data);
   }
 
-  // Called when the user dismisses the reward overlay.
   function dismissReveal() {
     setPending(null);
   }
 
-  // Clear persisted result cards (single card / multi grid).
   function clearResults() {
     setResult(null);
     setMultiResult(null);
@@ -169,7 +191,7 @@ export function useGacha(initialEventId?: string | null) {
     commitReveal,
     dismissReveal,
     clearResults,
-    pullCost: PULL_COST,
+    pullCost: config.PULL_COST_FRONTEND,
     muted: sound.muted,
     toggleMute: sound.toggleMute,
     onSound: sound.play,

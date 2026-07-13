@@ -1,9 +1,4 @@
-import {
-  Controller,
-  Get,
-  Param,
-  StreamableFile,
-} from '@nestjs/common';
+import { Controller, Get, Param, StreamableFile } from '@nestjs/common';
 import { EventsService } from './events.service';
 
 @Controller('events')

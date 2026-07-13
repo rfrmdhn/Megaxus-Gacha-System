@@ -1,6 +1,8 @@
 export const ADMIN_FEED_QUEUE = 'admin-feed';
 
-// A bulk pull can fire up to MAX_BULK_PULL (10) events at once; this holds a
-// burst in the queue and drip-feeds it to the admin SSE stream instead of
-// flooding it in one tick. Single pulls under normal usage never hit this cap.
-export const ADMIN_FEED_RATE_LIMIT = { max: 10, duration: 1000 };
+// Rate limit values are read from env vars at module init time.
+// Changing these requires an application restart (decorator values are static).
+export const ADMIN_FEED_RATE_LIMIT = {
+  max: Number(process.env.ADMIN_FEED_RATE_LIMIT_MAX ?? 10),
+  duration: Number(process.env.ADMIN_FEED_RATE_LIMIT_DURATION_MS ?? 1000),
+};

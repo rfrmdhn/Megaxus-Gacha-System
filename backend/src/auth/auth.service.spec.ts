@@ -5,7 +5,7 @@ import { AuthService } from './auth.service';
 describe('AuthService', () => {
   let prisma: any;
   let jwt: any;
-  let config: any;
+  let systemConfig: any;
   let service: AuthService;
 
   beforeEach(() => {
@@ -17,8 +17,17 @@ describe('AuthService', () => {
       },
     };
     jwt = { sign: jest.fn().mockReturnValue('jwt-token') };
-    config = { get: jest.fn().mockReturnValue('604800') };
-    service = new AuthService(prisma, jwt, config);
+    systemConfig = {
+      get: jest.fn().mockImplementation((key: string) => {
+        const defaults: Record<string, unknown> = {
+          BCRYPT_ROUNDS: 10,
+          REFRESH_TOKEN_BYTES: 32,
+          DEFAULT_REFRESH_EXPIRES_SECONDS: 604_800,
+        };
+        return defaults[key] ?? 10;
+      }),
+    };
+    service = new AuthService(prisma, jwt, systemConfig);
   });
 
   describe('register', () => {
@@ -137,8 +146,10 @@ describe('AuthService', () => {
     });
 
     it('falls back to the default refresh lifetime when unset', async () => {
-      // ConfigService returns the provided default verbatim here.
-      config.get.mockImplementation((_key: string, def: string) => def);
+      systemConfig.get.mockImplementation((key: string) => {
+        if (key === 'DEFAULT_REFRESH_EXPIRES_SECONDS') return 604_800;
+        return 10;
+      });
       const hash = bcrypt.hashSync('password123', 2);
       prisma.user.findUnique.mockResolvedValue({
         id: 'u1',

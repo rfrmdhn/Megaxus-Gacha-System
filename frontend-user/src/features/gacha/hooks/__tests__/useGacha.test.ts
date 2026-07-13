@@ -36,6 +36,7 @@ const multi = {
     { item: { id: "b", name: "B", rarity: "legendary", imageKey: null }, remainingCoins: 0 },
   ],
   bestRarity: "legendary",
+  worstRarity: "common",
   remainingCoins: 0,
 };
 

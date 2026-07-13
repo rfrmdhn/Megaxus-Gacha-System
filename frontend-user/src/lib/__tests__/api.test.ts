@@ -25,10 +25,6 @@ function textResponse(text: string, status = 200): Response {
   return new Response(text, { status, statusText: "Error" });
 }
 
-function makeApiError(message: string, status: number): ApiError {
-  return new ApiError(message, status);
-}
-
 describe("ApiError", () => {
   it("stores message and status", () => {
     const err = new ApiError("not found", 404);

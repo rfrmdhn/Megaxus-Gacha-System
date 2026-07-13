@@ -12,13 +12,19 @@ import { Observable } from 'rxjs';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { Public } from '../common/decorators/public.decorator';
 import { Role } from '../../generated/prisma';
 import { AdminHistoryService } from './admin-history.service';
 import { AdminFeedService } from '../queue/admin-feed.service';
 import { AdminHistoryQueryDto } from './dto/admin-history-query.dto';
 import { PrismaService } from '../prisma/prisma.service';
 
+// Class-level guards match every other admin controller, so any new route added
+// here is admin-protected by default. The SSE stream is the one deliberate
+// exception, opted out via @Public() because it authenticates by query param.
 @Controller('admin/history')
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(Role.admin)
 export class AdminHistoryController {
   constructor(
     private historyService: AdminHistoryService,
@@ -28,8 +34,6 @@ export class AdminHistoryController {
   ) {}
 
   @Get()
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.admin)
   list(@Query() query: AdminHistoryQueryDto) {
     return this.historyService.list(query);
   }
@@ -39,6 +43,7 @@ export class AdminHistoryController {
   // via the standard Bearer-header JwtAuthGuard. Role/ban status is re-read
   // from the DB (not trusted from the token payload) so a demotion or ban
   // takes effect immediately, matching JwtStrategy.validate's behavior.
+  @Public()
   @Sse('stream')
   async stream(
     @Query('token') token: string,

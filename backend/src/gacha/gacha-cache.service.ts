@@ -2,6 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import type Redis from 'ioredis';
 import { REDIS_CLIENT } from '../redis/redis.module';
 import { PrismaService } from '../prisma/prisma.service';
+import { SystemConfigService } from '../system-config/system-config.service';
 
 export interface CachedGachaItem {
   id: string;
@@ -25,6 +26,7 @@ export class GachaCacheService {
   constructor(
     @Inject(REDIS_CLIENT) private redis: Redis,
     private prisma: PrismaService,
+    private systemConfig: SystemConfigService,
   ) {}
 
   async getEventItems(eventId: string): Promise<CachedGachaItem[]> {
@@ -45,7 +47,14 @@ export class GachaCacheService {
       ...item,
       dropRate: Number(item.dropRate),
     }));
-    await this.redis.set(cacheKey(eventId), JSON.stringify(serializable));
+
+    const backstopTtl = this.systemConfig.get<number>('BACKSTOP_TTL_SECONDS');
+    await this.redis.set(
+      cacheKey(eventId),
+      JSON.stringify(serializable),
+      'EX',
+      backstopTtl,
+    );
     return serializable;
   }
 

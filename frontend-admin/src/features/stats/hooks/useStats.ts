@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ApiError, sseUrl } from "@/lib/api";
+import { getConfig, SystemConfig } from "@/lib/config";
 import { JwtPayload } from "@/lib/auth";
 import { AdminStats, LeaderboardEntry, RarityBreakdown } from "../types";
 import { getLeaderboard, getRarityBreakdown, getStats } from "../api";
@@ -11,9 +12,8 @@ interface PullEvent {
   rarity: string;
 }
 
-const REFRESH_DEBOUNCE_MS = 500;
+const DEFAULT_REFRESH_DEBOUNCE_MS = 500;
 
-// `null` means "all events" — matches every pull regardless of eventId.
 export type EventFilter = string | null;
 
 /**
@@ -25,6 +25,7 @@ export type EventFilter = string | null;
  * numbers so the cards and leaderboard stay current.
  */
 export function useStats(user: JwtPayload | null) {
+  const [config, setConfig] = useState<SystemConfig | null>(null);
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [rarityCounts, setRarityCounts] = useState<RarityBreakdown[]>([]);
@@ -33,8 +34,6 @@ export function useStats(user: JwtPayload | null) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // The SSE connection is keyed only to `user` (reconnecting on every filter
-  // change would be wasteful); the listener reads the current filter via ref.
   const eventFilterRef = useRef(eventFilter);
   useEffect(() => {
     eventFilterRef.current = eventFilter;
@@ -42,7 +41,12 @@ export function useStats(user: JwtPayload | null) {
 
   async function load() {
     try {
-      const [s, lb] = await Promise.all([getStats(), getLeaderboard()]);
+      const [cfg, s, lb] = await Promise.all([
+        getConfig(),
+        getStats(),
+        getLeaderboard(),
+      ]);
+      setConfig(cfg);
       setStats(s);
       setLeaderboard(lb);
     } catch (err) {
@@ -52,8 +56,6 @@ export function useStats(user: JwtPayload | null) {
     }
   }
 
-  // Best-effort live refresh; on failure keep the last good values silently
-  // rather than flashing an error over a working dashboard.
   async function refresh() {
     try {
       const [s, lb] = await Promise.all([getStats(), getLeaderboard()]);
@@ -99,7 +101,8 @@ export function useStats(user: JwtPayload | null) {
         });
       }
       if (debounceRef.current) clearTimeout(debounceRef.current);
-      debounceRef.current = setTimeout(() => void refresh(), REFRESH_DEBOUNCE_MS);
+      const debounceMs = config?.REFRESH_DEBOUNCE_MS ?? DEFAULT_REFRESH_DEBOUNCE_MS;
+      debounceRef.current = setTimeout(() => void refresh(), debounceMs);
     });
 
     return () => {

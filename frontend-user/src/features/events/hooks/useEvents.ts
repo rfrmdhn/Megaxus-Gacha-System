@@ -13,20 +13,18 @@ export function useEvents() {
 
   useEffect(() => {
     if (checking) return;
-    void loadEvents();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [checking]);
-
-  async function loadEvents() {
-    try {
-      const list = await listEvents();
-      setEvents(list);
-    } catch {
-      setError("Failed to load events");
-    } finally {
-      setLoading(false);
+    async function loadEvents() {
+      try {
+        const list = await listEvents();
+        setEvents(list);
+      } catch {
+        setError("Failed to load events");
+      } finally {
+        setLoading(false);
+      }
     }
-  }
+    void loadEvents();
+  }, [checking]);
 
   return { checking: checking || loading, events, error };
 }

@@ -1,5 +1,4 @@
 import { IsInt, IsUUID, Max, Min } from 'class-validator';
-import { MAX_BULK_PULL } from '../gacha.constants';
 
 export class PullBulkDto {
   @IsUUID()
@@ -7,6 +6,6 @@ export class PullBulkDto {
 
   @IsInt()
   @Min(1)
-  @Max(MAX_BULK_PULL)
+  @Max(100)
   count: number;
 }
