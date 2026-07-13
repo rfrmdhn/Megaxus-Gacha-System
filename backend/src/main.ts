@@ -5,7 +5,10 @@ import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  app.use(helmet());
+  // Event/item images are served publicly for direct cross-origin <img src>
+  // use by frontend-user and frontend-admin (different ports/origins), so the
+  // default same-origin CORP would silently block them from loading.
+  app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
   app.enableCors({
     origin: [
       process.env.FRONTEND_USER_ORIGIN ?? 'http://localhost:3000',
