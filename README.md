@@ -28,7 +28,7 @@ This starts Postgres, Redis, the backend (runs pending Prisma migrations and see
 
 ## Installation — Local development
 
-Requires Node.js 22+, and Postgres + Redis running locally (or via Docker: `docker compose up -d postgres redis`). Note: `docker-compose.yml` maps Redis to host port **6380** (to avoid clashing with a locally-installed Redis on 6379) — set `REDIS_PORT=6380` in `.env` if you use the Dockerized Redis instead of a native install.
+Requires Node.js 22+, and Postgres + Redis running locally (or via Docker: `docker compose up -d postgres redis`). Note: `docker-compose.yml` maps Redis to host port **6380** (to avoid clashing with a locally-installed Redis on 6379) — set `REDIS_PORT=6380` in `.env` if you use the Dockerized Redis instead of a native install. MinIO (`docker compose up -d minio`) is only needed once you hit the image upload/serve endpoints — the backend boots fine without it.
 
 **Backend**
 ```bash
@@ -57,6 +57,32 @@ cp .env.local.example .env.local
 npm run dev
 ```
 Runs on http://localhost:3002 (`package.json` pins the dev/start scripts to that port so it doesn't clash with the user app on 3000).
+
+## Environment variables
+
+Every app ships a committed `.env.example` (`.env.local.example` for the two Next.js apps) — copy it and adjust as needed (see [Installation](#installation--local-development) above for the exact `cp` commands).
+
+**Backend** (`backend/.env`, see [backend/.env.example](backend/.env.example))
+
+| Variable | Required | Default | Purpose |
+|---|---|---|---|
+| `DATABASE_URL` | yes | – | Postgres connection string |
+| `JWT_SECRET` | yes | – | Signs access + refresh tokens |
+| `REDIS_HOST` / `REDIS_PORT` | no | `localhost` / `6379` | Cache + BullMQ queue. Dockerized Redis maps to host port **6380** — see the note above |
+| `JWT_ACCESS_EXPIRES_IN_SECONDS` | no | `900` | Access token TTL (seconds) |
+| `REFRESH_TOKEN_EXPIRES_IN_SECONDS` | no | `604800` | Refresh token TTL (seconds) |
+| `PORT` | no | `3001` | HTTP port |
+| `FRONTEND_USER_ORIGIN` / `FRONTEND_ADMIN_ORIGIN` | no | `http://localhost:3000` / `http://localhost:3002` | CORS allowlist |
+| `MINIO_ENDPOINT` / `MINIO_PORT` / `MINIO_ACCESS_KEY` / `MINIO_SECRET_KEY` / `MINIO_BUCKET` / `MINIO_USE_SSL` | no | see `.env.example` | Object storage for event/item images. Only needed when hitting the image upload/serve endpoints — the app boots fine without MinIO running |
+| `GLOBAL_THROTTLE_LIMIT` / `GLOBAL_THROTTLE_TTL_MS`, `GACHA_PULL_THROTTLE_LIMIT` / `GACHA_PULL_THROTTLE_TTL_MS`, `ADMIN_FEED_RATE_LIMIT_MAX` / `ADMIN_FEED_RATE_LIMIT_DURATION_MS` | no | see `.env.example` | Rate limits, read directly from env at module init (restart required to change) |
+
+Everything else commented in `prisma/seed.js` (`PULL_COST`, `MAX_BULK_PULL`, `BCRYPT_ROUNDS`, `REFRESH_TOKEN_BYTES`, `RECENT_HISTORY_LIMIT`, `BACKSTOP_TTL_SECONDS`, etc.) is **DB-backed system config**, not an env var — tune it via the `system_config` table or `prisma/seed.js`'s defaults, not `.env`. The only system-config keys that double as env-var overrides are the two auth token lifetimes above (see `ENV_OVERRIDES` in [backend/src/system-config/system-config.service.ts](backend/src/system-config/system-config.service.ts)).
+
+**Frontends** (`frontend-user/.env.local`, `frontend-admin/.env.local`)
+
+| Variable | Required | Default | Purpose |
+|---|---|---|---|
+| `NEXT_PUBLIC_API_URL` | yes | `http://localhost:3001/api/v1` | Base URL the browser calls for the backend API. Inlined at build time — changing it requires a rebuild, not just a restart |
 
 ## API documentation
 
