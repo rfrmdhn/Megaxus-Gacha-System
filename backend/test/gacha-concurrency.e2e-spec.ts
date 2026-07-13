@@ -1,5 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ValidationPipe } from '@nestjs/common';
+import {
+  INestApplication,
+  ValidationPipe,
+  VersioningType,
+} from '@nestjs/common';
 import request from 'supertest';
 import { App } from 'supertest/types';
 import { AppModule } from '../src/app.module';
@@ -17,6 +21,7 @@ describe('Gacha pull concurrency (e2e)', () => {
 
     app = moduleFixture.createNestApplication();
     app.setGlobalPrefix('api');
+    app.enableVersioning({ type: VersioningType.URI, defaultVersion: '1' });
     app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
     await app.init();
 
@@ -35,7 +40,7 @@ describe('Gacha pull concurrency (e2e)', () => {
     // Register a normal user, then set a small known balance directly (bypasses
     // the 500-coin default so we can drain it with a handful of pulls, not fifty).
     const registerRes = await request(app.getHttpServer())
-      .post('/api/auth/register')
+      .post('/api/v1/auth/register')
       .send({ email: userEmail, password: 'password123' });
     const userToken: string = registerRes.body.token;
     const userId: string = registerRes.body.user.id;
@@ -46,19 +51,19 @@ describe('Gacha pull concurrency (e2e)', () => {
     // Register an admin (role flip is a direct DB write — there's no public
     // self-service admin endpoint by design) to configure the event.
     const adminRegisterRes = await request(app.getHttpServer())
-      .post('/api/auth/register')
+      .post('/api/v1/auth/register')
       .send({ email: adminEmail, password: 'password123' });
     await prisma.user.update({
       where: { id: adminRegisterRes.body.user.id },
       data: { role: 'admin' },
     });
     const adminLoginRes = await request(app.getHttpServer())
-      .post('/api/auth/login')
+      .post('/api/v1/auth/login')
       .send({ email: adminEmail, password: 'password123' });
     const adminToken: string = adminLoginRes.body.token;
 
     const eventRes = await request(app.getHttpServer())
-      .post('/api/admin/events')
+      .post('/api/v1/admin/events')
       .set('Authorization', `Bearer ${adminToken}`)
       .send({
         name: `Concurrency Test Event ${suffix}`,
@@ -68,12 +73,12 @@ describe('Gacha pull concurrency (e2e)', () => {
     const eventId: string = eventRes.body.id;
 
     await request(app.getHttpServer())
-      .post(`/api/admin/events/${eventId}/items`)
+      .post(`/api/v1/admin/events/${eventId}/items`)
       .set('Authorization', `Bearer ${adminToken}`)
       .send({ name: 'Only Item', rarity: 'common', dropRate: 100 });
 
     await request(app.getHttpServer())
-      .put(`/api/admin/events/${eventId}`)
+      .put(`/api/v1/admin/events/${eventId}`)
       .set('Authorization', `Bearer ${adminToken}`)
       .send({ isActive: true });
 
@@ -82,7 +87,7 @@ describe('Gacha pull concurrency (e2e)', () => {
     const responses = await Promise.all(
       Array.from({ length: CONCURRENT_REQUESTS }, () =>
         request(app.getHttpServer())
-          .post('/api/gacha/pull')
+          .post('/api/v1/gacha/pull')
           .set('Authorization', `Bearer ${userToken}`)
           .send({ eventId }),
       ),

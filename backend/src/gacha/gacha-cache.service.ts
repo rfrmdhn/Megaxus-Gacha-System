@@ -8,6 +8,7 @@ export interface CachedGachaItem {
   name: string;
   rarity: string;
   dropRate: number;
+  imageKey: string | null;
 }
 
 function cacheKey(eventId: string) {
@@ -32,9 +33,18 @@ export class GachaCacheService {
 
     const items = await this.prisma.gachaItem.findMany({
       where: { eventId },
-      select: { id: true, name: true, rarity: true, dropRate: true },
+      select: {
+        id: true,
+        name: true,
+        rarity: true,
+        dropRate: true,
+        imageKey: true,
+      },
     });
-    const serializable = items.map((item) => ({ ...item, dropRate: Number(item.dropRate) }));
+    const serializable = items.map((item) => ({
+      ...item,
+      dropRate: Number(item.dropRate),
+    }));
     await this.redis.set(cacheKey(eventId), JSON.stringify(serializable));
     return serializable;
   }

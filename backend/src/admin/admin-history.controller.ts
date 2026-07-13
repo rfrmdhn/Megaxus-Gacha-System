@@ -16,6 +16,7 @@ import { Role } from '../../generated/prisma';
 import { AdminHistoryService } from './admin-history.service';
 import { AdminFeedService } from '../queue/admin-feed.service';
 import { AdminHistoryQueryDto } from './dto/admin-history-query.dto';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Controller('admin/history')
 export class AdminHistoryController {
@@ -23,6 +24,7 @@ export class AdminHistoryController {
     private historyService: AdminHistoryService,
     private adminFeed: AdminFeedService,
     private jwtService: JwtService,
+    private prisma: PrismaService,
   ) {}
 
   @Get()
@@ -34,16 +36,24 @@ export class AdminHistoryController {
 
   // Native browser EventSource cannot set an Authorization header, so the
   // token is passed as a query param here and verified manually rather than
-  // via the standard Bearer-header JwtAuthGuard.
+  // via the standard Bearer-header JwtAuthGuard. Role/ban status is re-read
+  // from the DB (not trusted from the token payload) so a demotion or ban
+  // takes effect immediately, matching JwtStrategy.validate's behavior.
   @Sse('stream')
-  stream(@Query('token') token: string): Observable<MessageEvent> {
-    let payload: { role: Role };
+  async stream(
+    @Query('token') token: string,
+  ): Promise<Observable<MessageEvent>> {
+    let payload: { sub: string };
     try {
       payload = this.jwtService.verify(token);
     } catch {
       throw new UnauthorizedException('Invalid or missing token');
     }
-    if (payload.role !== Role.admin) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: payload.sub },
+      select: { role: true, isBanned: true },
+    });
+    if (!user || user.isBanned || user.role !== Role.admin) {
       throw new UnauthorizedException('Admin role required');
     }
     return this.adminFeed.stream();

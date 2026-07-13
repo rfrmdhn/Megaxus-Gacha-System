@@ -18,12 +18,15 @@ enum Role {
 }
 
 model User {
-  id           String   @id @default(uuid())
-  email        String   @unique
-  passwordHash String   @map("password_hash")
-  role         Role     @default(user)
-  coins        Int      @default(500)
-  createdAt    DateTime @default(now()) @map("created_at")
+  id                    String    @id @default(uuid())
+  email                 String    @unique
+  passwordHash          String    @map("password_hash")
+  role                  Role      @default(user)
+  coins                 Int       @default(500)
+  isBanned              Boolean   @default(false) @map("is_banned")
+  refreshTokenHash      String?   @map("refresh_token_hash")
+  refreshTokenExpiresAt DateTime? @map("refresh_token_expires_at")
+  createdAt             DateTime  @default(now()) @map("created_at")
 
   gachaLogs GachaLog[]
 
@@ -36,6 +39,7 @@ model GachaEvent {
   isActive  Boolean  @default(false) @map("is_active")
   startsAt  DateTime @map("starts_at")
   endsAt    DateTime @map("ends_at")
+  imageKey  String?  @map("image_key")
   createdAt DateTime @default(now()) @map("created_at")
 
   items     GachaItem[]
@@ -50,6 +54,7 @@ model GachaItem {
   name      String
   rarity    String
   dropRate  Decimal  @map("drop_rate") @db.Decimal(5, 2)
+  imageKey  String?  @map("image_key")
   createdAt DateTime @default(now()) @map("created_at")
 
   event     GachaEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)

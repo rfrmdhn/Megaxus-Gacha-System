@@ -16,7 +16,10 @@ export class UsersController {
   }
 
   @Get('history')
-  getHistory(@CurrentUser() user: AuthenticatedUser, @Query() query: HistoryQueryDto) {
+  getHistory(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query() query: HistoryQueryDto,
+  ) {
     return this.usersService.getHistory(user.id, query);
   }
 }

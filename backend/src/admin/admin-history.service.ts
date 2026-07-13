@@ -11,7 +11,11 @@ export class AdminHistoryService {
     const rows = await this.prisma.gachaLog.findMany({
       where: query.userId ? { userId: query.userId } : undefined,
       orderBy: { createdAt: 'desc' },
-      include: { item: true, event: true, user: true },
+      include: {
+        item: { select: { name: true, rarity: true } },
+        event: { select: { name: true } },
+        user: { select: { email: true } },
+      },
       ...buildCursorArgs(query.cursor, query.limit),
     });
 
