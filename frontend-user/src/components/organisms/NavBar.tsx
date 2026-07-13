@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { clearSession, getCurrentUser } from "@/lib/auth";
 import { Skeleton } from "@/components/Skeleton";
 import { Button } from "@/components/atoms/Button";
@@ -22,25 +22,26 @@ function MenuIcon({ open }: { open: boolean }) {
 
 const SCROLL_THRESHOLD_PX = 8;
 
+const emptySubscribe = () => () => {};
+
 export default function NavBar() {
-  const [checking, setChecking] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
+
+  // useSyncExternalStore with an empty subscribe + static snapshot returns the
+  // server value (false) during SSR/hydration and the client value (true) after
+  // the first client render — no effect or setState needed.
+  const isClient = useSyncExternalStore(emptySubscribe, () => true, () => false);
 
   // The root layout (and this component) never remounts on client-side
   // navigation, so re-check auth state on every route change — otherwise
   // the nav stays stuck showing "Login/Register" right after a login/register
   // redirect, since the initial mount ran before the token was saved.
   // getCurrentUser() is synchronous (reads from cookies/localStorage), so we
-  // can just call it directly during render — no effect needed.
-  const user = getCurrentUser();
-
-  // Show skeleton on initial mount only, then reveal content.
-  useEffect(() => {
-    setChecking(false);
-  }, []);
+  // call it directly during render — no effect needed.
+  const user = isClient ? getCurrentUser() : null;
 
   // Solid background once the page scrolls, so page content never shows
   // through the sticky header — transparent/blur only reads well at the top.
@@ -81,7 +82,7 @@ export default function NavBar() {
           </span>
         </Link>
         <div className="relative flex items-center gap-1 text-sm">
-          {checking ? (
+          {!isClient ? (
             <>
               <Skeleton className="h-4 w-14" />
               <Skeleton className="h-4 w-14" />

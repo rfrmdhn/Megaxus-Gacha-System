@@ -23,7 +23,7 @@ interface ItemImageProps {
  */
 export function ItemImage({ item, className, style, alt = "" }: ItemImageProps) {
   const [errored, setErrored] = useState(false);
-  const src = useMemo(() => getItemImageSrc(item), [item.id, item.imageKey, item.rarity]);
+  const src = useMemo(() => getItemImageSrc(item), [item]);
 
   const fallback = getItemIcon(item.rarity);
   const shownSrc = errored ? fallback : src;
