@@ -73,7 +73,7 @@ export default function NavBar() {
     >
       <nav className="mx-auto flex max-w-4xl items-center justify-between px-4 py-3">
         <Link href="/gacha" className="flex items-center gap-2 font-semibold">
-          <Image src="/megaxuslogo.png" alt="Megaxus" width={112} height={29} className="h-7 w-auto" />
+          <Image src="/megaxuslogo.png" alt="Megaxus" width={112} height={29} className="h-7 w-auto" priority />
           <span className="bg-gradient-to-r from-brand-red-600 via-brand-red-700 to-brand-gray-900 bg-clip-text text-transparent">
             Gacha Event System
           </span>

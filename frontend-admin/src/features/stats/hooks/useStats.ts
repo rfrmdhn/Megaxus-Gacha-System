@@ -36,7 +36,9 @@ export function useStats(user: JwtPayload | null) {
   // The SSE connection is keyed only to `user` (reconnecting on every filter
   // change would be wasteful); the listener reads the current filter via ref.
   const eventFilterRef = useRef(eventFilter);
-  eventFilterRef.current = eventFilter;
+  useEffect(() => {
+    eventFilterRef.current = eventFilter;
+  }, [eventFilter]);
 
   async function load() {
     try {
@@ -74,7 +76,6 @@ export function useStats(user: JwtPayload | null) {
   useEffect(() => {
     if (!user) return;
     void loadRarityBreakdown(eventFilter);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, eventFilter]);
 
   useEffect(() => {
