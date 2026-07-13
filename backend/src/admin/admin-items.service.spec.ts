@@ -251,8 +251,11 @@ describe('AdminItemsService', () => {
       prisma.gachaItem.findUnique.mockResolvedValue(makeItem());
       prisma.gachaLog.count.mockResolvedValue(0);
       prisma.gachaItem.delete.mockResolvedValue(undefined);
+      prisma.gachaEvent.findUnique.mockResolvedValue(
+        makeEvent({ isActive: false }),
+      );
 
-      await service.remove('item-1');
+      const result = await service.remove('item-1');
 
       expect(prisma.gachaLog.count).toHaveBeenCalledWith({
         where: { itemId: 'item-1' },
@@ -261,6 +264,7 @@ describe('AdminItemsService', () => {
         where: { id: 'item-1' },
       });
       expect(gachaCache.invalidate).toHaveBeenCalledWith('evt-1');
+      expect(result).toEqual({ success: true });
     });
 
     it('throws BadRequestException when the item has existing pull history', async () => {
@@ -271,6 +275,41 @@ describe('AdminItemsService', () => {
         BadRequestException,
       );
       expect(prisma.gachaItem.delete).not.toHaveBeenCalled();
+    });
+
+    it('returns no warning when the active event still sums to exactly 100%', async () => {
+      prisma.gachaItem.findUnique.mockResolvedValue(makeItem());
+      prisma.gachaLog.count.mockResolvedValue(0);
+      prisma.gachaItem.delete.mockResolvedValue(undefined);
+      prisma.gachaEvent.findUnique.mockResolvedValue(
+        makeEvent({ isActive: true }),
+      );
+      prisma.gachaItem.findMany.mockResolvedValue([
+        { dropRate: 60 },
+        { dropRate: 40 },
+      ]);
+
+      const result = await service.remove('item-1');
+
+      expect(result).toEqual({ success: true });
+    });
+
+    it('warns when deleting the item drops an active event below 100%', async () => {
+      prisma.gachaItem.findUnique.mockResolvedValue(makeItem());
+      prisma.gachaLog.count.mockResolvedValue(0);
+      prisma.gachaItem.delete.mockResolvedValue(undefined);
+      prisma.gachaEvent.findUnique.mockResolvedValue(
+        makeEvent({ isActive: true }),
+      );
+      prisma.gachaItem.findMany.mockResolvedValue([{ dropRate: 60 }]);
+
+      const result = await service.remove('item-1');
+
+      expect(result).toEqual({
+        success: true,
+        warning:
+          'Active event drop rates now total 60% (not 100%); pulls are blocked until an admin restores the total to 100%.',
+      });
     });
   });
 

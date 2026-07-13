@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -35,7 +36,23 @@ export class AdminEventsService {
   list() {
     return this.prisma.gachaEvent.findMany({
       orderBy: { createdAt: 'desc' },
-      include: { items: true },
+      select: {
+        id: true,
+        name: true,
+        isActive: true,
+        startsAt: true,
+        endsAt: true,
+        imageKey: true,
+        items: {
+          select: {
+            id: true,
+            name: true,
+            rarity: true,
+            dropRate: true,
+            imageKey: true,
+          },
+        },
+      },
     });
   }
 
@@ -86,7 +103,9 @@ export class AdminEventsService {
       where: { eventId: id },
     });
     if (pullCount > 0) {
-      throw new BadRequestException(
+      // 409 Conflict: the request conflicts with the append-only pull history,
+      // matching AdminUsersService.remove's treatment of the same situation.
+      throw new ConflictException(
         'Cannot delete an event with existing pull history; deactivate it instead',
       );
     }

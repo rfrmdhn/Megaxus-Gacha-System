@@ -9,6 +9,7 @@ import { StorageService, StoredObject } from '../storage/storage.service';
 import {
   assertDropRatesDoNotExceed100,
   assertDropRatesEqual100,
+  sumDropRates,
 } from './drop-rate.util';
 import { CreateItemDto, UpdateItemDto } from './dto/item.dto';
 
@@ -43,9 +44,11 @@ export class AdminItemsService {
     });
     const rates = [...existing.map((i) => i.dropRate), dto.dropRate];
     // Active events must stay valid after every edit; draft events can be built up incrementally.
-    event.isActive
-      ? assertDropRatesEqual100(rates)
-      : assertDropRatesDoNotExceed100(rates);
+    if (event.isActive) {
+      assertDropRatesEqual100(rates);
+    } else {
+      assertDropRatesDoNotExceed100(rates);
+    }
 
     const item = await this.prisma.gachaItem.create({
       data: {
@@ -65,6 +68,7 @@ export class AdminItemsService {
     if (dto.dropRate !== undefined) {
       const event = await this.prisma.gachaEvent.findUniqueOrThrow({
         where: { id: item.eventId },
+        select: { isActive: true },
       });
       const siblings = await this.prisma.gachaItem.findMany({
         where: { eventId: item.eventId, id: { not: itemId } },
@@ -96,10 +100,34 @@ export class AdminItemsService {
         'Cannot delete an item that has already been awarded to a player',
       );
     }
-    // Deleting from an active event can leave it below 100% — GachaService's
-    // pull-time check blocks pulls on a misconfigured active event as a backstop.
     await this.prisma.gachaItem.delete({ where: { id: itemId } });
     await this.gachaCache.invalidate(item.eventId);
+
+    // The delete is never blocked — an admin must be able to remove a
+    // misconfigured item even from a live event (ADR-004). But doing so can drop
+    // the active event below 100%, which GachaService's pull-time check will then
+    // reject on every pull. Surface that as a warning instead of a silent gap.
+    return this.buildRemovalResult(item.eventId);
+  }
+
+  private async buildRemovalResult(eventId: string) {
+    const event = await this.prisma.gachaEvent.findUnique({
+      where: { id: eventId },
+      select: { isActive: true },
+    });
+    if (!event?.isActive) return { success: true };
+
+    const remaining = await this.prisma.gachaItem.findMany({
+      where: { eventId },
+      select: { dropRate: true },
+    });
+    const total = sumDropRates(remaining.map((i) => i.dropRate));
+    if (total.equals(100)) return { success: true };
+
+    return {
+      success: true,
+      warning: `Active event drop rates now total ${total.toString()}% (not 100%); pulls are blocked until an admin restores the total to 100%.`,
+    };
   }
 
   async uploadImage(itemId: string, file: UploadedImageFile) {

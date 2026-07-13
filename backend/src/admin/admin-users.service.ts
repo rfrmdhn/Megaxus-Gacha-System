@@ -4,6 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
+import { User } from '../../generated/prisma';
 import { PrismaService } from '../prisma/prisma.service';
 import { buildCursorArgs, paginate } from '../common/pagination';
 import { AdminUserQueryDto } from './dto/admin-user-query.dto';
@@ -29,15 +30,9 @@ export class AdminUsersService {
 
     const { items, nextCursor } = paginate(rows, query.limit);
     return {
-      items: items.map((user) => ({
-        id: user.id,
-        email: user.email,
-        role: user.role,
-        coins: user.coins,
-        isBanned: user.isBanned,
-        pullCount: user._count.gachaLogs,
-        createdAt: user.createdAt,
-      })),
+      items: items.map((user) =>
+        this.toUserSummary(user, user._count.gachaLogs),
+      ),
       nextCursor,
     };
   }
@@ -60,15 +55,7 @@ export class AdminUsersService {
       },
     });
 
-    return {
-      id: user.id,
-      email: user.email,
-      role: user.role,
-      coins: user.coins,
-      isBanned: user.isBanned,
-      pullCount: 0,
-      createdAt: user.createdAt,
-    };
+    return this.toUserSummary(user, 0);
   }
 
   async getDetail(id: string) {
@@ -89,13 +76,7 @@ export class AdminUsersService {
     });
 
     return {
-      id: user.id,
-      email: user.email,
-      role: user.role,
-      coins: user.coins,
-      isBanned: user.isBanned,
-      pullCount: user._count.gachaLogs,
-      createdAt: user.createdAt,
+      ...this.toUserSummary(user, user._count.gachaLogs),
       recentHistory: recentHistory.map((log) => ({
         id: log.id,
         eventName: log.event.name,
@@ -109,14 +90,18 @@ export class AdminUsersService {
 
   async update(id: string, dto: UpdateUserDto) {
     await this.assertExists(id);
-    return this.prisma.user.update({
+    // Project the safe shape rather than returning the raw row — the User model
+    // carries passwordHash/refreshTokenHash that must never reach the response.
+    const user = await this.prisma.user.update({
       where: { id },
       data: {
         ...(dto.coins !== undefined ? { coins: dto.coins } : {}),
         ...(dto.role !== undefined ? { role: dto.role } : {}),
         ...(dto.isBanned !== undefined ? { isBanned: dto.isBanned } : {}),
       },
+      include: { _count: { select: { gachaLogs: true } } },
     });
+    return this.toUserSummary(user, user._count.gachaLogs);
   }
 
   async remove(id: string) {
@@ -136,8 +121,25 @@ export class AdminUsersService {
   }
 
   private async assertExists(id: string) {
-    const user = await this.prisma.user.findUnique({ where: { id } });
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+      select: { id: true },
+    });
     if (!user) throw new NotFoundException('User not found');
     return user;
+  }
+
+  // Single source of truth for the safe, response-facing user shape — excludes
+  // passwordHash/refreshTokenHash and every other internal column.
+  private toUserSummary(user: User, pullCount: number) {
+    return {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      coins: user.coins,
+      isBanned: user.isBanned,
+      pullCount,
+      createdAt: user.createdAt,
+    };
   }
 }

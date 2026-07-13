@@ -1,4 +1,8 @@
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
 import { AdminEventsService } from './admin-events.service';
 
 function makeEvent(overrides: Partial<any> = {}) {
@@ -52,7 +56,23 @@ describe('AdminEventsService', () => {
       expect(result).toEqual(events);
       expect(prisma.gachaEvent.findMany).toHaveBeenCalledWith({
         orderBy: { createdAt: 'desc' },
-        include: { items: true },
+        select: {
+          id: true,
+          name: true,
+          isActive: true,
+          startsAt: true,
+          endsAt: true,
+          imageKey: true,
+          items: {
+            select: {
+              id: true,
+              name: true,
+              rarity: true,
+              dropRate: true,
+              imageKey: true,
+            },
+          },
+        },
       });
     });
   });
@@ -248,13 +268,11 @@ describe('AdminEventsService', () => {
       });
     });
 
-    it('throws BadRequestException when the event has existing pull history', async () => {
+    it('throws ConflictException when the event has existing pull history', async () => {
       prisma.gachaEvent.findUnique.mockResolvedValue(makeEvent());
       prisma.gachaLog.count.mockResolvedValue(3);
 
-      await expect(service.remove('evt-1')).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(service.remove('evt-1')).rejects.toThrow(ConflictException);
       expect(prisma.gachaEvent.delete).not.toHaveBeenCalled();
     });
   });

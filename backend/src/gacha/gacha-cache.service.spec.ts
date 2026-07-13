@@ -70,6 +70,8 @@ describe('GachaCacheService', () => {
       expect(redis.set).toHaveBeenCalledWith(
         'event:evt-1:items',
         expect.any(String),
+        'EX',
+        86_400,
       );
     });
 

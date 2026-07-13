@@ -9,6 +9,16 @@ function sumOf(rates: (Decimal | number | string)[]): Decimal {
 }
 
 /**
+ * Decimal-exact sum of drop rates, for callers that need the total itself (e.g.
+ * to warn about an active event that has drifted from 100%) rather than to
+ * assert-and-throw. Uses the same Decimal arithmetic as the assertions so the
+ * comparison is free of the float error a plain `+` would introduce.
+ */
+export function sumDropRates(rates: (Decimal | number | string)[]): Decimal {
+  return sumOf(rates);
+}
+
+/**
  * Used while an event is a draft (not active): items can be added incrementally,
  * so only reject if the running total would exceed 100 — it doesn't need to hit
  * exactly 100 until the event is activated.

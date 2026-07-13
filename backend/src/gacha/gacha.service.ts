@@ -54,12 +54,7 @@ export class GachaService {
     });
 
     return {
-      item: {
-        id: result.log.item.id,
-        name: result.log.item.name,
-        rarity: result.log.item.rarity,
-        imageKey: result.log.item.imageKey,
-      },
+      item: this.toItemResponse(result.log.item),
       remainingCoins: result.user.coins,
     };
   }
@@ -119,12 +114,7 @@ export class GachaService {
     );
 
     return {
-      items: result.picked.map((item) => ({
-        id: item.id,
-        name: item.name,
-        rarity: item.rarity,
-        imageKey: item.imageKey,
-      })),
+      items: result.picked.map((item) => this.toItemResponse(item)),
       bestRarity: best.rarity,
       remainingCoins: result.user.coins,
     };
@@ -167,6 +157,22 @@ export class GachaService {
     if (deducted.count === 0) {
       throw new BadRequestException('Insufficient coins');
     }
+  }
+
+  // Shared shape for the item(s) returned to the player from a pull — the same
+  // safe projection whether the source is a freshly-created log or a cached item.
+  private toItemResponse(item: {
+    id: string;
+    name: string;
+    rarity: string;
+    imageKey: string | null;
+  }) {
+    return {
+      id: item.id,
+      name: item.name,
+      rarity: item.rarity,
+      imageKey: item.imageKey,
+    };
   }
 
   // Best-effort real-time notification. Called only after COMMIT, so the pull is

@@ -222,6 +222,7 @@ describe('AdminUsersService', () => {
       expect(prisma.user.update).toHaveBeenCalledWith({
         where: { id: 'u1' },
         data: { isBanned: true },
+        include: { _count: { select: { gachaLogs: true } } },
       });
     });
 
@@ -238,6 +239,7 @@ describe('AdminUsersService', () => {
       expect(prisma.user.update).toHaveBeenCalledWith({
         where: { id: 'u1' },
         data: { coins: 999, role: 'admin', isBanned: false },
+        include: { _count: { select: { gachaLogs: true } } },
       });
     });
 
@@ -250,7 +252,35 @@ describe('AdminUsersService', () => {
       expect(prisma.user.update).toHaveBeenCalledWith({
         where: { id: 'u1' },
         data: { coins: 200 },
+        include: { _count: { select: { gachaLogs: true } } },
       });
+    });
+
+    it('projects the safe summary shape and never leaks credential hashes', async () => {
+      prisma.user.findUnique.mockResolvedValue(makeUserRow());
+      prisma.user.update.mockResolvedValue(
+        makeUserRow({
+          coins: 200,
+          passwordHash: 'super-secret-bcrypt-hash',
+          refreshTokenHash: 'refresh-hash',
+          refreshTokenExpiresAt: new Date('2026-02-01'),
+        }),
+      );
+
+      const result = await service.update('u1', { coins: 200 });
+
+      expect(result).toEqual({
+        id: 'u1',
+        email: 'user@test.com',
+        role: 'user',
+        coins: 200,
+        isBanned: false,
+        pullCount: 3,
+        createdAt: makeUserRow().createdAt,
+      });
+      expect(result).not.toHaveProperty('passwordHash');
+      expect(result).not.toHaveProperty('refreshTokenHash');
+      expect(result).not.toHaveProperty('refreshTokenExpiresAt');
     });
   });
 

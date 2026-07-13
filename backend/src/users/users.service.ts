@@ -8,7 +8,10 @@ export class UsersService {
   constructor(private prisma: PrismaService) {}
 
   async getProfile(userId: string) {
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, email: true, coins: true },
+    });
     if (!user) throw new NotFoundException('User not found');
     return { id: user.id, email: user.email, coins: user.coins };
   }
