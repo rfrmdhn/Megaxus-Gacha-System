@@ -101,8 +101,9 @@ export class AuthService {
       role: user.role,
     });
 
-    const refreshTokenBytes =
-      this.systemConfig.get<number>('REFRESH_TOKEN_BYTES');
+    const refreshTokenBytes = this.systemConfig.get<number>(
+      'REFRESH_TOKEN_BYTES',
+    );
     const bcryptRounds = this.systemConfig.get<number>('BCRYPT_ROUNDS');
     const expiresInSeconds = this.systemConfig.get<number>(
       'DEFAULT_REFRESH_EXPIRES_SECONDS',

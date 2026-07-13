@@ -16,6 +16,7 @@ function makeUserRow(overrides: Partial<any> = {}) {
 
 describe('AdminUsersService', () => {
   let prisma: any;
+  let systemConfig: any;
   let service: AdminUsersService;
 
   beforeEach(() => {
@@ -29,7 +30,8 @@ describe('AdminUsersService', () => {
       },
       gachaLog: { findMany: jest.fn(), count: jest.fn() },
     };
-    service = new AdminUsersService(prisma);
+    systemConfig = { get: jest.fn().mockImplementation((_key: string, fallback?: unknown) => fallback ?? 10) };
+    service = new AdminUsersService(prisma, systemConfig);
   });
 
   describe('list', () => {

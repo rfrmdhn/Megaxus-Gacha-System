@@ -1,7 +1,6 @@
 import { validate } from 'class-validator';
 import { plainToInstance } from 'class-transformer';
 import { PullBulkDto } from './pull-bulk.dto';
-import { MAX_BULK_PULL } from '../gacha.constants';
 
 const VALID_UUID = '550e8400-e29b-41d4-a716-446655440000';
 
@@ -27,10 +26,10 @@ describe('PullBulkDto', () => {
     expect(errors.some((e) => e.property === 'count')).toBe(true);
   });
 
-  it(`fails when count exceeds the maximum of ${MAX_BULK_PULL}`, async () => {
+  it('fails when count exceeds the static max of 100', async () => {
     const dto = plainToInstance(PullBulkDto, {
       eventId: VALID_UUID,
-      count: MAX_BULK_PULL + 1,
+      count: 101,
     });
     const errors = await validate(dto);
     expect(errors.some((e) => e.property === 'count')).toBe(true);

@@ -31,10 +31,7 @@ export class GachaController {
   @Throttle(GACHA_THROTTLE)
   @Post('pull-bulk')
   @HttpCode(200)
-  pullBulk(
-    @CurrentUser() user: AuthenticatedUser,
-    @Body() dto: PullBulkDto,
-  ) {
+  pullBulk(@CurrentUser() user: AuthenticatedUser, @Body() dto: PullBulkDto) {
     return this.gachaService.pullBulk(user.id, dto.eventId, dto.count);
   }
 }

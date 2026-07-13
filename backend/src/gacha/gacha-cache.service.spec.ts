@@ -3,6 +3,7 @@ import { GachaCacheService } from './gacha-cache.service';
 describe('GachaCacheService', () => {
   let redis: any;
   let prisma: any;
+  let systemConfig: any;
   let service: GachaCacheService;
 
   beforeEach(() => {
@@ -14,7 +15,8 @@ describe('GachaCacheService', () => {
     prisma = {
       gachaItem: { findMany: jest.fn() },
     };
-    service = new GachaCacheService(redis, prisma);
+    systemConfig = { get: jest.fn().mockReturnValue(86_400) };
+    service = new GachaCacheService(redis, prisma, systemConfig);
   });
 
   describe('getEventItems', () => {

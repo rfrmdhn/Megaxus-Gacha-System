@@ -1,6 +1,6 @@
 "use client";
 
-import { CSSProperties, useEffect, useState } from "react";
+import { CSSProperties, useMemo, useState } from "react";
 import { getItemIcon, getItemImageSrc } from "@/lib/itemIcon";
 
 interface ItemImageItem {
@@ -22,24 +22,21 @@ interface ItemImageProps {
  * when a set image fails to load (missing object, network error).
  */
 export function ItemImage({ item, className, style, alt = "" }: ItemImageProps) {
-  const [src, setSrc] = useState(() => getItemImageSrc(item));
-
-  // Keep the shown image in sync when the item (or its image) changes.
-  useEffect(() => {
-    setSrc(getItemImageSrc(item));
-  }, [item.id, item.imageKey, item.rarity]);
+  const [errored, setErrored] = useState(false);
+  const src = useMemo(() => getItemImageSrc(item), [item.id, item.imageKey, item.rarity]);
 
   const fallback = getItemIcon(item.rarity);
+  const shownSrc = errored ? fallback : src;
 
   return (
     // eslint-disable-next-line @next/next/no-img-element -- served from the API / static assets, not an optimizable Next asset
     <img
-      src={src}
+      src={shownSrc}
       alt={alt}
       className={className}
       style={style}
       onError={() => {
-        if (src !== fallback) setSrc(fallback);
+        if (!errored) setErrored(true);
       }}
     />
   );

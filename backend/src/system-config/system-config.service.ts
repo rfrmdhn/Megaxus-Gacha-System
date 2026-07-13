@@ -66,7 +66,9 @@ export class SystemConfigService implements OnModuleInit {
       this.loaded = true;
       this.logger.log(`Loaded ${rows.length} system config entries`);
     } catch {
-      this.logger.warn('Failed to load system config from database, using defaults');
+      this.logger.warn(
+        'Failed to load system config from database, using defaults',
+      );
       this.loaded = true;
     }
   }

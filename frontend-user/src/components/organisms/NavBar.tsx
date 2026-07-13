@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { clearSession, getCurrentUser, JwtPayload } from "@/lib/auth";
+import { clearSession, getCurrentUser } from "@/lib/auth";
 import { Skeleton } from "@/components/Skeleton";
 import { Button } from "@/components/atoms/Button";
 
@@ -23,7 +23,6 @@ function MenuIcon({ open }: { open: boolean }) {
 const SCROLL_THRESHOLD_PX = 8;
 
 export default function NavBar() {
-  const [user, setUser] = useState<JwtPayload | null>(null);
   const [checking, setChecking] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -34,10 +33,14 @@ export default function NavBar() {
   // navigation, so re-check auth state on every route change — otherwise
   // the nav stays stuck showing "Login/Register" right after a login/register
   // redirect, since the initial mount ran before the token was saved.
+  // getCurrentUser() is synchronous (reads from cookies/localStorage), so we
+  // can just call it directly during render — no effect needed.
+  const user = getCurrentUser();
+
+  // Show skeleton on initial mount only, then reveal content.
   useEffect(() => {
-    setUser(getCurrentUser());
     setChecking(false);
-  }, [pathname]);
+  }, []);
 
   // Solid background once the page scrolls, so page content never shows
   // through the sticky header — transparent/blur only reads well at the top.
@@ -52,7 +55,6 @@ export default function NavBar() {
 
   function logout() {
     clearSession();
-    setUser(null);
     setMenuOpen(false);
     router.push("/login");
   }

@@ -43,6 +43,7 @@ describe('GachaService', () => {
   let prisma: any;
   let gachaCache: any;
   let adminFeed: any;
+  let systemConfig: any;
   let service: GachaService;
 
   beforeEach(() => {
@@ -52,7 +53,16 @@ describe('GachaService', () => {
     };
     gachaCache = { getEventItems: jest.fn() };
     adminFeed = { emitPull: jest.fn().mockResolvedValue(undefined) };
-    service = new GachaService(prisma, gachaCache, adminFeed);
+    systemConfig = {
+      get: jest.fn().mockImplementation((key: string) => {
+        const defaults: Record<string, unknown> = {
+          PULL_COST: 10,
+          MAX_BULK_PULL: 10,
+        };
+        return defaults[key] ?? 10;
+      }),
+    };
+    service = new GachaService(prisma, gachaCache, adminFeed, systemConfig);
   });
 
   it('throws NotFoundException when the event does not exist', async () => {
