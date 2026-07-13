@@ -2,7 +2,7 @@
 
 Player-facing Next.js app: register/login, browse active events, pull gacha (single or bulk, with a full cinematic reveal animation), and view profile/coin balance and pull history. No admin routes live here — see [frontend-admin](../frontend-admin).
 
-For everything beyond local setup (architecture, components, every feature in detail — including the gacha reveal animation system, testing, known issues), see the [project README](../README.md) — this is the one place all three apps are documented, since this repo's own `docs/` folder is a local, gitignored developer aid and isn't part of the shipped project.
+For everything beyond local setup (architecture, components, every feature in detail — including the gacha reveal animation system, testing, known issues), see the [project README](../README.md) — this is the one place all three apps are documented.
 
 - [Architecture](../README.md#frontend-user-architecture)
 - [Features & components](../README.md#frontend-user--features--components)
@@ -41,4 +41,4 @@ npm run test:cov    # with coverage report
 
 ## Note on sound
 
-The cinematic pull-reveal animation plays sound effects via Howler, but the `.mp3` files themselves are intentionally not committed (see `public/sounds/README.md`) — Howler fails silently on a missing file, so the app degrades gracefully to no audio rather than erroring.
+The cinematic pull-reveal animation plays sound effects via Howler, but the `.mp3` files themselves are intentionally not committed — Howler fails silently on a missing file, so the app degrades gracefully to no audio rather than erroring.

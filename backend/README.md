@@ -2,7 +2,7 @@
 
 NestJS API for the Gacha Event System — the single backend shared by [frontend-user](../frontend-user) and [frontend-admin](../frontend-admin).
 
-For everything beyond local setup (architecture, the gacha algorithm, auth system, full API reference, database schema, admin features, testing, known issues), see the [project README](../README.md) — this is the one place all three apps are documented, since this repo's own `docs/` folder is a local, gitignored developer aid and isn't part of the shipped project.
+For everything beyond local setup (architecture, the gacha algorithm, auth system, full API reference, database schema, admin features, testing, known issues), see the [project README](../README.md) — this is the one place all three apps are documented.
 
 ## Setup
 
