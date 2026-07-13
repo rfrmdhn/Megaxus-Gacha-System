@@ -83,6 +83,7 @@ describe("RarityReveal", () => {
       { item: { id: "b", name: "B", rarity: "rare", imageKey: null }, remainingCoins: 0 },
     ],
     bestRarity: "rare",
+    worstRarity: "common",
     remainingCoins: 0,
   };
 

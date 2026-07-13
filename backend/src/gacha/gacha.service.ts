@@ -102,6 +102,9 @@ export class GachaService {
     const best = result.picked.reduce((rarest, item) =>
       item.dropRate < rarest.dropRate ? item : rarest,
     );
+    const worst = result.picked.reduce((commonest, item) =>
+      item.dropRate > commonest.dropRate ? item : commonest,
+    );
 
     await Promise.all(
       result.picked.map((item) =>
@@ -120,6 +123,7 @@ export class GachaService {
     return {
       items: result.picked.map((item) => this.toItemResponse(item)),
       bestRarity: best.rarity,
+      worstRarity: worst.rarity,
       remainingCoins: result.user.coins,
     };
   }

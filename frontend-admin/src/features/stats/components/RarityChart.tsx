@@ -24,14 +24,16 @@ export function RarityChart({ data }: { data: RarityBreakdown[] }) {
     );
   }
 
+  const sorted = [...data].sort((a, b) => b.count - a.count);
+
   return (
     <ResponsiveContainer width="100%" height={220}>
-      <BarChart data={data}>
+      <BarChart data={sorted}>
         <XAxis dataKey="rarity" tickLine={false} axisLine={false} fontSize={12} />
         <YAxis allowDecimals={false} tickLine={false} axisLine={false} width={24} fontSize={12} />
         <Tooltip cursor={{ fill: "rgba(0,0,0,0.04)" }} />
         <Bar dataKey="count" radius={[4, 4, 0, 0]}>
-          {data.map((entry) => (
+          {sorted.map((entry) => (
             <Cell key={entry.rarity} fill={colorFor(entry.rarity)} />
           ))}
         </Bar>

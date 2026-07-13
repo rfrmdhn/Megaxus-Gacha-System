@@ -20,10 +20,12 @@ export interface PullResult {
 }
 
 // Result of a bulk summon (backend `POST /gacha/pull-bulk`). `results` holds
-// every pulled item; `bestRarity` is the rarity of the rarest pull, decided by
-// the backend (lowest drop rate) so the client never interprets rarity labels.
+// every pulled item; `bestRarity`/`worstRarity` are the rarest and commonest
+// pulls, decided by the backend (lowest/highest drop rate) so the client
+// never interprets rarity labels.
 export interface MultiPullResult {
   results: PullResult[];
   bestRarity: string;
+  worstRarity: string;
   remainingCoins: number;
 }

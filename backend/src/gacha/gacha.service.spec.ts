@@ -186,7 +186,7 @@ describe('GachaService', () => {
       expect(prisma.$transaction).not.toHaveBeenCalled();
     });
 
-    it('charges PULL_COST * count in one deduction, logs each pull, and returns the rarest as bestRarity', async () => {
+    it('charges PULL_COST * count in one deduction, logs each pull, and returns the rarest as bestRarity and the commonest as worstRarity', async () => {
       prisma.gachaEvent.findUnique.mockResolvedValue(makeEvent());
       gachaCache.getEventItems.mockResolvedValue([COMMON, RARE]);
       const tx = makeTx({
@@ -221,6 +221,7 @@ describe('GachaService', () => {
           { id: 'r', name: 'Langka', rarity: 'rare', imageKey: null },
         ],
         bestRarity: 'rare',
+        worstRarity: 'common',
         remainingCoins: 480,
       });
     });

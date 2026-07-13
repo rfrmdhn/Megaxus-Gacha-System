@@ -50,6 +50,7 @@ const mockBulkResult = {
     rarity: "common",
   })),
   bestRarity: "rare",
+  worstRarity: "common",
   remainingCoins: 0,
 };
 
