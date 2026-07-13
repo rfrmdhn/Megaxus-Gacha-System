@@ -152,8 +152,18 @@ describe('GachaService', () => {
   describe('pullBulk', () => {
     // Two items summing to 100 so a controlled Math.random deterministically
     // selects which one each roll lands on (common < 90 <= rare).
-    const COMMON = makeItem({ id: 'c', name: 'Biasa', rarity: 'common', dropRate: 90 });
-    const RARE = makeItem({ id: 'r', name: 'Langka', rarity: 'rare', dropRate: 10 });
+    const COMMON = makeItem({
+      id: 'c',
+      name: 'Biasa',
+      rarity: 'common',
+      dropRate: 90,
+    });
+    const RARE = makeItem({
+      id: 'r',
+      name: 'Langka',
+      rarity: 'rare',
+      dropRate: 10,
+    });
 
     afterEach(() => jest.restoreAllMocks());
 

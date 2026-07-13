@@ -6,17 +6,18 @@ import {
 import * as bcrypt from 'bcrypt';
 import { User } from '../../generated/prisma';
 import { PrismaService } from '../prisma/prisma.service';
+import { SystemConfigService } from '../system-config/system-config.service';
 import { buildCursorArgs, paginate } from '../common/pagination';
 import { AdminUserQueryDto } from './dto/admin-user-query.dto';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 
-const RECENT_HISTORY_LIMIT = 10;
-const BCRYPT_ROUNDS = 10;
-
 @Injectable()
 export class AdminUsersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private systemConfig: SystemConfigService,
+  ) {}
 
   async list(query: AdminUserQueryDto) {
     const rows = await this.prisma.user.findMany({
@@ -45,7 +46,8 @@ export class AdminUsersService {
       throw new ConflictException('Email is already registered');
     }
 
-    const passwordHash = await bcrypt.hash(dto.password, BCRYPT_ROUNDS);
+    const bcryptRounds = this.systemConfig.get<number>('BCRYPT_ROUNDS');
+    const passwordHash = await bcrypt.hash(dto.password, bcryptRounds);
     const user = await this.prisma.user.create({
       data: {
         email: dto.email,
@@ -65,10 +67,11 @@ export class AdminUsersService {
     });
     if (!user) throw new NotFoundException('User not found');
 
+    const recentLimit = this.systemConfig.get<number>('RECENT_HISTORY_LIMIT');
     const recentHistory = await this.prisma.gachaLog.findMany({
       where: { userId: id },
       orderBy: { createdAt: 'desc' },
-      take: RECENT_HISTORY_LIMIT,
+      take: recentLimit,
       include: {
         item: { select: { name: true, rarity: true } },
         event: { select: { name: true } },
@@ -90,8 +93,6 @@ export class AdminUsersService {
 
   async update(id: string, dto: UpdateUserDto) {
     await this.assertExists(id);
-    // Project the safe shape rather than returning the raw row — the User model
-    // carries passwordHash/refreshTokenHash that must never reach the response.
     const user = await this.prisma.user.update({
       where: { id },
       data: {
@@ -106,8 +107,6 @@ export class AdminUsersService {
 
   async remove(id: string) {
     await this.assertExists(id);
-    // gacha_logs are the system's append-only permanent record — refuse to
-    // destroy a user's history. Banning is the reversible way to disable an account.
     const pullCount = await this.prisma.gachaLog.count({
       where: { userId: id },
     });
@@ -129,8 +128,6 @@ export class AdminUsersService {
     return user;
   }
 
-  // Single source of truth for the safe, response-facing user shape — excludes
-  // passwordHash/refreshTokenHash and every other internal column.
   private toUserSummary(user: User, pullCount: number) {
     return {
       id: user.id,

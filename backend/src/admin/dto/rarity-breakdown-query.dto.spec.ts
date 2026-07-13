@@ -19,7 +19,9 @@ describe('RarityBreakdownQueryDto', () => {
   });
 
   it('fails when eventId is not a valid UUID', async () => {
-    const dto = plainToInstance(RarityBreakdownQueryDto, { eventId: 'not-a-uuid' });
+    const dto = plainToInstance(RarityBreakdownQueryDto, {
+      eventId: 'not-a-uuid',
+    });
     const errors = await validate(dto);
     expect(errors.length).toBeGreaterThan(0);
   });

@@ -6,6 +6,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
 import { RedisModule } from './redis/redis.module';
+import { SystemConfigModule } from './system-config/system-config.module';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { EventsModule } from './events/events.module';
@@ -16,9 +17,15 @@ import { HealthModule } from './health/health.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
-    ThrottlerModule.forRoot([{ ttl: 60_000, limit: 40 }]),
+    ThrottlerModule.forRoot([
+      {
+        ttl: Number(process.env.GLOBAL_THROTTLE_TTL_MS ?? 60_000),
+        limit: Number(process.env.GLOBAL_THROTTLE_LIMIT ?? 40),
+      },
+    ]),
     PrismaModule,
     RedisModule,
+    SystemConfigModule,
     AuthModule,
     UsersModule,
     EventsModule,

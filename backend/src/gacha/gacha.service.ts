@@ -6,10 +6,10 @@ import {
 } from '@nestjs/common';
 import { Prisma } from '../../generated/prisma';
 import { PrismaService } from '../prisma/prisma.service';
+import { SystemConfigService } from '../system-config/system-config.service';
 import { CachedGachaItem, GachaCacheService } from './gacha-cache.service';
 import { AdminFeedProducer } from '../queue/admin-feed.producer';
 import { pickWeightedRandom } from './weighted-random';
-import { PULL_COST } from './gacha.constants';
 import { assertDropRatesEqual100 } from '../admin/drop-rate.util';
 
 @Injectable()
@@ -20,18 +20,20 @@ export class GachaService {
     private prisma: PrismaService,
     private gachaCache: GachaCacheService,
     private adminFeed: AdminFeedProducer,
+    private systemConfig: SystemConfigService,
   ) {}
 
   async pull(userId: string, eventId: string) {
     const { event, items } = await this.loadActiveEventWithItems(eventId);
+    const pullCost = this.systemConfig.get<number>('PULL_COST');
 
     const result = await this.prisma.$transaction(async (tx) => {
-      await this.deductCoinsOrThrow(tx, userId, PULL_COST);
+      await this.deductCoinsOrThrow(tx, userId, pullCost);
 
       const picked = pickWeightedRandom(items);
 
       const log = await tx.gachaLog.create({
-        data: { userId, eventId, itemId: picked.id, coinsSpent: PULL_COST },
+        data: { userId, eventId, itemId: picked.id, coinsSpent: pullCost },
         include: { item: true },
       });
 
@@ -60,15 +62,19 @@ export class GachaService {
   }
 
   async pullBulk(userId: string, eventId: string, count: number) {
+    const maxBulk = this.systemConfig.get<number>('MAX_BULK_PULL');
+    if (count > maxBulk) {
+      throw new BadRequestException(
+        `Cannot pull more than ${maxBulk} items at once`,
+      );
+    }
+
     const { event, items } = await this.loadActiveEventWithItems(eventId);
-    const totalCost = PULL_COST * count;
-    // One timestamp shared by every log row and every feed event, so the DB
-    // record and the admin feed agree on when the bulk pull happened.
+    const pullCost = this.systemConfig.get<number>('PULL_COST');
+    const totalCost = pullCost * count;
     const createdAt = new Date();
 
     const result = await this.prisma.$transaction(async (tx) => {
-      // All-or-nothing: the whole batch is charged up front in one guarded
-      // deduction. Either the user can afford all `count` pulls or none happen.
       await this.deductCoinsOrThrow(tx, userId, totalCost);
 
       const picked = Array.from({ length: count }, () =>
@@ -80,7 +86,7 @@ export class GachaService {
           userId,
           eventId,
           itemId: item.id,
-          coinsSpent: PULL_COST,
+          coinsSpent: pullCost,
           createdAt,
         })),
       });
@@ -93,8 +99,6 @@ export class GachaService {
       return { picked, user };
     });
 
-    // Best pull is decided on the server by drop rate (rarest = lowest
-    // dropRate) so the client never has to interpret free-form rarity labels.
     const best = result.picked.reduce((rarest, item) =>
       item.dropRate < rarest.dropRate ? item : rarest,
     );
@@ -135,16 +139,11 @@ export class GachaService {
     if (items.length === 0) {
       throw new BadRequestException('This event has no configured items');
     }
-    // Defense-in-depth: an active event's items must sum to exactly 100%.
-    // Activation already enforces this, but a later item edit could break it.
     assertDropRatesEqual100(items.map((i) => i.dropRate));
 
     return { event, items };
   }
 
-  // Atomic check-and-deduct: the WHERE clause folds the balance check and the
-  // deduction into one statement, closing the race window entirely. See
-  // docs/adr.md ADR-002 — do not split this into a read + separate update.
   private async deductCoinsOrThrow(
     tx: Prisma.TransactionClient,
     userId: string,
@@ -159,8 +158,6 @@ export class GachaService {
     }
   }
 
-  // Shared shape for the item(s) returned to the player from a pull — the same
-  // safe projection whether the source is a freshly-created log or a cached item.
   private toItemResponse(item: {
     id: string;
     name: string;
@@ -175,8 +172,6 @@ export class GachaService {
     };
   }
 
-  // Best-effort real-time notification. Called only after COMMIT, so the pull is
-  // already durable — a queue/Redis failure here must never fail the pull.
   private async emitPull(event: {
     userId: string;
     userEmail: string;

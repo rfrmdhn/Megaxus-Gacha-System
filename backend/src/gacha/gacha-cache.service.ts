@@ -2,6 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import type Redis from 'ioredis';
 import { REDIS_CLIENT } from '../redis/redis.module';
 import { PrismaService } from '../prisma/prisma.service';
+import { SystemConfigService } from '../system-config/system-config.service';
 
 export interface CachedGachaItem {
   id: string;
@@ -15,13 +16,6 @@ function cacheKey(eventId: string) {
   return `event:${eventId}:items`;
 }
 
-// Defense-in-depth backstop only. Correctness still relies on every write path
-// calling invalidate() — this TTL does NOT replace that (a wrong-but-unexpired
-// entry would still serve stale odds for up to this long). It exists solely so a
-// future write path that forgets to invalidate self-heals within a day instead
-// of staying stale indefinitely. See docs/adr.md ADR-005 addendum.
-const BACKSTOP_TTL_SECONDS = 86_400;
-
 /**
  * Cache-aside for an event's items/drop-rates. Invalidated (deleted) on admin
  * write, never updated in place, so there is only one code path (this read)
@@ -32,6 +26,7 @@ export class GachaCacheService {
   constructor(
     @Inject(REDIS_CLIENT) private redis: Redis,
     private prisma: PrismaService,
+    private systemConfig: SystemConfigService,
   ) {}
 
   async getEventItems(eventId: string): Promise<CachedGachaItem[]> {
@@ -52,11 +47,13 @@ export class GachaCacheService {
       ...item,
       dropRate: Number(item.dropRate),
     }));
+
+    const backstopTtl = this.systemConfig.get<number>('BACKSTOP_TTL_SECONDS');
     await this.redis.set(
       cacheKey(eventId),
       JSON.stringify(serializable),
       'EX',
-      BACKSTOP_TTL_SECONDS,
+      backstopTtl,
     );
     return serializable;
   }

@@ -34,7 +34,13 @@ describe('GachaCacheService', () => {
     it('fetches from DB and caches on cache miss', async () => {
       redis.get.mockResolvedValue(null);
       const dbItems = [
-        { id: 'item-1', name: 'Sword', rarity: 'rare', dropRate: 50, imageKey: null },
+        {
+          id: 'item-1',
+          name: 'Sword',
+          rarity: 'rare',
+          dropRate: 50,
+          imageKey: null,
+        },
         {
           id: 'item-2',
           name: 'Shield',
@@ -48,7 +54,13 @@ describe('GachaCacheService', () => {
       const result = await service.getEventItems('evt-1');
 
       expect(result).toEqual([
-        { id: 'item-1', name: 'Sword', rarity: 'rare', dropRate: 50, imageKey: null },
+        {
+          id: 'item-1',
+          name: 'Sword',
+          rarity: 'rare',
+          dropRate: 50,
+          imageKey: null,
+        },
         {
           id: 'item-2',
           name: 'Shield',

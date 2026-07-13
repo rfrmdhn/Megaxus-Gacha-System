@@ -7,7 +7,10 @@ const VALID_UUID = '550e8400-e29b-41d4-a716-446655440000';
 
 describe('PullBulkDto', () => {
   it('passes validation with a valid UUID and count', async () => {
-    const dto = plainToInstance(PullBulkDto, { eventId: VALID_UUID, count: 10 });
+    const dto = plainToInstance(PullBulkDto, {
+      eventId: VALID_UUID,
+      count: 10,
+    });
     const errors = await validate(dto);
     expect(errors.length).toBe(0);
   });
@@ -34,7 +37,10 @@ describe('PullBulkDto', () => {
   });
 
   it('fails when count is not an integer', async () => {
-    const dto = plainToInstance(PullBulkDto, { eventId: VALID_UUID, count: 2.5 });
+    const dto = plainToInstance(PullBulkDto, {
+      eventId: VALID_UUID,
+      count: 2.5,
+    });
     const errors = await validate(dto);
     expect(errors.some((e) => e.property === 'count')).toBe(true);
   });
