@@ -70,20 +70,17 @@ services:
       MINIO_SECRET_KEY: minioadmin
       MINIO_BUCKET: item-images
       MINIO_USE_SSL: "false"
-      # System config overrides (optional — DB values are used when these are unset).
-      # PULL_COST: "10"
-      # MAX_BULK_PULL: "10"
+      # Rate limiting (optional — read directly from env at module init).
+      # GLOBAL_THROTTLE_LIMIT: "40"
+      # GLOBAL_THROTTLE_TTL_MS: "60000"
       # GACHA_PULL_THROTTLE_LIMIT: "120"
       # GACHA_PULL_THROTTLE_TTL_MS: "60000"
       # ADMIN_FEED_RATE_LIMIT_MAX: "10"
       # ADMIN_FEED_RATE_LIMIT_DURATION_MS: "1000"
-      # GLOBAL_THROTTLE_LIMIT: "40"
-      # GLOBAL_THROTTLE_TTL_MS: "60000"
-      # BCRYPT_ROUNDS: "10"
-      # REFRESH_TOKEN_BYTES: "32"
-      # DEFAULT_REFRESH_EXPIRES_SECONDS: "604800"
-      # RECENT_HISTORY_LIMIT: "10"
-      # BACKSTOP_TTL_SECONDS: "86400"
+      # System config (gacha rules, security) — these live in the DB, not env
+      # vars; see backend/.env.example and backend/prisma/seed.js. Only the
+      # two auth token lifetimes above (JWT_ACCESS_EXPIRES_IN_SECONDS,
+      # REFRESH_TOKEN_EXPIRES_IN_SECONDS) are wired as env overrides.
     ports:
       - "3001:3001"
     # Seed is an idempotent upsert (see backend/prisma/seed.js), safe to run on every boot.
