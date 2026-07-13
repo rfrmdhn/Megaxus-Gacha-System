@@ -2,7 +2,7 @@
 
 Admin-only Next.js app: manage draft/active gacha events and items (including banner/artwork uploads), manage users, and watch live pull history via Server-Sent Events. No self-registration — admin accounts are promoted directly in the database (see the [project README](../README.md#creating-an-admin-user)). Runs on port **3002** by default so it can run alongside [frontend-user](../frontend-user) (3000) and the backend (3001).
 
-For everything beyond local setup (architecture, components, every feature in detail, testing, known issues), see the [project README](../README.md) — this is the one place all three apps are documented, since this repo's own `docs/` folder is a local, gitignored developer aid and isn't part of the shipped project.
+For everything beyond local setup (architecture, components, every feature in detail, testing, known issues), see the [project README](../README.md) — this is the one place all three apps are documented.
 
 - [Architecture](../README.md#frontend-admin-architecture)
 - [Features & components](../README.md#frontend-admin--features--components)
