@@ -31,6 +31,12 @@ describe('StorageService', () => {
 
       expect(client.makeBucket).not.toHaveBeenCalled();
     });
+
+    it('does not throw when MinIO is unreachable', async () => {
+      client.bucketExists.mockRejectedValue(new Error('connect ECONNREFUSED'));
+
+      await expect(service.onModuleInit()).resolves.toBeUndefined();
+    });
   });
 
   describe('upload', () => {

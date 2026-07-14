@@ -1,4 +1,4 @@
-import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
+import { Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import type { Client } from 'minio';
 import { Readable } from 'stream';
 import { MINIO_BUCKET, MINIO_CLIENT } from './storage.constants';
@@ -26,14 +26,22 @@ function extensionFor(key: string): string {
  */
 @Injectable()
 export class StorageService implements OnModuleInit {
+  private readonly logger = new Logger(StorageService.name);
+
   constructor(
     @Inject(MINIO_CLIENT) private client: Client,
     @Inject(MINIO_BUCKET) private bucket: string,
   ) {}
 
   async onModuleInit(): Promise<void> {
-    const exists = await this.client.bucketExists(this.bucket);
-    if (!exists) await this.client.makeBucket(this.bucket);
+    try {
+      const exists = await this.client.bucketExists(this.bucket);
+      if (!exists) await this.client.makeBucket(this.bucket);
+    } catch (error) {
+      this.logger.warn(
+        `MinIO unavailable at boot, image upload/serve endpoints will fail until it is reachable: ${(error as Error).message}`,
+      );
+    }
   }
 
   async upload(key: string, buffer: Buffer, mimetype: string): Promise<void> {
